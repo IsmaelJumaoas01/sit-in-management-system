@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+    <title>Register</title>
+</head>
+<body>
+    <div class="register-container">
+        <h2>Register</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        <form action="{{ url_for('register') }}" method="POST">
+            <input type="text" name="idno" placeholder="IDNO" required><br>
+            <input type="text" name="lastname" placeholder="Last Name" required><br>
+            <input type="text" name="firstname" placeholder="First Name" required><br>
+            <input type="text" name="middlename" placeholder="Middle Name" required><br>
+            <input type="text" name="course" placeholder="Course" required><br>
+            <select name="year" required>
+                <option value="" disabled selected>Select Year</option>
+                <option value="1">Year 1</option>
+                <option value="2">Year 2</option>
+                <option value="3">Year 3</option>
+                <option value="4">Year 4</option>
+            </select><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button type="submit">Register</button>
+        </form>
+        
+        <p class="login-link">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+    </div>
+</body>
+</html>

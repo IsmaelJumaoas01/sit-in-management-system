@@ -63,10 +63,6 @@ def register():
     return render_template('register.html', form_data=form_data)
 
 
-
-
-
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -106,7 +102,7 @@ def edit_info():
         email = session['email']
 
         if request.method == 'POST':
-            # Get the new details from the form
+            
             new_firstname = request.form['firstname']
             new_lastname = request.form['lastname']
             new_middlename = request.form['middlename']
@@ -114,11 +110,11 @@ def edit_info():
             new_year = request.form['year']
             new_email = request.form['email']
 
-            # Validate and update the database
+          
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # SQL update query to update the user's details except IDNO
+            
             cursor.execute("""
                 UPDATE students
                 SET FIRSTNAME = %s, LASTNAME = %s, MIDDLENAME = %s, COURSE = %s, YEAR = %s, EMAIL = %s

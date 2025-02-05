@@ -15,8 +15,14 @@ def get_db_connection():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    form_data = None  
+
     if request.method == 'POST':
         form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password']}
+
+        if len(form_data['middlename']) != 1 or not form_data['middlename'].isupper():
+            flash('Middle name must be a single capital letter.', 'error')
+            return render_template('register.html', form_data=form_data)
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -27,7 +33,7 @@ def register():
             flash('IDNO already exists. Please choose a different IDNO.', 'error')
             cursor.close()
             conn.close()
-            return redirect(url_for('register'))
+            return render_template('register.html', form_data=form_data)
 
         cursor.execute("SELECT * FROM students WHERE EMAIL = %s", (form_data['email'],))
         existing_email = cursor.fetchone()
@@ -36,7 +42,7 @@ def register():
             flash('Email address already registered. Please choose a different email.', 'error')
             cursor.close()
             conn.close()
-            return redirect(url_for('register'))
+            return render_template('register.html', form_data=form_data)
 
         cursor.execute(
             "INSERT INTO students (IDNO, LASTNAME, FIRSTNAME, MIDDLENAME, COURSE, YEAR, EMAIL, PASSWORD) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
@@ -50,7 +56,10 @@ def register():
         flash('Registration successful! You can now login.', 'success')
         return redirect(url_for('login'))
 
-    return render_template('register.html')
+    return render_template('register.html', form_data=form_data)
+
+
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

@@ -9,7 +9,8 @@
 <body>
     <div class="register-container">
         <h2>Register</h2>
-        
+
+        <!-- Display Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <ul class="flash-messages">
@@ -19,25 +20,25 @@
                 </ul>
             {% endif %}
         {% endwith %}
-        
+
         <form action="{{ url_for('register') }}" method="POST">
-            <input type="text" name="idno" placeholder="IDNO" required><br>
-            <input type="text" name="lastname" placeholder="Last Name" required><br>
-            <input type="text" name="firstname" placeholder="First Name" required><br>
-            <input type="text" name="middlename" placeholder="Middle Name" required><br>
-            <input type="text" name="course" placeholder="Course" required><br>
+            <input type="text" name="idno" placeholder="IDNO" required value="{{ form_data.idno if form_data and form_data.idno else '' }}"><br>
+            <input type="text" name="lastname" placeholder="Last Name" required value="{{ form_data.lastname if form_data and form_data.lastname else '' }}"><br>
+            <input type="text" name="firstname" placeholder="First Name" required value="{{ form_data.firstname if form_data and form_data.firstname else '' }}"><br>
+            <input type="text" name="middlename" placeholder="Middle Name" required value="{{ form_data.middlename if form_data and form_data.middlename else '' }}"><br>
+            <input type="text" name="course" placeholder="Course" required value="{{ form_data.course if form_data and form_data.course else '' }}"><br>
             <select name="year" required>
                 <option value="" disabled selected>Select Year</option>
-                <option value="1">Year 1</option>
-                <option value="2">Year 2</option>
-                <option value="3">Year 3</option>
-                <option value="4">Year 4</option>
+                <option value="1" {% if form_data and form_data.year == '1' %} selected {% endif %}>Year 1</option>
+                <option value="2" {% if form_data and form_data.year == '2' %} selected {% endif %}>Year 2</option>
+                <option value="3" {% if form_data and form_data.year == '3' %} selected {% endif %}>Year 3</option>
+                <option value="4" {% if form_data and form_data.year == '4' %} selected {% endif %}>Year 4</option>
             </select><br>
-            <input type="text" name="email" placeholder="Email Address" required><br> <!-- Added Email Field -->
-            <input type="password" name="password" placeholder="Password" required><br>
+            <input type="text" name="email" placeholder="Email Address" required value="{{ form_data.email if form_data and form_data.email else '' }}"><br>
+            <input type="password" name="password" placeholder="Password" required value="{{ form_data.password if form_data and form_data.password else '' }}"><br>
             <button type="submit">Register</button>
         </form>
-        
+
         <p class="login-link">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
     </div>
 </body>

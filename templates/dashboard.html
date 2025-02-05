@@ -8,6 +8,17 @@
     <title>Dashboard</title>
 </head>
 <body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('dashboard') }}" class="navbar-logo">Home</a>
+            <form action="{{ url_for('logout') }}" method="post">
+                <div class = "logout">
+                <button type="submit" class="navbar-button logout-button">Logout</button>
+            </div>
+            </form>
+        </div>
+    </nav>
+    
     <div class="dashboard-container">
         <h1>Welcome, {{ firstname }} {{ middlename }} {{ lastname }}!</h1>
         
@@ -17,10 +28,6 @@
             <p><strong>Year:</strong> {{ year }}</p>
             <p><strong>Email:</strong> {{ email }}</p>
         </div>
-
-        <form action="{{ url_for('logout') }}" method="post">
-            <button type="submit" class="logout-button">Logout</button>
-        </form>
     </div>
 </body>
 </html>

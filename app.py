@@ -20,13 +20,22 @@ def register():
     if request.method == 'POST':
         form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password', 'confirm_password']}
 
+<<<<<<< HEAD
 
+=======
+        # Ensure that IDNO contains only digits
+>>>>>>> a0b02212c1915a9832981b18d04e5381924c975e
         if not form_data['idno'].isdigit():
             flash('IDNO must only contain numbers. Please try again.', 'error')
             return render_template('register.html', form_data=form_data)
 
+<<<<<<< HEAD
         
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' 
+=======
+        # Validate email format
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'  # Regular expression for email validation
+>>>>>>> a0b02212c1915a9832981b18d04e5381924c975e
         if not re.match(email_regex, form_data['email']):
             flash('Invalid email format. Please enter a valid email address.', 'error')
             return render_template('register.html', form_data=form_data)
@@ -72,6 +81,9 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form_data=form_data)
+    
+
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

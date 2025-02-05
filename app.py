@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-import mysql.connector
+import mysql.connector, re
 
 app = Flask(__name__)
 app.secret_key = 'xdsxdxdxdasxdsxsaasaxasdaxda'
@@ -13,12 +13,27 @@ def get_db_connection():
     )
 
 
+
+
+import re  # Add this at the top of your file for regular expressions
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form_data = None  
 
     if request.method == 'POST':
         form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password', 'confirm_password']}
+
+        # Ensure that IDNO contains only digits
+        if not form_data['idno'].isdigit():
+            flash('IDNO must only contain numbers. Please try again.', 'error')
+            return render_template('register.html', form_data=form_data)
+
+        # Validate email format
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'  # Regular expression for email validation
+        if not re.match(email_regex, form_data['email']):
+            flash('Invalid email format. Please enter a valid email address.', 'error')
+            return render_template('register.html', form_data=form_data)
 
         if form_data['password'] != form_data['confirm_password']:
             flash('Passwords do not match. Please try again.', 'error')
@@ -61,6 +76,8 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html', form_data=form_data)
+
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

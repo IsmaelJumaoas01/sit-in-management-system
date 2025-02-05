@@ -18,7 +18,11 @@ def register():
     form_data = None  
 
     if request.method == 'POST':
-        form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password']}
+        form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password', 'confirm_password']}
+
+        if form_data['password'] != form_data['confirm_password']:
+            flash('Passwords do not match. Please try again.', 'error')
+            return render_template('register.html', form_data=form_data)
 
         if len(form_data['middlename']) != 1 or not form_data['middlename'].isupper():
             flash('Middle name must be a single capital letter.', 'error')
@@ -62,6 +66,7 @@ def register():
 
 
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -88,6 +93,58 @@ def login():
             flash('Invalid credentials, please try again.', 'error')
 
     return render_template('login.html')
+
+@app.route('/edit_info', methods=['GET', 'POST'])
+def edit_info():
+    if 'idno' in session:
+        user_idno = session['idno']
+        firstname = session['firstname']
+        lastname = session['lastname']
+        middlename = session['middlename']
+        course = session['course']
+        year = session['year']
+        email = session['email']
+
+        if request.method == 'POST':
+            # Get the new details from the form
+            new_firstname = request.form['firstname']
+            new_lastname = request.form['lastname']
+            new_middlename = request.form['middlename']
+            new_course = request.form['course']
+            new_year = request.form['year']
+            new_email = request.form['email']
+
+            # Validate and update the database
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # SQL update query to update the user's details except IDNO
+            cursor.execute("""
+                UPDATE students
+                SET FIRSTNAME = %s, LASTNAME = %s, MIDDLENAME = %s, COURSE = %s, YEAR = %s, EMAIL = %s
+                WHERE IDNO = %s
+            """, (new_firstname, new_lastname, new_middlename, new_course, new_year, new_email, user_idno))
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            session['firstname'] = new_firstname
+            session['lastname'] = new_lastname
+            session['middlename'] = new_middlename
+            session['course'] = new_course
+            session['year'] = new_year
+            session['email'] = new_email
+
+            flash('Your details have been updated successfully!', 'success')
+            return redirect(url_for('dashboard'))
+
+        return render_template('edit_info.html', user_idno=user_idno, firstname=firstname, lastname=lastname,
+                               middlename=middlename, course=course, year=year, email=email)
+    else:
+        flash('You must be logged in to edit your information.', 'error')
+        return redirect(url_for('login'))
+
 
 
 @app.route('/home')

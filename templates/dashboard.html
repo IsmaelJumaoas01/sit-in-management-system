@@ -12,7 +12,7 @@
         <div class="navbar-container">
             <a href="{{ url_for('dashboard') }}" class="navbar-logo">Home</a>
             <form action="{{ url_for('logout') }}" method="post">
-                <div class = "logout">
+                <div class="logout">
                 <button type="submit" class="navbar-button logout-button">Logout</button>
             </div>
             </form>
@@ -27,6 +27,9 @@
             <p><strong>Course:</strong> {{ course }}</p>
             <p><strong>Year:</strong> {{ year }}</p>
             <p><strong>Email:</strong> {{ email }}</p>
+            <form action="{{ url_for('edit_info') }}" method="get">
+                <button type="submit" class="navbar-button">Edit Info</button>
+            </form>
         </div>
     </div>
 </body>

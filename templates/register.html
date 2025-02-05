@@ -35,9 +35,11 @@
                 <option value="4" {% if form_data and form_data.year == '4' %} selected {% endif %}>Year 4</option>
             </select><br>
             <input type="text" name="email" placeholder="Email Address" required value="{{ form_data.email if form_data and form_data.email else '' }}"><br>
-            <input type="password" name="password" placeholder="Password" required value="{{ form_data.password if form_data and form_data.password else '' }}"><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" required><br>  <!-- Confirm Password Field -->
             <button type="submit">Register</button>
         </form>
+        
 
         <p class="login-link">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
     </div>

@@ -1,0 +1,113 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, rgba(40, 44, 52, 1) 0%, rgba(25, 29, 37, 1) 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: #fff;
+}
+
+.dashboard-container {
+    background: rgba(0, 0, 0, 0.7);
+    padding: 30px 20px;  /* Reduced padding */
+    border-radius: 10px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    width: 350px;  /* Slightly smaller width */
+    text-align: center;
+    transition: all 0.3s ease;
+    color: #fff;
+    height: auto;  /* Let content define height */
+    max-height: 650px; /* Maximum height for the container */
+    overflow-y: auto; /* Adds scroll if content exceeds max height */
+}
+
+.dashboard-container:hover {
+    transform: translateY(-10px);
+}
+
+.info-box {
+    margin: 15px 0;  /* Reduced margin */
+    text-align: left;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 15px;  /* Reduced padding */
+    border-radius: 8px;
+}
+
+.info-box label {
+    font-size: 14px;  /* Reduced font size */
+    font-weight: bold;
+    display: block;
+    margin-bottom: 6px;  /* Reduced margin */
+}
+
+.info-box input {
+    width: 100%;
+    padding: 8px;  /* Reduced padding */
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;  /* Reduced font size */
+    margin-bottom: 10px;  /* Reduced margin */
+}
+
+.info-box input:focus {
+    outline: none;
+    border-color: #45a049;
+}
+
+.navbar-button {
+    padding: 10px 20px;
+    background-color: #dd0c0c;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;  /* Reduced font size */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.navbar-button:hover {
+    background-color: #45a049;
+}
+
+.navbar {
+    background-color: #333;
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-logo {
+    color: #fff;
+    text-decoration: none;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.logout-button {
+    width: 100%;
+    padding: 15px;
+    background-color: #dd0c0c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+    background-color: #45a049;
+}

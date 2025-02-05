@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='edit_info.css') }}">
+    <title>Edit Info</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('dashboard') }}" class="navbar-logo">Home</a>
+            <form action="{{ url_for('logout') }}" method="post">
+                <div class="logout">
+                <button type="submit" class="navbar-button logout-button">Logout</button>
+            </div>
+            </form>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <h1>Edit Your Information</h1>
+
+        <form action="{{ url_for('edit_info') }}" method="POST">
+            <div class="info-box">
+                <label for="firstname">First Name</label>
+                <input type="text" name="firstname" id="firstname" value="{{ firstname }}" required>
+            </div>
+
+            <div class="info-box">
+                <label for="lastname">Last Name</label>
+                <input type="text" name="lastname" id="lastname" value="{{ lastname }}" required>
+            </div>
+
+            <div class="info-box">
+                <label for="middlename">Middle Name</label>
+                <input type="text" name="middlename" id="middlename" value="{{ middlename }}" required>
+            </div>
+
+            <div class="info-box">
+                <label for="course">Course</label>
+                <input type="text" name="course" id="course" value="{{ course }}" required>
+            </div>
+
+            <div class="info-box">
+                <label for="year">Year</label>
+                <input type="text" name="year" id="year" value="{{ year }}" required>
+            </div>
+
+            <div class="info-box">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value="{{ email }}" required>
+            </div>
+
+            <div class="info-box">
+                <button type="submit" class="navbar-button">Update Info</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

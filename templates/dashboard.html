@@ -3,9 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testing </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+
+    <title>Dashboard</title>
 </head>
 <body>
-    <h2>done</h2>
+    <div class="dashboard-container">
+        <h1>Welcome, {{ firstname }} {{ middlename }} {{ lastname }}!</h1>
+        
+        <div class="info-box">
+            <p><strong>ID:</strong> {{ user_idno }}</p>
+            <p><strong>Course:</strong> {{ course }}</p>
+            <p><strong>Year:</strong> {{ year }}</p>
+            <p><strong>Email:</strong> {{ email }}</p>
+        </div>
+
+        <form action="{{ url_for('logout') }}" method="post">
+            <button type="submit" class="logout-button">Logout</button>
+        </form>
+    </div>
 </body>
 </html>

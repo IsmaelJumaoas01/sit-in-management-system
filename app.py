@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
-import mysql.connector
+import mysql.connector, re
 
 app = Flask(__name__)
 app.secret_key = 'xdsxdxdxdasxdsxsaasaxasdaxda'
@@ -19,6 +19,17 @@ def register():
 
     if request.method == 'POST':
         form_data = {key: request.form[key] for key in ['idno', 'lastname', 'firstname', 'middlename', 'course', 'year', 'email', 'password', 'confirm_password']}
+
+
+        if not form_data['idno'].isdigit():
+            flash('IDNO must only contain numbers. Please try again.', 'error')
+            return render_template('register.html', form_data=form_data)
+
+        
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$' 
+        if not re.match(email_regex, form_data['email']):
+            flash('Invalid email format. Please enter a valid email address.', 'error')
+            return render_template('register.html', form_data=form_data)
 
         if form_data['password'] != form_data['confirm_password']:
             flash('Passwords do not match. Please try again.', 'error')

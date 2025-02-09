@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 import mysql.connector, re
+from datetime import datetime
+
 
 app = Flask(__name__)
 app.secret_key = 'xdsxdxdxdasxdsxsaasaxasdaxda'
@@ -213,6 +215,126 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
+
+
+
+# Sit-in Request Submission
+@app.route('/request_sit_in', methods=['POST'])
+def request_sit_in():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    student_id = session['IDNO']
+    lab_id = request.form['lab_id']
+    requested_date = request.form['date']
+    requested_time = request.form['time']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Check if student has exceeded 30 sit-ins
+    cursor.execute("SELECT COUNT(*) FROM SIT_IN_REQUESTS WHERE IDNO = %s", (student_id,))
+    sit_in_count = cursor.fetchone()[0]
+    if sit_in_count >= 30:
+        return jsonify({'error': 'Sit-in limit reached'}), 400
+    
+    # Check if lab is available at the requested time
+    cursor.execute("SELECT * FROM LAB_SCHEDULE WHERE LAB_ID = %s AND DATE = %s AND TIME = %s", (lab_id, requested_date, requested_time))
+    if cursor.fetchone():
+        return jsonify({'error': 'Lab is occupied at this time'}), 400
+    
+    # Insert sit-in request
+    cursor.execute("INSERT INTO SIT_IN_REQUESTS (IDNO, LAB_ID, DATE, TIME, STATUS) VALUES (%s, %s, %s, %s, 'PENDING')", (student_id, lab_id, requested_date, requested_time))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': 'Sit-in request submitted successfully'})
+
+# Staff Approves/Rejects Sit-in Requests
+@app.route('/manage_sit_in', methods=['POST'])
+def manage_sit_in():
+    if 'USER_TYPE' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    request_id = request.form['request_id']
+    action = request.form['action'].upper()
+
+    if action not in ['APPROVED', 'REJECTED']:
+        return jsonify({'error': 'Invalid action'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE SIT_IN_REQUESTS SET STATUS = %s WHERE REQUEST_ID = %s", (action, request_id))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': f'Sit-in request {action.lower()} successfully'})
+
+# Semester Reset
+@app.route('/reset_semester', methods=['POST'])
+def reset_semester():
+    if 'USER_TYPE' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized access'}), 403
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Clear all sit-in records
+    cursor.execute("DELETE FROM SIT_IN_REQUESTS")
+    conn.commit()
+    
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': 'Semester reset successful. All sit-in records cleared'})
+
+
+# Route for viewing requests
+@app.route('/view-requests')
+def view_requests():
+    if 'USER_TYPE' in session and session['USER_TYPE'] == 'STAFF':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM SIT_IN_REQUESTS")  # Adjust query as needed
+        requests = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return render_template('view_requests.html', requests=requests)
+    else:
+        flash('You must be a staff member to view requests.', 'error')
+        return redirect(url_for('dashboard'))
+
+# Route for managing sit-ins
+@app.route('/manage-sitin')
+def manage_sitin():
+    if 'USER_TYPE' in session and session['USER_TYPE'] == 'STAFF':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM SIT_IN_REQUESTS WHERE STATUS = 'PENDING'")  # Adjust query as needed
+        requests = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return render_template('manage_sitin.html', requests=requests)
+    else:
+        flash('You must be a staff member to manage sit-ins.', 'error')
+        return redirect(url_for('dashboard'))
+
+# Route for class schedule
+@app.route('/class-schedule')
+def class_schedule():
+    if 'USER_TYPE' in session and session['USER_TYPE'] == 'STAFF':
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM CLASS_SCHEDULE")  # Adjust query as needed
+        schedule = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return render_template('class_schedule.html', schedule=schedule)
+    else:
+        flash('You must be a staff member to view class schedules.', 'error')
+        return redirect(url_for('dashboard'))
 
 
 if __name__ == '__main__':

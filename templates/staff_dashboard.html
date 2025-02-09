@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='staff_dashboard.css') }}">
 </head>
+
 <body>
     <!-- Navbar -->
     <header class="navbar">
         <div class="navbar-container">
-            <a href="#" class="navbar-logo">Your Company</a>
+            <a href="#" class="navbar-logo">ADMIN</a>
             <div class="navbar-icons">
                 <form action="{{ url_for('logout') }}" method="post">
                     <button type="submit" class="navbar-button logout-button">Logout</button>
@@ -21,45 +23,76 @@
 
     <!-- Dashboard Content -->
     <div class="dashboard-container">
-        <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}</h1>
-        
-        <div class="flash-messages">
-            {% if flash_messages %}
-                {% for message in flash_messages %}
-                    <li class="{{ message.category }}">{{ message.message }}</li>
-                {% endfor %}
-            {% endif %}
-        </div>
+        <!-- Left Side Content (Info Box and Buttons) -->
+        <div class="left-panel">
+            <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}</h1>
 
-        <div class="info-box">
-            <p><strong>Email:</strong> {{ staff_email }}</p>
-            <p><strong>Role:</strong> Staff</p>
-        </div>
-
-        <div class="dashboard-cards">
-            <div class="card">
-                <h3>Manage Announcements</h3>
-                <p>View and create new announcements for students.</p>
-                <a href="" class="button">Go to Announcements</a>
+            <!-- Staff Info -->
+            <div class="info-box">
+                <p><strong>Email:</strong> {{ staff_email }}</p>
+                <p><strong>Role:</strong> Staff</p>
             </div>
 
-            <div class="card">
-                <h3>View Requests</h3>
-                <p>Check and manage the service requests from students.</p>
-                <a href="" class="button">View Requests</a>
+            <!-- Buttons to switch between sections -->
+            <!-- Buttons to switch between sections -->
+            <div class="button-container">
+                <button class="button" onclick="showSection('viewRequests', this)">View Requests</button>
+                <button class="button" onclick="showSection('manageSitins', this)">Manage Sit-ins</button>
+                <button class="button" onclick="showSection('viewSchedules', this)">View Schedules</button>
             </div>
 
-            <div class="card">
-                <h3>Facilities Reservations</h3>
-                <p>Oversee facility reservations and manage bookings.</p>
-                <a href="" class="button">Manage Reservations</a>
+        </div>
+
+        <!-- Right Side Content (Dynamic Sections) -->
+        <div class="right-panel">
+            <!-- Sections -->
+            <div id="viewRequests" class="content-section">
+                <h2>Service Requests</h2>
+                <p>Here you can view and manage student service requests.</p>
+            </div>
+
+            <div id="manageSitins" class="content-section" style="display:none;">
+                <h2>Student Sit-in Requests</h2>
+                <p>Manage student sit-in requests and approve them.</p>
+            </div>
+
+            <div id="viewSchedules" class="content-section" style="display:none;">
+                <h2>Class Schedules</h2>
+                <p>View and manage class schedules for laboratories.</p>
             </div>
         </div>
-        
-        <form action="{{ url_for('logout') }}" method="post">
-            <button type="submit" class="navbar-button logout-button">Logout</button>
-        </form>
     </div>
 
+    <script>
+        // Function to show and hide sections
+        function showSection(sectionId, button) {
+    // Hide all sections
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show the selected section
+    const selectedSection = document.getElementById(sectionId);
+    if (selectedSection) {
+        selectedSection.style.display = 'block';
+    }
+
+    // Remove the "selected" class from all buttons
+    const buttons = document.querySelectorAll('.button');
+    buttons.forEach(btn => {
+        btn.classList.remove('selected');
+    });
+
+    // Add the "selected" class to the clicked button
+    button.classList.add('selected');
+}
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            showSection('viewRequests');
+        });
+    </script>
 </body>
+
 </html>

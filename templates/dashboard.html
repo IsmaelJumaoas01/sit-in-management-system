@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 
     <title>Dashboard</title>
 </head>
@@ -11,13 +12,25 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="{{ url_for('dashboard') }}" class="navbar-logo">Home</a>
-            <form action="{{ url_for('logout') }}" method="post">
-                <div class="logout">
-                <button type="submit" class="navbar-button logout-button">Logout</button>
+    
+            <div class="navbar-icons">
+                <a href="#" class="navbar-icon" title="Notifications">
+                    <i class="fas fa-bell"></i> <!-- Notification Icon -->
+                </a>
+                <a href="#" class="navbar-icon" title="Messages">
+                    <i class="fas fa-envelope"></i> <!-- Message Icon -->
+                </a>
+                <a href="" class="navbar-icon" title="Profile">
+                    <i class="fas fa-user"></i> <!-- Profile Icon -->
+                </a>
             </div>
+    
+            <form action="{{ url_for('logout') }}" method="post">
+                <button type="submit" class="navbar-button logout-button">Logout</button>
             </form>
         </div>
     </nav>
+    
     
     <div class="dashboard-container">
         <h1>Welcome, {{ firstname }} {{ middlename }} {{ lastname }}!</h1>

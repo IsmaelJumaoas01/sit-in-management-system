@@ -22,14 +22,14 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
             <input type="text" name="IDNO" placeholder="Enter IDNO" required>
             <input type="password" name="PASSWORD" placeholder="Enter Password" required>
             <button type="submit">Login</button>
         </form>
         
         
-        <p class="register-link">Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+        <p class="register-link">Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a></p>
     </div>
 </body>
 </html>

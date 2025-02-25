@@ -11,7 +11,7 @@
 <body>
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="{{ url_for('dashboard') }}" class="navbar-logo">Home</a>
+            <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">Home</a>
     
             <div class="navbar-icons">
                 <a href="#" class="navbar-icon" title="Notifications">
@@ -25,7 +25,7 @@
                 </a>
             </div>
     
-            <form action="{{ url_for('logout') }}" method="post">
+            <form action="{{ url_for('auth.logout') }}" method="post">
                 <button type="submit" class="navbar-button logout-button">Logout</button>
             </form>
         </div>
@@ -40,7 +40,7 @@
             <p><strong>Course:</strong> {{ course }}</p>
             <p><strong>Year:</strong> {{ year }}</p>
             <p><strong>Email:</strong> {{ email }}</p>
-            <form action="{{ url_for('edit_info') }}" method="get">
+            <form action="{{ url_for('user.edit_info') }}" method="get">
                 <button type="submit" class="navbar-button">Edit Info</button>
             </form>
         </div>

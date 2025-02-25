@@ -20,7 +20,7 @@
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('register') }}" method="POST">
+        <form action="{{ url_for('auth.register') }}" method="POST">
             <input type="text" name="idno" placeholder="IDNO" required value="{{ form_data.idno if form_data and form_data.idno else '' }}"><br>
             <input type="text" name="lastname" placeholder="Last Name" required value="{{ form_data.lastname if form_data and form_data.lastname else '' }}"><br>
             <input type="text" name="firstname" placeholder="First Name" required value="{{ form_data.firstname if form_data and form_data.firstname else '' }}"><br>
@@ -49,7 +49,7 @@
         
         
 
-        <p class="login-link">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        <p class="login-link">Already have an account? <a href="{{ url_for('auth.login') }}">Login here</a></p>
     </div>
 </body>
 </html>

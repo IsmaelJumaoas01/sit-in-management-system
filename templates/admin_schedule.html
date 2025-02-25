@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Schedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>Schedule Management</h2>
+    <div id="calendar"></div>
+
+    <!-- Modal for Adding Subject -->
+    <div id="subjectModal" style="display:none; position:fixed; top:20%; left:30%; background:white; padding:20px; border-radius:10px;">
+        <h3>Add Subject</h3>
+        <label>Subject:</label>
+        <select id="subjectDropdown"></select><br><br>
+        <label>Lab:</label>
+        <select id="labDropdown"></select><br><br>
+        <label>Start Time:</label>
+        <input type="time" id="startTime"><br><br>
+        <label>End Time:</label>
+        <input type="time" id="endTime"><br><br>
+        <button onclick="saveSubject()">Save</button>
+        <button onclick="closeModal()">Cancel</button>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            let calendarEl = document.getElementById('calendar');
+            let calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                slotMinTime: "07:30:00",
+                slotMaxTime: "21:00:00",
+                selectable: true,
+                editable: true,
+                dayMaxEvents: true,
+                eventClick: function (info) {
+                    if (confirm("Do you want to remove this subject?")) {
+                        removeSubject(info.event.id);
+                    }
+                },
+                select: function (info) {
+                    openModal(info.startStr, info.endStr, info.start.getDay());
+                },
+                events: "/api/get_schedules",
+                eventDrop: function (info) {
+                    updateSchedule(info.event);
+                }
+            });
+            calendar.render();
+        });
+
+        function openModal(start, end, day) {
+            $('#startTime').val(start.split("T")[1].slice(0, 5));
+            $('#endTime').val(end.split("T")[1].slice(0, 5));
+            $('#subjectModal').data('day', day);
+            $('#subjectModal').show();
+        }
+
+        function closeModal() {
+            $('#subjectModal').hide();
+        }
+
+        function saveSubject() {
+            let subject = $('#subjectDropdown').val();
+            let lab = $('#labDropdown').val();
+            let start = $('#startTime').val();
+            let end = $('#endTime').val();
+            let day = $('#subjectModal').data('day');
+
+            $.post('/api/add_schedule', {
+                subject_id: subject,
+                lab_id: lab,
+                start_time: start,
+                end_time: end,
+                day: day
+            }, function (response) {
+                alert(response.message);
+                location.reload();
+            });
+        }
+
+        function removeSubject(schedule_id) {
+            $.ajax({
+                url: '/api/remove_schedule',
+                type: 'DELETE',
+                contentType: 'application/json',
+                data: JSON.stringify({ schedule_id: schedule_id }),
+                success: function (response) {
+                    alert(response.message);
+                    location.reload();
+                }
+            });
+        }
+
+        function updateSchedule(event) {
+            $.post('/api/update_schedule', {
+                schedule_id: event.id,
+                start_time: event.start.toISOString(),
+                end_time: event.end.toISOString(),
+                day: event.start.getDay()
+            }, function (response) {
+                alert(response.message);
+            });
+        }
+    </script>
+</body>
+</html>

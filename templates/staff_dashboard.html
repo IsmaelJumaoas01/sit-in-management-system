@@ -1,98 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Staff Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='staff_dashboard.css') }}">
-</head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='staff_dashboard.css') }}"
+    />
+  </head>
 
-<body>
+  <body>
     <!-- Navbar -->
     <header class="navbar">
-        <div class="navbar-container">
-            <a href="#" class="navbar-logo">ADMIN</a>
-            <div class="navbar-icons">
-                <form action="{{ url_for('logout') }}" method="post">
-                    <button type="submit" class="navbar-button logout-button">Logout</button>
-                </form>
-            </div>
+      <div class="navbar-container">
+        <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">ADMIN</a>
+        <div class="navbar-icons">
+          <form action="{{ url_for('auth.logout') }}" method="post">
+            <button type="submit" class="navbar-button logout-button">
+              Logout
+            </button>
+          </form>
         </div>
+      </div>
     </header>
 
-    <!-- Dashboard Content -->
-    <div class="dashboard-container">
-        <!-- Left Side Content (Info Box and Buttons) -->
-        <div class="left-panel">
-            <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}</h1>
+    <div class="main-container">
+      <!-- Left Panel -->
+      <div class="left-panel">
+        <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}</h1>
+        <div class="info-box">
+          <p><strong>Email:</strong> {{ staff_email }}</p>
+          <p><strong>Role:</strong> Staff</p>
+        </div>
+        <div class="button-container">
+          <button class="button" onclick="showSection('viewRequests', this)">
+            View Requests
+          </button>
+          <button class="button" onclick="showSection('manageSitins', this)">
+            Manage Sit-ins
+          </button>
+          <button class="button" onclick="showSection('viewSchedules', this)">
+            View Schedules
+          </button>
+          <button class="button" onclick="showSection('manageLabs', this)">
+            Manage Laboratories
+          </button>
+        </div>
+      </div>
 
-            <!-- Staff Info -->
-            <div class="info-box">
-                <p><strong>Email:</strong> {{ staff_email }}</p>
-                <p><strong>Role:</strong> Staff</p>
+      <!-- Right Panel -->
+      <div class="right-panel">
+        <div id="viewRequests" class="content-section">
+          <h2>Service Requests</h2>
+          <div class="data-container">
+            <p>Here you can view and manage student service requests.</p>
+            <!-- Pagination controls -->
+            <div class="pagination">
+              <button class="prev-button" onclick="prevPage('viewRequests')">Previous</button>
+              <button class="next-button" onclick="nextPage('viewRequests')">Next</button>
             </div>
-
-            <!-- Buttons to switch between sections -->
-            <!-- Buttons to switch between sections -->
-            <div class="button-container">
-                <button class="button" onclick="showSection('viewRequests', this)">View Requests</button>
-                <button class="button" onclick="showSection('manageSitins', this)">Manage Sit-ins</button>
-                <button class="button" onclick="showSection('viewSchedules', this)">View Schedules</button>
-            </div>
-
+          </div>
         </div>
 
-        <!-- Right Side Content (Dynamic Sections) -->
-        <div class="right-panel">
-            <!-- Sections -->
-            <div id="viewRequests" class="content-section">
-                <h2>Service Requests</h2>
-                <p>Here you can view and manage student service requests.</p>
+        <div id="manageSitins" class="content-section" style="display: none">
+          <h2>Student Sit-in Requests</h2>
+          <div class="data-container">
+            <p>Manage student sit-in requests and approve them.</p>
+            <!-- Pagination controls -->
+            <div class="pagination">
+              <button class="prev-button" onclick="prevPage('manageSitins')">Previous</button>
+              <button class="next-button" onclick="nextPage('manageSitins')">Next</button>
             </div>
-
-            <div id="manageSitins" class="content-section" style="display:none;">
-                <h2>Student Sit-in Requests</h2>
-                <p>Manage student sit-in requests and approve them.</p>
-            </div>
-
-            <div id="viewSchedules" class="content-section" style="display:none;">
-                <h2>Class Schedules</h2>
-                <p>View and manage class schedules for laboratories.</p>
-            </div>
+          </div>
         </div>
+
+        <div id="viewSchedules" class="content-section" style="display: none">
+          <h2>Class Schedules</h2>
+          <div class="data-container">
+            <p>View and manage class schedules for laboratories.</p>
+            <!-- Pagination controls -->
+            <div class="pagination">
+              <button class="prev-button" onclick="prevPage('viewSchedules')">Previous</button>
+              <button class="next-button" onclick="nextPage('viewSchedules')">Next</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="manageLabs" class="content-section" style="display: none">
+          <h2>Manage Laboratories</h2>
+          <form id="addLabForm">
+            <input type="number" id="labId" placeholder="Lab ID" required />
+            <input type="number" id="totalComputers" placeholder="Total Computers" required />
+            <button type="submit">Add Laboratory</button>
+          </form>
+          <div class="data-container">
+            <ul id="labList"></ul>
+            <!-- Pagination controls -->
+            <div class="pagination">
+              <button class="prev-button" onclick="prevPage('manageLabs')">Previous</button>
+              <button class="next-button" onclick="nextPage('manageLabs')">Next</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>
-        // Function to show and hide sections
-        function showSection(sectionId, button) {
-    // Hide all sections
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(section => {
-        section.style.display = 'none';
-    });
+      let currentPage = {
+        viewRequests: 1,
+        manageSitins: 1,
+        viewSchedules: 1,
+        manageLabs: 1
+      };
+      const itemsPerPage = 5;
 
-    // Show the selected section
-    const selectedSection = document.getElementById(sectionId);
-    if (selectedSection) {
-        selectedSection.style.display = 'block';
-    }
+      function showSection(sectionId, button) {
+        document.querySelectorAll(".content-section").forEach(section => section.style.display = "none");
+        document.getElementById(sectionId).style.display = "block";
+        document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
+        button.classList.add("selected");
+        fetchLabs();
+      }
 
-    // Remove the "selected" class from all buttons
-    const buttons = document.querySelectorAll('.button');
-    buttons.forEach(btn => {
-        btn.classList.remove('selected');
-    });
+      document.addEventListener("DOMContentLoaded", function () {
+        showSection("viewRequests", document.querySelector(".button"));
+        fetchLabs();
+      });
 
-    // Add the "selected" class to the clicked button
-    button.classList.add('selected');
-}
+      document.getElementById("addLabForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        const labId = document.getElementById("labId").value.trim();
+        const totalComputers = parseInt(document.getElementById("totalComputers").value.trim(), 10);
 
+        if (!totalComputers || totalComputers <= 0) {
+            alert("Please enter a valid number of computers.");
+            return;
+        }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            showSection('viewRequests');
+        fetch("/manage_labs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                lab_id: labId ? parseInt(labId, 10) : null, 
+                total_computers: totalComputers 
+            }), 
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+            } else {
+                document.getElementById("labId").value = "";
+                document.getElementById("totalComputers").value = "";
+                fetchLabs();
+            }
         });
-    </script>
-</body>
+      });
 
+      function fetchLabs() {
+        fetch("/manage_labs")
+        .then(response => response.json())
+        .then(labs => {
+            const labList = document.getElementById("labList");
+            labList.innerHTML = "";
+            const start = (currentPage.manageLabs - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedLabs = labs.slice(start, end);
+            paginatedLabs.forEach(lab => {
+                const li = document.createElement("li");
+                li.innerHTML = `Lab ID: ${lab.LAB_ID} - ${lab.TOTAL_COMPUTERS} Computers 
+                        <button onclick="confirmDeleteLab(${lab.LAB_ID})">Delete</button>`;
+                labList.appendChild(li);
+            });
+        });
+      }
+
+      function confirmDeleteLab(labId) {
+        if (confirm("Are you sure you want to delete this lab and all its computers?")) {
+          deleteLab(labId);
+        }
+      }
+
+      function deleteLab(labId) {
+        fetch("/manage_labs", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lab_id: labId }),
+        })
+        .then(response => response.json())
+        .then(() => fetchLabs());
+      }
+
+      function prevPage(sectionId) {
+        if (currentPage[sectionId] > 1) {
+          currentPage[sectionId]--;
+          fetchLabs();
+        }
+      }
+
+      function nextPage(sectionId) {
+        currentPage[sectionId]++;
+        fetchLabs();
+      }
+    </script>
+  </body>
 </html>

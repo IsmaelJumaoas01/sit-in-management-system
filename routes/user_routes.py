@@ -74,7 +74,16 @@ def dashboard():
                                        course=course,
                                        year=year,
                                        email=email)
-        
+            elif session['USER_TYPE'] == 'ADMIN':
+                return render_template('admin_dashboard.html', 
+                                       user_idno=user_idno,
+                                       firstname=firstname,
+                                       middlename=middlename,
+                                       lastname=lastname,
+                                       course=course,
+                                       year=year,
+                                       email=email)
+                                       
         return render_template('dashboard.html', user_idno=user_idno, firstname=firstname, lastname=lastname, middlename=middlename, course=course, year=year, email=email)
     else:
         flash('You must be logged in to view the dashboard.', 'error')

@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='admin_dashboard.css') }}"
+    />
   </head>
 
   <body>
@@ -14,25 +17,44 @@
         <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">ADMIN</a>
         <div class="navbar-icons">
           <form action="{{ url_for('auth.logout') }}" method="post">
-            <button type="submit" class="navbar-button logout-button">Logout</button>
+            <button type="submit" class="navbar-button logout-button">
+              Logout
+            </button>
           </form>
         </div>
       </div>
     </header>
 
     <div class="main-container">
-      <!-- Left Panel -->
+      <!-- Inside the Left Panel -->
       <div class="left-panel">
         <h1>Welcome, Admin</h1>
         <div class="info-box">
-          <p><strong>Email:</strong> {{ admin_email }}</p>
+          <p><strong>Email:</strong> {{ email }}</p>
           <p><strong>Role:</strong> Admin</p>
         </div>
         <div class="button-container">
-          <button class="button" onclick="showSection('setSemesterDates', this)">Set Semester Dates</button>
-          <button class="button" onclick="showSection('manageSubjects', this)">Manage Subjects</button>
-          <button class="button" onclick="showSection('scheduleSubjects', this)">Schedule Subjects</button>
-        </div>
+          <button
+            class="button"
+            onclick="showSection('setSemesterDates', this)"
+          >
+            Set Semester Dates
+          </button>
+          <button class="button" onclick="showSection('manageSubjects', this)">
+            Manage Subjects
+          </button>
+          <button
+            class="button"
+            onclick="showSection('scheduleSubjects', this)"
+          >
+            Schedule Subjects
+          </button>
+        <button class="button">
+          <a href="{{ url_for('user.edit_info') }}" class="button"
+            >Edit Profile</a
+          >
+        </button>
+      </div>
       </div>
 
       <!-- Right Panel -->
@@ -50,7 +72,9 @@
             </div>
             <button type="submit" class="button">Set Dates</button>
           </form>
-          <button class="button" onclick="resetSemester()">Reset Semester</button>
+          <button class="button" onclick="resetSemester()">
+            Reset Semester
+          </button>
         </div>
 
         <div id="manageSubjects" class="content-section" style="display: none">
@@ -71,7 +95,11 @@
           </div>
         </div>
 
-        <div id="scheduleSubjects" class="content-section" style="display: none">
+        <div
+          id="scheduleSubjects"
+          class="content-section"
+          style="display: none"
+        >
           <h2>Schedule Subjects</h2>
           <form id="scheduleSubjectForm">
             <div class="info-box">
@@ -120,9 +148,13 @@
 
     <script>
       function showSection(sectionId, button) {
-        document.querySelectorAll(".content-section").forEach(section => section.style.display = "none");
+        document
+          .querySelectorAll(".content-section")
+          .forEach((section) => (section.style.display = "none"));
         document.getElementById(sectionId).style.display = "block";
-        document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
+        document
+          .querySelectorAll(".button")
+          .forEach((btn) => btn.classList.remove("selected"));
         button.classList.add("selected");
       }
 
@@ -133,144 +165,165 @@
         fetchSchedule();
       });
 
-      document.getElementById("setSemesterDatesForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        const startDate = document.getElementById("startDate").value;
-        const endDate = document.getElementById("endDate").value;
+      document
+        .getElementById("setSemesterDatesForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const startDate = document.getElementById("startDate").value;
+          const endDate = document.getElementById("endDate").value;
 
-        fetch("/set_semester_dates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ startDate, endDate }),
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            alert(data.error);
-          } else {
-            alert("Semester dates set successfully");
-          }
+          fetch("/set_semester_dates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ startDate, endDate }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                alert(data.error);
+              } else {
+                alert("Semester dates set successfully");
+              }
+            });
         });
-      });
 
       function resetSemester() {
-        if (confirm("Are you sure you want to reset the semester? This will remove all schedules.")) {
+        if (
+          confirm(
+            "Are you sure you want to reset the semester? This will remove all schedules."
+          )
+        ) {
           fetch("/reset_semester", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
           })
-          .then(response => response.json())
-          .then(data => {
-            if (data.error) {
-              alert(data.error);
-            } else {
-              alert("Semester reset successfully");
-              fetchSchedule();
-            }
-          });
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                alert(data.error);
+              } else {
+                alert("Semester reset successfully");
+                fetchSchedule();
+              }
+            });
         }
       }
 
-      document.getElementById("addSubjectForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        const subjectName = document.getElementById("subjectName").value.trim();
-        const description = document.getElementById("description").value.trim();
+      document
+        .getElementById("addSubjectForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const subjectName = document
+            .getElementById("subjectName")
+            .value.trim();
+          const description = document
+            .getElementById("description")
+            .value.trim();
 
-        fetch("/add_subject", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subjectName, description }),
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            alert(data.error);
-          } else {
-            alert("Subject added successfully");
-            document.getElementById("subjectName").value = "";
-            document.getElementById("description").value = "";
-            fetchSubjects();
-          }
+          fetch("/add_subject", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subjectName, description }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                alert(data.error);
+              } else {
+                alert("Subject added successfully");
+                document.getElementById("subjectName").value = "";
+                document.getElementById("description").value = "";
+                fetchSubjects();
+              }
+            });
         });
-      });
 
-      document.getElementById("scheduleSubjectForm").addEventListener("submit", function (event) {
-        event.preventDefault();
-        const subject = document.getElementById("subject").value;
-        const lab = document.getElementById("lab").value;
-        const instructor = document.getElementById("instructor").value.trim();
-        const day = document.getElementById("day").value;
-        const startTime = document.getElementById("startTime").value;
-        const endTime = document.getElementById("endTime").value;
+      document
+        .getElementById("scheduleSubjectForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const subject = document.getElementById("subject").value;
+          const lab = document.getElementById("lab").value;
+          const instructor = document.getElementById("instructor").value.trim();
+          const day = document.getElementById("day").value;
+          const startTime = document.getElementById("startTime").value;
+          const endTime = document.getElementById("endTime").value;
 
-        fetch("/schedule_subject", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subject, lab, instructor, day, startTime, endTime }),
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            alert(data.error);
-          } else {
-            alert("Subject scheduled successfully");
-            fetchSchedule();
-          }
+          fetch("/schedule_subject", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subject,
+              lab,
+              instructor,
+              day,
+              startTime,
+              endTime,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                alert(data.error);
+              } else {
+                alert("Subject scheduled successfully");
+                fetchSchedule();
+              }
+            });
         });
-      });
 
       function fetchSubjects() {
         fetch("/get_subjects")
-        .then(response => response.json())
-        .then(subjects => {
-          const subjectSelect = document.getElementById("subject");
-          subjectSelect.innerHTML = "";
-          subjects.forEach(subject => {
-            const option = document.createElement("option");
-            option.value = subject.SUBJECT_ID;
-            option.textContent = subject.SUBJECT_NAME;
-            subjectSelect.appendChild(option);
-          });
+          .then((response) => response.json())
+          .then((subjects) => {
+            const subjectSelect = document.getElementById("subject");
+            subjectSelect.innerHTML = "";
+            subjects.forEach((subject) => {
+              const option = document.createElement("option");
+              option.value = subject.SUBJECT_ID;
+              option.textContent = subject.SUBJECT_NAME;
+              subjectSelect.appendChild(option);
+            });
 
-          const subjectList = document.getElementById("subjectList");
-          subjectList.innerHTML = "";
-          subjects.forEach(subject => {
-            const li = document.createElement("li");
-            li.textContent = subject.SUBJECT_NAME;
-            subjectList.appendChild(li);
+            const subjectList = document.getElementById("subjectList");
+            subjectList.innerHTML = "";
+            subjects.forEach((subject) => {
+              const li = document.createElement("li");
+              li.textContent = subject.SUBJECT_NAME;
+              subjectList.appendChild(li);
+            });
           });
-        });
       }
 
       function fetchLabs() {
         fetch("/get_labs")
-        .then(response => response.json())
-        .then(labs => {
-          const labSelect = document.getElementById("lab");
-          labSelect.innerHTML = "";
-          labs.forEach(lab => {
-            const option = document.createElement("option");
-            option.value = lab.LAB_ID;
-            option.textContent = lab.LAB_NAME;
-            labSelect.appendChild(option);
+          .then((response) => response.json())
+          .then((labs) => {
+            const labSelect = document.getElementById("lab");
+            labSelect.innerHTML = "";
+            labs.forEach((lab) => {
+              const option = document.createElement("option");
+              option.value = lab.LAB_ID;
+              option.textContent = lab.LAB_NAME;
+              labSelect.appendChild(option);
+            });
           });
-        });
       }
 
       function fetchSchedule() {
         fetch("/get_schedule")
-        .then(response => response.json())
-        .then(schedule => {
-          const calendar = document.querySelector(".calendar");
-          calendar.innerHTML = "";
-          // Populate the calendar with the schedule
-          schedule.forEach(entry => {
-            const div = document.createElement("div");
-            div.classList.add("calendar-entry");
-            div.textContent = `${entry.DAY} ${entry.START_TIME} - ${entry.END_TIME}: ${entry.SUBJECT_NAME} in ${entry.LAB_NAME}`;
-            calendar.appendChild(div);
+          .then((response) => response.json())
+          .then((schedule) => {
+            const calendar = document.querySelector(".calendar");
+            calendar.innerHTML = "";
+            // Populate the calendar with the schedule
+            schedule.forEach((entry) => {
+              const div = document.createElement("div");
+              div.classList.add("calendar-entry");
+              div.textContent = `${entry.DAY} ${entry.START_TIME} - ${entry.END_TIME}: ${entry.SUBJECT_NAME} in ${entry.LAB_NAME}`;
+              calendar.appendChild(div);
+            });
           });
-        });
       }
     </script>
   </body>

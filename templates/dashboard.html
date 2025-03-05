@@ -1,49 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-
     <title>Dashboard</title>
-</head>
-<body>
+  </head>
+  <body>
     <nav class="navbar">
-        <div class="navbar-container">
-            <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">Home</a>
-    
-            <div class="navbar-icons">
-                <a href="#" class="navbar-icon" title="Notifications">
-                    <i class="fas fa-bell"></i> <!-- Notification Icon -->
-                </a>
-                <a href="#" class="navbar-icon" title="Messages">
-                    <i class="fas fa-envelope"></i> <!-- Message Icon -->
-                </a>
-                <a href="" class="navbar-icon" title="Profile">
-                    <i class="fas fa-user"></i> <!-- Profile Icon -->
-                </a>
-            </div>
-    
-            <form action="{{ url_for('auth.logout') }}" method="post">
-                <button type="submit" class="navbar-button logout-button">Logout</button>
-            </form>
+      <div class="navbar-container">
+        <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">Home</a>
+        <div class="navbar-icons">
+          <a href="#" class="navbar-icon" title="Notifications">
+            <i class="fas fa-bell"></i>
+          </a>
+          <a href="#" class="navbar-icon" title="Messages">
+            <i class="fas fa-envelope"></i>
+          </a>
+          <a href="#" class="navbar-icon" title="Profile">
+            <i class="fas fa-user"></i>
+          </a>
         </div>
+        <form action="{{ url_for('auth.logout') }}" method="post">
+          <button type="submit" class="navbar-button logout-button">Logout</button>
+        </form>
+      </div>
     </nav>
     
-    
-    <div class="dashboard-container">
+    <div class="wrapper">
+      <!-- Dashboard Container -->
+      <div class="dashboard-container">
         <h1>Welcome, {{ firstname }} {{ middlename }} {{ lastname }}!</h1>
-        
         <div class="info-box">
-            <p><strong>ID:</strong> {{ user_idno }}</p>
-            <p><strong>Course:</strong> {{ course }}</p>
-            <p><strong>Year:</strong> {{ year }}</p>
-            <p><strong>Email:</strong> {{ email }}</p>
-            <form action="{{ url_for('user.edit_info') }}" method="get">
-                <button type="submit" class="navbar-button">Edit Info</button>
-            </form>
+          <p><strong>ID:</strong> {{ user_idno }}</p>
+          <p><strong>Course:</strong> {{ course }}</p>
+          <p><strong>Year:</strong> {{ year }}</p>
+          <p><strong>Email:</strong> {{ email }}</p>
+          <form action="{{ url_for('user.edit_info') }}" method="get">
+            <button type="submit" class="navbar-button">Edit Info</button>
+          </form>
         </div>
+      </div>
+      
+      <!-- Announcements Container -->
+      <div class="announcement-container">
+        <h2>Announcements</h2>
+        <div class="announcement-scrollable">
+          {% for group, announcements in grouped_announcements.items() %}
+            {% if announcements %}
+              <h3>{{ group }}</h3>
+              {% for ann in announcements %}
+                <div class="announcement-item">
+                  <h4>{{ ann.title }}</h4>
+                  <p>{{ ann.content }}</p>
+                  <small>Posted on: {{ ann.date_posted }} by {{ ann.posted_by }}</small>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
     </div>
-</body>
+  </body>
 </html>

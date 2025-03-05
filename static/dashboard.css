@@ -1,153 +1,214 @@
 body {
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, rgba(40, 44, 52, 1) 0%, rgba(25, 29, 37, 1) 100%);
+  font-family: "Roboto", sans-serif;
+  background: linear-gradient(
+    135deg,
+    rgba(40, 44, 52, 1) 0%,
+    rgba(25, 29, 37, 1) 100%
+  );
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  color: #fff;
+}
+.wrapper {
     display: flex;
+    gap: 30px; /* Space between dashboard and announcements */
+    padding-top: 80px; /* To clear the navbar */
     justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    color: #fff;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .dashboard-container {
+  background: rgba(0, 0, 0, 0.7);
+  padding: 40px 30px;
+  border-radius: 10px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  text-align: center;
+  transition: all 0.3s ease;
+  color: #fff;
+}
+
+.dashboard-container:hover {
+  transform: translateY(-10px);
+}
+
+.info-box {
+  margin: 20px 0;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.info-box p {
+  font-size: 16px;
+  margin: 10px 0;
+}
+
+.info-box p strong {
+  font-weight: bold;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 15px;
+  background-color: #dd0c0c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #45a049;
+}
+
+.flash-messages {
+  list-style-type: none;
+  padding: 0;
+  margin-bottom: 20px;
+}
+
+.flash-messages li {
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.flash-messages .error {
+  background-color: #f44336;
+  color: white;
+}
+
+.flash-messages .success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.navbar {
+  background-color: #333;
+  padding: 10px 20px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.navbar-logo {
+  color: #fff;
+  text-decoration: none;
+  font-size: 24px;
+  font-weight: bold;
+  padding-left: 20px; /* Add padding to the left */
+}
+
+.navbar-icons {
+  display: flex;
+  gap: 15px;
+}
+
+.navbar-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.navbar-icon img {
+  width: 25px;
+  height: 25px;
+}
+
+.navbar-button {
+  padding: 10px 20px;
+  background-color: #dd0c0c;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.navbar-button:hover {
+  background-color: #45a049;
+}
+
+.navbar-icon i {
+  font-size: 25px; /* Adjust size */
+  color: white; /* Icon color */
+}
+
+.navbar-icon:hover i {
+  color: #45a049; /* Hover color */
+}
+
+/* Announcements Container - scrollable */
+.announcement-container {
     background: rgba(0, 0, 0, 0.7);
     padding: 40px 30px;
     border-radius: 10px;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
     width: 400px;
-    text-align: center;
-    transition: all 0.3s ease;
     color: #fff;
+    transition: all 0.3s ease;
+    max-height: 500px;  /* Fixed height */
+
 }
 
-.dashboard-container:hover {
+.announcement-scrollable {
+    max-height: 400px; /* adjust as needed */
+    overflow-y: auto;
+    padding-right: 10px; /* optional: to account for scrollbar */
+  }
+  
+.announcement-container:hover {
     transform: translateY(-10px);
 }
-
-.info-box {
-    margin: 20px 0;
-    text-align: left;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 20px;
-    border-radius: 8px;
-}
-
-.info-box p {
-    font-size: 16px;
-    margin: 10px 0;
-}
-
-.info-box p strong {
-    font-weight: bold;
-}
-
-.logout-button {
-    width: 100%;
-    padding: 15px;
-    background-color: #dd0c0c;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-}
-
-.logout-button:hover {
-    background-color: #45a049;
-}
-
-.flash-messages {
-    list-style-type: none;
-    padding: 0;
+.announcement-container h2 {
+    font-size: 22px;
     margin-bottom: 20px;
-}
-
-.flash-messages li {
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
     text-align: center;
-    font-size: 16px;
 }
 
-.flash-messages .error {
-    background-color: #f44336;
-    color: white;
+/* Announcement Item Styling */
+.announcement-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
-
-.flash-messages .success {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.navbar {
-    background-color: #333;
-    padding: 10px 20px;
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1000;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.navbar-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.navbar-logo {
-    color: #fff;
-    text-decoration: none;
-    font-size: 24px;
-    font-weight: bold;
-    padding-left: 20px; /* Add padding to the left */
-    
-}
-
-.navbar-icons {
-    display: flex;
-    gap: 15px;
-}
-
-.navbar-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.navbar-icon img {
-    width: 25px;
-    height: 25px;
-}
-
-.navbar-button {
-    padding: 10px 20px;
-    background-color: #dd0c0c;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
+.announcement-item h3 {
     font-size: 18px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-decoration: none;
+    margin-bottom: 10px;
 }
-
-.navbar-button:hover {
-    background-color: #45a049;
+.announcement-item p {
+    font-size: 16px;
+    margin-bottom: 10px;
 }
-
-.navbar-icon i {
-    font-size: 25px; /* Adjust size */
-    color: white;    /* Icon color */
+.announcement-item small {
+    font-size: 14px;
+    color: #bbb;
+    display: block;
+    margin-top: 5px;
 }
-
-.navbar-icon:hover i {
-    color: #45a049; /* Hover color */
-}
-

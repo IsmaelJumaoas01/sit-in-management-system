@@ -84,3 +84,4 @@ def get_schedule():
     cursor.close()
     conn.close()
     return jsonify([{'DAY': entry[0], 'START_TIME': entry[1], 'END_TIME': entry[2], 'SUBJECT_NAME': entry[3], 'LAB_NAME': entry[4]} for entry in schedule])
+

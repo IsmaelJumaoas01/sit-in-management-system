@@ -252,3 +252,255 @@ p {
     background-color: #33833b;
 }
 
+/* Style for the search form, similar to #addLabForm */
+.search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+  }
+  
+  .search-form input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  .search-form button {
+    background: #45a049;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .search-form button:hover {
+    background: #33833b;
+  }
+  
+  /* Optional: Ensure the results container uses the same data-container style */
+  .data-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+  
+  .student-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  
+  .student-table th,
+  .student-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .student-table th {
+    background: rgba(0, 0, 0, 0.3);
+    font-size: 18px;
+  }
+  
+  .student-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+
+ /* Announcements Section */
+#announcements {
+    padding: 20px;
+  }
+  
+  #announcementForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    margin-bottom: 20px;
+  }
+  
+  #announcementForm input,
+  #announcementForm textarea {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  #announcementForm button {
+    background: #45a049;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  #announcementForm button:hover {
+    background: #33833b;
+  }
+  
+  /* Announcement Item Styling */
+  .announcement-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .announcement-item h3 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+  }
+  
+  .announcement-item p {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+  }
+  
+  .announcement-item small {
+    display: block;
+    margin-bottom: 10px;
+    color: #bbb;
+    font-size: 14px;
+  }
+  
+  .announcement-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .announcement-actions button {
+    padding: 8px 12px;
+    background: #45a049;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .announcement-actions button:hover {
+    background: #33833b;
+  }
+  
+  /* Pagination for Announcements */
+  #announcementPagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  #announcementPagination button {
+    padding: 10px 15px;
+    background-color: #45a049;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  #announcementPagination button:hover {
+    background-color: #33833b;
+  }
+  
+  /* Modal Styling for Edit Announcement */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+  }
+  
+  .modal-content {
+    background: rgba(0, 0, 0, 0.85);
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px; /* Larger modal */
+    color: #fff;
+    box-shadow: 0px 4px 20px rgba(0,0,0,0.5);
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-size: 22px;
+  }
+  
+  .close-modal {
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .close-modal:hover,
+  .close-modal:focus {
+    color: #fff;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  
+  .modal-body input,
+  .modal-body textarea {
+    width: calc(100% - 20px); /* Leaves 10px on each side */
+    padding: 10px;
+    margin: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    color: white;
+    box-sizing: border-box;
+  }
+  
+  
+  .modal-body button {
+    background: #45a049;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .modal-body button:hover {
+    background: #33833b;
+  }
+  

@@ -5,44 +5,51 @@ lab_bp = Blueprint('lab', __name__)
 
 @lab_bp.route('/manage_labs', methods=['GET', 'POST', 'DELETE'])
 def manage_labs():
-    if 'USER_TYPE' in session and session['USER_TYPE'] == 'STAFF':
+    if 'USER_TYPE' in session and (session['USER_TYPE'] == 'STAFF' or session['USER_TYPE'] == 'ADMIN'):
         conn = get_db_connection()
         cursor = conn.cursor()
 
         if request.method == 'POST':
             data = request.get_json()
-            lab_id = data.get('lab_id')
+            lab_name = data.get('lab_name')
             total_computers = data.get('total_computers')
 
-            if not isinstance(total_computers, int) or total_computers <= 0:
-                return jsonify({'error': 'Invalid number of computers'}), 400
+            if not lab_name or not isinstance(total_computers, int) or total_computers <= 0:
+                return jsonify({'error': 'Invalid lab name or number of computers'}), 400
 
-            if lab_id:
-                cursor.execute("SELECT COUNT(*) FROM LABORATORIES WHERE LAB_ID = %s", (lab_id,))
-                if cursor.fetchone()[0] > 0:
-                    return jsonify({'error': 'Lab ID already exists'}), 400
-                
-                cursor.execute("INSERT INTO LABORATORIES (LAB_ID, TOTAL_COMPUTERS) VALUES (%s, %s)", 
-                               (lab_id, total_computers))
-            else:
-                cursor.execute("INSERT INTO LABORATORIES (TOTAL_COMPUTERS) VALUES (%s)", (total_computers,))
-                lab_id = cursor.lastrowid  
+            try:
+                # Insert the lab
+                cursor.execute("INSERT INTO LABORATORIES (LAB_NAME, TOTAL_COMPUTERS) VALUES (%s, %s)", 
+                           (lab_name, total_computers))
+                lab_id = cursor.lastrowid
 
-            for _ in range(total_computers):
-                cursor.execute("INSERT INTO COMPUTERS (LAB_ID) VALUES (%s)", (lab_id,))
+                # Insert computers for the lab
+                for i in range(total_computers):
+                    cursor.execute("INSERT INTO COMPUTERS (LAB_ID) VALUES (%s)", 
+                               (lab_id,))
 
-            conn.commit()
-            return jsonify({'message': 'Laboratory and computers added successfully'}), 201
+                conn.commit()
+                return jsonify({'message': 'Laboratory and computers added successfully', 'lab_id': lab_id}), 201
+            except Exception as e:
+                conn.rollback()
+                return jsonify({'error': str(e)}), 500
 
         elif request.method == 'GET':
             cursor.execute("""
-                SELECT L.LAB_ID, COUNT(C.COMPUTER_ID) AS TOTAL_COMPUTERS
+                SELECT L.LAB_ID, L.LAB_NAME, L.TOTAL_COMPUTERS, 
+                       COUNT(C.COMPUTER_ID) AS AVAILABLE_COMPUTERS
                 FROM LABORATORIES L
                 LEFT JOIN COMPUTERS C ON L.LAB_ID = C.LAB_ID
-                GROUP BY L.LAB_ID
+                GROUP BY L.LAB_ID, L.LAB_NAME, L.TOTAL_COMPUTERS
+                ORDER BY L.LAB_NAME
             """)
             labs = cursor.fetchall()
-            lab_list = [{'LAB_ID': lab[0], 'TOTAL_COMPUTERS': lab[1]} for lab in labs]
+            lab_list = [{
+                'LAB_ID': lab[0], 
+                'LAB_NAME': lab[1],
+                'TOTAL_COMPUTERS': lab[2],
+                'AVAILABLE_COMPUTERS': lab[3] or 0
+            } for lab in labs]
 
             cursor.close()
             conn.close()
@@ -55,13 +62,13 @@ def manage_labs():
             if not lab_id:
                 return jsonify({'error': 'Missing lab_id'}), 400
 
-            # Delete all computers in the lab
-            cursor.execute("DELETE FROM COMPUTERS WHERE LAB_ID = %s", (lab_id,))
-            # Delete the lab itself
-            cursor.execute("DELETE FROM LABORATORIES WHERE LAB_ID = %s", (lab_id,))
-            conn.commit()
-
-            return jsonify({'message': 'Laboratory and all its computers deleted successfully'}), 200
+            try:
+                cursor.execute("DELETE FROM LABORATORIES WHERE LAB_ID = %s", (lab_id,))
+                conn.commit()
+                return jsonify({'message': 'Laboratory and all its computers deleted successfully'}), 200
+            except Exception as e:
+                conn.rollback()
+                return jsonify({'error': str(e)}), 500
 
     return jsonify({'error': 'Access denied'}), 403
 
@@ -110,7 +117,7 @@ def announcements():
                 return jsonify({'error': 'Title and content are required'}), 400
             try:
                 cursor.execute(
-                    "INSERT INTO ANNOUNCEMENTS (TITLE, CONTENT, POSTED_BY) VALUES (%s, %s, %s)",
+                    "INSERT INTO ANNOUNCEMENTS (TITLE, CONTENT, POSTED_BY, DATE_POSTED) VALUES (%s, %s, %s, NOW())",
                     (title, content, posted_by)
                 )
                 conn.commit()
@@ -123,9 +130,11 @@ def announcements():
         else:  # GET
             try:
                 cursor.execute("""
-                    SELECT ANNOUNCEMENT_ID, TITLE, CONTENT, DATE_POSTED, POSTED_BY 
-                    FROM ANNOUNCEMENTS 
-                    ORDER BY DATE_POSTED DESC
+                    SELECT A.ANNOUNCEMENT_ID, A.TITLE, A.CONTENT, A.DATE_POSTED, A.POSTED_BY,
+                           U.FIRSTNAME, U.LASTNAME
+                    FROM ANNOUNCEMENTS A
+                    JOIN USERS U ON A.POSTED_BY = U.IDNO
+                    ORDER BY A.DATE_POSTED DESC
                 """)
                 announcements = cursor.fetchall()
                 result = []
@@ -135,7 +144,8 @@ def announcements():
                         'title': ann[1],
                         'content': ann[2],
                         'date_posted': ann[3].strftime("%Y-%m-%d %H:%M:%S") if ann[3] else "",
-                        'posted_by': ann[4]
+                        'posted_by': ann[4],
+                        'poster_name': f"{ann[5]} {ann[6]}"
                     })
                 return jsonify(result)
             except Exception as e:
@@ -150,6 +160,21 @@ def manage_announcement(announcement_id):
     if 'USER_TYPE' in session and session['USER_TYPE'] in ['STAFF', 'ADMIN']:
         conn = get_db_connection()
         cursor = conn.cursor()
+        
+        # First check if the announcement exists and belongs to the user
+        cursor.execute("""
+            SELECT POSTED_BY FROM ANNOUNCEMENTS 
+            WHERE ANNOUNCEMENT_ID = %s
+        """, (announcement_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            return jsonify({'error': 'Announcement not found'}), 404
+            
+        # Only allow staff to edit/delete their own announcements (admin can edit/delete any)
+        if session['USER_TYPE'] == 'STAFF' and result[0] != session['IDNO']:
+            return jsonify({'error': 'You can only modify your own announcements'}), 403
+            
         if request.method == 'PUT':
             data = request.get_json()
             title = data.get('title')

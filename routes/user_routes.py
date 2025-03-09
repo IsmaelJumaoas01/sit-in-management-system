@@ -1,10 +1,82 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from db import get_db_connection
-
+import os
+from werkzeug.utils import secure_filename
+import base64
+from io import BytesIO
 from datetime import datetime, timedelta
 
-
 user_bp = Blueprint('user', __name__)
+
+# Add configuration for file uploads
+UPLOAD_FOLDER = 'static/profile_pictures'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@user_bp.route('/update_profile_picture', methods=['POST'])
+def update_profile_picture():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    if 'profile_picture' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['profile_picture']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    if file and allowed_file(file.filename):
+        # Read the file content
+        file_content = file.read()
+        
+        # Update the user's profile picture in the database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute(
+                "UPDATE USERS SET PROFILE_PICTURE = %s WHERE IDNO = %s",
+                (file_content, session['IDNO'])
+            )
+            conn.commit()
+            
+            # Convert image to base64 for immediate display
+            encoded_image = base64.b64encode(file_content).decode('utf-8')
+            
+            return jsonify({
+                'success': True,
+                'profile_picture_data': f"data:image/{file.filename.split('.')[-1]};base64,{encoded_image}"
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            cursor.close()
+            conn.close()
+
+    return jsonify({'error': 'Invalid file type'}), 400
+
+@user_bp.route('/get_profile_picture/<string:idno>')
+def get_profile_picture(idno):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (idno,))
+        result = cursor.fetchone()
+        if result and result[0]:
+            return send_file(
+                BytesIO(result[0]),
+                mimetype='image/jpeg'
+            )
+        else:
+            # Return a default profile picture from static folder
+            return redirect(url_for('static', filename='static/images/default-profile.png'))
+    except Exception as e:
+        # Return a default profile picture from static folder
+        return redirect(url_for('static', filename='static/images/default-profile.png'))
+    finally:
+        cursor.close()
+        conn.close()
 
 @user_bp.route('/edit_info', methods=['GET', 'POST'])
 def edit_info():
@@ -19,6 +91,7 @@ def edit_info():
 
         if request.method == 'POST':
             new_firstname = request.form['firstname']
+            
             new_lastname = request.form['lastname']
             new_middlename = request.form['middlename']
             new_course = request.form['course']
@@ -54,84 +127,65 @@ def edit_info():
 @user_bp.route('/home')
 def dashboard():
     if 'IDNO' in session:
+        # First check user type and redirect if not a student
+        if session.get('USER_TYPE') == 'ADMIN':
+            return redirect(url_for('admin.admin_dashboard'))
+        elif session.get('USER_TYPE') == 'STAFF':
+            return redirect(url_for('staff.dashboard'))
+        
+        # Continue with student dashboard if user is a student
         user_idno = session['IDNO']
-        firstname = session.get('staff_firstname', session.get('FIRSTNAME'))
-        lastname = session.get('staff_lastname', session.get('LASTNAME'))
+        firstname = session.get('FIRSTNAME')
+        lastname = session.get('LASTNAME')
         middlename = session.get('MIDDLENAME')
         course = session.get('COURSE')
         year = session.get('YEAR')
         email = session.get('EMAIL')
 
-        # For STUDENT users, load and group announcements
-        if 'USER_TYPE' in session and session['USER_TYPE'] == 'STUDENT':
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute("""
-                    SELECT ANNOUNCEMENT_ID, TITLE, CONTENT, DATE_POSTED, POSTED_BY 
-                    FROM ANNOUNCEMENTS 
-                    ORDER BY DATE_POSTED DESC
-                """)
-                announcements_data = cursor.fetchall()
-                ann_list = []
-                for ann in announcements_data:
-                    ann_date = ann[3]
-                    if hasattr(ann_date, 'strftime'):
-                        date_str = ann_date.strftime("%Y-%m-%d %H:%M:%S")
-                    else:
-                        date_str = ann_date
-                    ann_list.append({
-                        'announcement_id': ann[0],
-                        'title': ann[1],
-                        'content': ann[2],
-                        'date_posted': date_str,
-                        'posted_by': ann[4]
-                    })
-            except Exception as e:
-                ann_list = []
-            finally:
-                cursor.close()
-                conn.close()
+        # Get announcements for student dashboard
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                SELECT ANNOUNCEMENT_ID, TITLE, CONTENT, DATE_POSTED, POSTED_BY 
+                FROM ANNOUNCEMENTS 
+                ORDER BY DATE_POSTED DESC
+            """)
+            announcements_data = cursor.fetchall()
+            ann_list = []
+            for ann in announcements_data:
+                ann_date = ann[3]
+                if hasattr(ann_date, 'strftime'):
+                    date_str = ann_date.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    date_str = ann_date
+                ann_list.append({
+                    'announcement_id': ann[0],
+                    'title': ann[1],
+                    'content': ann[2],
+                    'date_posted': date_str,
+                    'posted_by': ann[4]
+                })
+        except Exception as e:
+            ann_list = []
+        finally:
+            cursor.close()
+            conn.close()
 
-            # Group announcements by time period
-            grouped_announcements = group_announcements_by_time(ann_list)
-            return render_template('dashboard.html', 
-                                   user_idno=user_idno,
-                                   firstname=firstname,
-                                   middlename=middlename,
-                                   lastname=lastname,
-                                   course=course,
-                                   year=year,
-                                   email=email,
-                                   grouped_announcements=grouped_announcements)
-        elif 'USER_TYPE' in session:
-            # Existing branches for STAFF and ADMIN
-            if session['USER_TYPE'] == 'STAFF':
-                return render_template('staff_dashboard.html', 
-                                       staff_firstname=firstname, 
-                                       staff_lastname=lastname,
-                                       staff_email=email)
-            elif session['USER_TYPE'] == 'ADMIN':
-                return render_template('admin_dashboard.html', 
-                                       user_idno=user_idno,
-                                       firstname=firstname,
-                                       middlename=middlename,
-                                       lastname=lastname,
-                                       course=course,
-                                       year=year,
-                                       email=email)
+        # Group announcements by time period
+        grouped_announcements = group_announcements_by_time(ann_list)
         return render_template('dashboard.html', 
-                               user_idno=user_idno,
-                               firstname=firstname,
-                               lastname=lastname,
-                               middlename=middlename,
-                               course=course,
-                               year=year,
-                               email=email)
+                            user_idno=user_idno,
+                            firstname=firstname,
+                            middlename=middlename,
+                            lastname=lastname,
+                            course=course,
+                            year=year,
+                            email=email,
+                            grouped_announcements=grouped_announcements)
     else:
         flash('You must be logged in to view the dashboard.', 'error')
         return redirect(url_for('auth.login'))
-
 
 def group_announcements_by_time(announcements):
     """
@@ -172,3 +226,140 @@ def group_announcements_by_time(announcements):
         else:
             grouped["Earlier"].append(ann)
     return grouped
+
+@user_bp.route('/get_announcements')
+def get_announcements():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT ANNOUNCEMENT_ID, TITLE, CONTENT, DATE_POSTED, POSTED_BY 
+            FROM ANNOUNCEMENTS 
+            ORDER BY DATE_POSTED DESC
+        """)
+        announcements_data = cursor.fetchall()
+        ann_list = []
+        for ann in announcements_data:
+            ann_date = ann[3]
+            if hasattr(ann_date, 'strftime'):
+                date_str = ann_date.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                date_str = ann_date
+            ann_list.append({
+                'announcement_id': ann[0],
+                'title': ann[1],
+                'content': ann[2],
+                'date_posted': date_str,
+                'posted_by': ann[4]
+            })
+        
+        # Group announcements by time period
+        grouped_announcements = group_announcements_by_time(ann_list)
+        return jsonify({'grouped_announcements': grouped_announcements})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/sitin_records')
+def get_student_sitin_records():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    lab_id = request.args.get('lab_id')
+    purpose_id = request.args.get('purpose_id')
+    status = request.args.get('status')
+    session_status = request.args.get('session')
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        query = """
+            SELECT s.RECORD_ID, s.USER_IDNO, s.LAB_ID, s.DATE, s.END_TIME, s.STATUS, s.SESSION,
+                   l.LAB_NAME,
+                   p.PURPOSE_NAME
+            FROM SIT_IN_RECORDS s
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE s.USER_IDNO = %s
+        """
+        params = [session['IDNO']]
+
+        if lab_id:
+            query += " AND s.LAB_ID = %s"
+            params.append(lab_id)
+        
+        if purpose_id:
+            query += " AND s.PURPOSE_ID = %s"
+            params.append(purpose_id)
+            
+        if status:
+            query += " AND s.STATUS = %s"
+            params.append(status)
+            
+        if session_status:
+            query += " AND s.SESSION = %s"
+            params.append(session_status)
+
+        query += " ORDER BY s.DATE DESC"
+        
+        cursor.execute(query, params)
+        records = cursor.fetchall()
+
+        return jsonify([{
+            'RECORD_ID': r[0],
+            'STUDENT_ID': r[1],
+            'LAB_ID': r[2],
+            'DATE': r[3].isoformat(),
+            'END_TIME': r[4].isoformat() if r[4] else None,
+            'STATUS': r[5],
+            'SESSION': r[6],
+            'LAB_NAME': r[7],
+            'PURPOSE_NAME': r[8]
+        } for r in records])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/laboratories')
+def get_laboratories():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT LAB_ID, LAB_NAME FROM LABORATORIES")
+        labs = cursor.fetchall()
+        return jsonify([{'LAB_ID': lab[0], 'LAB_NAME': lab[1]} for lab in labs])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/purposes')
+def get_purposes():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT PURPOSE_ID, PURPOSE_NAME FROM PURPOSES ORDER BY PURPOSE_NAME")
+        purposes = cursor.fetchall()
+        return jsonify([{'PURPOSE_ID': purpose[0], 'PURPOSE_NAME': purpose[1]} for purpose in purposes])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()

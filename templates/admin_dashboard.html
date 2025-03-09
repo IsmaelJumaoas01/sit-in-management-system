@@ -6,92 +6,408 @@
     <title>Admin Dashboard</title>
     <link
       rel="stylesheet"
-      href="{{ url_for('static', filename='admin_dashboard.css') }}"
+      href="{{ url_for('static', filename='dashboard.css') }}"
     />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+      /* ... existing styles ... */
+
+      /* Purpose Item Styles */
+      .purpose-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .purpose-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .purpose-info {
+        flex: 1;
+      }
+
+      .purpose-info h4 {
+        margin: 0;
+        color: #fff;
+        font-size: 1.1em;
+      }
+
+      .purpose-actions button {
+        background: #dd0c0c;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .purpose-actions button:hover {
+        background: #ff4444;
+        transform: translateY(-2px);
+      }
+
+      /* Toast Notification Styles */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transform: translateY(100px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 2000;
+      }
+
+      .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .toast.success {
+        border-left: 4px solid #45a049;
+      }
+
+      .toast.error {
+        border-left: 4px solid #dd0c0c;
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 500px;
+        width: 90%;
+        position: relative;
+        transform: scale(0.9);
+        opacity: 0;
+        animation: modalShow 0.3s ease forwards;
+      }
+
+      @keyframes modalShow {
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        color: #fff;
+      }
+
+      .close-modal {
+        font-size: 24px;
+        color: #fff;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .close-modal:hover {
+        color: #ff4444;
+      }
+
+      /* Form Styles */
+      .custom-input {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .custom-input:focus {
+        outline: none;
+        border-color: #45a049;
+        box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
+      }
+
+      /* Button Styles */
+      .button.pulse {
+        background: linear-gradient(135deg, #45a049 0%, #33833b 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .button.pulse:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(69, 160, 73, 0.4);
+      }
+
+      /* Confirmation Dialog Styles */
+      .confirm-dialog {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .confirm-content {
+        background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+      }
+
+      .confirm-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .confirm-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .confirm-yes {
+        background: #dd0c0c !important;
+        color: white;
+      }
+
+      .confirm-no {
+        background: #45a049 !important;
+        color: white;
+      }
+
+      .confirm-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* ... existing styles ... */
+    </style>
   </head>
 
   <body>
     <!-- Navbar -->
     <header class="navbar">
       <div class="navbar-container">
-        <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">ADMIN</a>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="navbar-logo">
+          <i class="fas fa-shield-alt"></i> ADMIN DASHBOARD
+        </a>
         <div class="navbar-icons">
+          <a href="#" class="navbar-icon" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge">3</span>
+          </a>
+          <div class="profile-dropdown">
+            <a href="#" class="navbar-icon profile-icon" title="Profile" onclick="toggleProfileMenu(event)">
+              <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                   alt="Profile" class="profile-image">
+            </a>
+            <div class="profile-dropdown-content">
+              <a href="#" onclick="openModal()"><i class="fas fa-user-edit"></i> Edit Profile</a>
           <form action="{{ url_for('auth.logout') }}" method="post">
-            <button type="submit" class="navbar-button logout-button">
-              Logout
-            </button>
+                <button type="submit" class="dropdown-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
           </form>
+            </div>
+          </div>
         </div>
       </div>
     </header>
 
     <div class="main-container">
-      <!-- Inside the Left Panel -->
+      <!-- Left Panel -->
       <div class="left-panel">
-        <h1>Welcome, Admin</h1>
+        <div class="profile-header">
+          <div class="profile-picture-container">
+            <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                 alt="Profile Picture" class="large-profile-image">
+            <button class="change-photo-btn" onclick="document.getElementById('profile-upload').click()">
+              <i class="fas fa-camera"></i>
+            </button>
+            <input type="file" id="profile-upload" hidden accept="image/*" onchange="updateProfilePicture(this)">
+          </div>
+          <h1>Welcome, {{ session['FIRSTNAME'] }} {{ session['LASTNAME'] }}</h1>
         <div class="info-box">
           <p><strong>Email:</strong> {{ email }}</p>
-          <p><strong>Role:</strong> Admin</p>
+            <p><strong>Role:</strong> Administrator</p>
+          </div>
+
+          <!-- Add visible Edit and Logout buttons -->
+          <div class="action-buttons">
+            <button class="action-button edit-button" onclick="openModal()">
+              <i class="fas fa-user-edit"></i> Edit Profile
+            </button>
+            <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirmLogout(event)">
+              <button type="submit" class="action-button logout-button">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </button>
+            </form>
+          </div>
         </div>
         <div class="button-container">
           <button
-            class="button"
+            class="button ripple"
             onclick="showSection('setSemesterDates', this)"
           >
-            Set Semester Dates
-          </button>
-          <button class="button" onclick="showSection('manageSubjects', this)">
-            Manage Subjects
+            <i class="fas fa-calendar-alt"></i> Set Semester Dates
           </button>
           <button
-            class="button"
+            class="button ripple"
+            onclick="showSection('managePurposes', this)"
+          >
+            <i class="fas fa-tasks"></i> Manage Purposes
+          </button>
+          <button
+            class="button ripple"
             onclick="showSection('scheduleSubjects', this)"
           >
-            Schedule Subjects
+            <i class="fas fa-clock"></i> Schedule Subjects
           </button>
-        <button class="button">
-          <a href="{{ url_for('user.edit_info') }}" class="button"
-            >Edit Profile</a
-          >
+          <button class="button ripple" onclick="showSection('manageLabs', this)">
+            <i class="fas fa-desktop"></i> Manage Labs
+          </button>
+          <button class="button ripple" onclick="showSection('announcements', this)">
+            <i class="fas fa-bullhorn"></i> Announcements
         </button>
       </div>
       </div>
 
       <!-- Right Panel -->
       <div class="right-panel">
-        <div id="setSemesterDates" class="content-section">
-          <h2>Set Semester Dates</h2>
+        <!-- Edit Profile Modal -->
+        <div id="editModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit Profile Information</h2>
+            <form action="{{ url_for('admin.edit_info') }}" method="post" id="editForm" enctype="multipart/form-data">
+              <div class="modal-profile-picture">
+                <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                     alt="Profile Picture" class="preview-profile-image">
+                <div class="upload-overlay">
+                  <input type="file" name="profile_picture" id="modal-profile-upload" hidden accept="image/*" onchange="previewImage(this)">
+                  <label for="modal-profile-upload" class="upload-btn">
+                    <i class="fas fa-camera"></i> Change Photo
+                  </label>
+                </div>
+              </div>
+              
+              <div class="form-group animate-up">
+                <label for="firstname">First Name:</label>
+                <input type="text" id="firstname" name="firstname" value="{{ session['FIRSTNAME'] }}" required class="custom-input">
+              </div>
+              <div class="form-group animate-up">
+                <label for="lastname">Last Name:</label>
+                <input type="text" id="lastname" name="lastname" value="{{ session['LASTNAME'] }}" required class="custom-input">
+              </div>
+              <div class="form-group animate-up">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ email }}" required class="custom-input">
+              </div>
+              <div class="form-group animate-up">
+                <label for="password">New Password (leave blank to keep current):</label>
+                <input type="password" id="password" name="password" class="custom-input">
+              </div>
+              <button type="submit" class="button pulse">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div id="setSemesterDates" class="content-section animate-section">
+          <h2><i class="fas fa-calendar-alt"></i> Set Semester Dates</h2>
           <form id="setSemesterDatesForm">
-            <div class="info-box">
+            <div class="form-group">
               <label for="startDate">Start Date</label>
-              <input type="date" id="startDate" name="startDate" required />
+              <input type="date" id="startDate" name="startDate" required class="custom-input" />
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="endDate">End Date</label>
-              <input type="date" id="endDate" name="endDate" required />
+              <input type="date" id="endDate" name="endDate" required class="custom-input" />
             </div>
-            <button type="submit" class="button">Set Dates</button>
+            <button type="submit" class="button ripple">
+              <i class="fas fa-save"></i> Set Dates
+            </button>
           </form>
-          <button class="button" onclick="resetSemester()">
-            Reset Semester
+          <button class="button ripple" onclick="resetSemester()">
+            <i class="fas fa-redo"></i> Reset Semester
           </button>
         </div>
 
         <div id="manageSubjects" class="content-section" style="display: none">
-          <h2>Manage Subjects</h2>
+          <h2><i class="fas fa-book"></i> Manage Subjects</h2>
           <form id="addSubjectForm">
-            <div class="info-box">
+            <div class="form-group">
               <label for="subjectName">Subject Name</label>
-              <input type="text" id="subjectName" name="subjectName" required />
+              <input type="text" id="subjectName" name="subjectName" required class="custom-input" />
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="description">Description</label>
-              <textarea id="description" name="description" rows="4"></textarea>
+              <textarea id="description" name="description" rows="4" class="custom-input"></textarea>
             </div>
-            <button type="submit" class="button">Add Subject</button>
+            <button type="submit" class="button ripple">
+              <i class="fas fa-plus"></i> Add Subject
+            </button>
           </form>
           <div class="data-container">
-            <ul id="subjectList"></ul>
+            <div id="subjectList" class="subject-list"></div>
           </div>
         </div>
 
@@ -100,27 +416,27 @@
           class="content-section"
           style="display: none"
         >
-          <h2>Schedule Subjects</h2>
+          <h2><i class="fas fa-clock"></i> Schedule Subjects</h2>
           <form id="scheduleSubjectForm">
-            <div class="info-box">
+            <div class="form-group">
               <label for="subject">Subject</label>
-              <select id="subject" name="subject" required>
+              <select id="subject" name="subject" required class="custom-input">
                 <!-- Options will be populated dynamically -->
               </select>
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="lab">Lab</label>
-              <select id="lab" name="lab" required>
+              <select id="lab" name="lab" required class="custom-input">
                 <!-- Options will be populated dynamically -->
               </select>
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="instructor">Instructor ID</label>
-              <input type="text" id="instructor" name="instructor" required />
+              <input type="text" id="instructor" name="instructor" required class="custom-input" />
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="day">Day</label>
-              <select id="day" name="day" required>
+              <select id="day" name="day" required class="custom-input">
                 <option value="MON">Monday</option>
                 <option value="TUE">Tuesday</option>
                 <option value="WED">Wednesday</option>
@@ -129,201 +445,773 @@
                 <option value="SAT">Saturday</option>
               </select>
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="startTime">Start Time</label>
-              <input type="time" id="startTime" name="startTime" required />
+              <input type="time" id="startTime" name="startTime" required class="custom-input" />
             </div>
-            <div class="info-box">
+            <div class="form-group">
               <label for="endTime">End Time</label>
-              <input type="time" id="endTime" name="endTime" required />
+              <input type="time" id="endTime" name="endTime" required class="custom-input" />
             </div>
-            <button type="submit" class="button">Schedule Subject</button>
+            <button type="submit" class="button ripple">
+              <i class="fas fa-plus"></i> Schedule Subject
+            </button>
           </form>
           <div class="calendar">
             <!-- Calendar will be populated dynamically -->
           </div>
+        </div>
+
+        <div id="manageLabs" class="content-section animate-section" style="display: none">
+          <h2><i class="fas fa-desktop"></i> Manage Labs</h2>
+          <div class="card-container">
+            <div class="card labs-list-card">
+              <div class="header-with-button">
+                <h3><i class="fas fa-list"></i> Existing Labs</h3>
+                <button class="add-btn pulse-hover" onclick="openAddLabModal()">
+                  <i class="fas fa-plus"></i> Add New Lab
+                </button>
+              </div>
+              <div class="data-container custom-scrollbar">
+                <div id="labList" class="grid-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="announcements" class="content-section animate-section" style="display: none">
+          <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
+          <div class="card-container">
+            <div class="card announcements-list-card">
+              <div class="header-with-button">
+                <h3><i class="fas fa-list"></i> Posted Announcements</h3>
+                <button class="add-btn pulse-hover" onclick="openAddAnnouncementModal()">
+                  <i class="fas fa-plus"></i> New Announcement
+                </button>
+              </div>
+              <div class="data-container custom-scrollbar" id="announcementsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manage Purposes Section -->
+        <div id="managePurposes" class="content-section animate-section">
+          <h2><i class="fas fa-tasks"></i> Manage Purposes</h2>
+          <div class="card-container">
+            <div class="card">
+              <div class="header-with-button">
+                <h3><i class="fas fa-list"></i> Available Purposes</h3>
+                <button class="add-btn pulse-hover" onclick="openAddPurposeModal()">
+                  <i class="fas fa-plus"></i> Add New Purpose
+                </button>
+              </div>
+              <div class="data-container custom-scrollbar">
+                <div id="purposeList" class="grid-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Purpose Modal -->
+        <div id="addPurposeModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>Add New Purpose</h3>
+              <span class="close-modal" onclick="closeAddPurposeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+              <form id="addPurposeForm">
+                <div class="form-group">
+                  <label for="purposeName">Purpose Name:</label>
+                  <input type="text" id="purposeName" name="purposeName" required class="custom-input">
+                </div>
+                <button type="submit" class="button pulse">
+                  <i class="fas fa-plus"></i> Add Purpose
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Announcement Modal -->
+        <div id="addAnnouncementModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeAddAnnouncementModal()">&times;</span>
+            <h2><i class="fas fa-bullhorn"></i> New Announcement</h2>
+            <form id="announcementForm">
+              <div class="form-group animate-up">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required placeholder="Enter announcement title">
+                <span class="focus-border"></span>
+              </div>
+              <div class="form-group animate-up">
+                <label for="content">Content</label>
+                <textarea id="content" name="content" rows="4" required placeholder="Enter announcement content"></textarea>
+                <span class="focus-border"></span>
+              </div>
+              <button type="submit" class="submit-btn pulse-hover">
+                <i class="fas fa-paper-plane"></i> Post Announcement
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add Lab Modal -->
+        <div id="addLabModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeAddLabModal()">&times;</span>
+            <h2><i class="fas fa-plus-circle"></i> Add New Lab</h2>
+            <form id="addLabForm">
+              <div class="form-group animate-up">
+                <label for="labName">Lab Name</label>
+                <input type="text" id="labName" name="labName" required placeholder="e.g., LAB-101">
+                <span class="focus-border"></span>
+              </div>
+              <div class="form-group animate-up">
+                <label for="totalComputers">Total Computers</label>
+                <input type="number" id="totalComputers" name="totalComputers" required min="1" placeholder="Enter number of computers">
+                <span class="focus-border"></span>
+              </div>
+              <button type="submit" class="submit-btn pulse-hover">
+                <i class="fas fa-plus"></i> Add Lab
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Edit Announcement Modal -->
+        <div id="editAnnouncementModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeEditAnnouncementModal()">&times;</span>
+            <h2><i class="fas fa-edit"></i> Edit Announcement</h2>
+            <form id="editAnnouncementForm">
+              <input type="hidden" id="editAnnouncementId">
+              <div class="form-group animate-up">
+                <label for="editTitle">Title</label>
+                <input type="text" id="editTitle" name="editTitle" required placeholder="Enter announcement title">
+                <span class="focus-border"></span>
+              </div>
+              <div class="form-group animate-up">
+                <label for="editContent">Content</label>
+                <textarea id="editContent" name="editContent" rows="4" required placeholder="Enter announcement content"></textarea>
+                <span class="focus-border"></span>
+              </div>
+              <button type="submit" class="submit-btn pulse-hover">
+                <i class="fas fa-save"></i> Save Changes
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirmation Dialog -->
+    <div id="confirmDialog" class="confirm-dialog" onclick="if(event.target === this) closeConfirmDialog()">
+      <div class="confirm-content">
+        <h3>Confirm Action</h3>
+        <p>Are you sure you want to proceed?</p>
+        <div class="confirm-buttons">
+          <button class="confirm-btn confirm-yes" style="background: #dd0c0c;">Yes</button>
+          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">Cancel</button>
         </div>
       </div>
     </div>
 
     <script>
       function showSection(sectionId, button) {
-        document
-          .querySelectorAll(".content-section")
-          .forEach((section) => (section.style.display = "none"));
-        document.getElementById(sectionId).style.display = "block";
-        document
-          .querySelectorAll(".button")
-          .forEach((btn) => btn.classList.remove("selected"));
-        button.classList.add("selected");
+        document.querySelectorAll(".content-section").forEach(section => {
+          section.style.display = "none";
+          section.classList.remove("show");
+        });
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.style.display = "block";
+          setTimeout(() => section.classList.add("show"), 10);
+        }
+        
+        document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
+        if (button) button.classList.add("selected");
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        showSection("setSemesterDates", document.querySelector(".button"));
-        fetchSubjects();
+        // Remove semester dates initialization
+        showSection("manageLabs", document.querySelector(".button"));
         fetchLabs();
-        fetchSchedule();
-      });
+        fetchAnnouncements();
+        fetchPurposes();
 
-      document
-        .getElementById("setSemesterDatesForm")
-        .addEventListener("submit", function (event) {
+        // Ensure all modals are closed on page load
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+          modal.style.display = 'none';
+        });
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+          if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+            document.body.style.overflow = 'auto';
+          }
+        }
+
+        // Add event listeners for form submissions
+        document.getElementById('addLabForm').addEventListener('submit', function(event) {
           event.preventDefault();
-          const startDate = document.getElementById("startDate").value;
-          const endDate = document.getElementById("endDate").value;
+          const labName = document.getElementById('labName').value;
+          const totalComputers = parseInt(document.getElementById('totalComputers').value);
 
-          fetch("/set_semester_dates", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ startDate, endDate }),
+          fetch('/manage_labs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lab_name: labName, total_computers: totalComputers })
           })
-            .then((response) => response.json())
-            .then((data) => {
+          .then(response => response.json())
+          .then(data => {
               if (data.error) {
-                alert(data.error);
+              showToast(data.error, 'error');
               } else {
-                alert("Semester dates set successfully");
+              showToast('Lab added successfully', 'success');
+              closeAddLabModal();
+              fetchLabs();
               }
             });
         });
 
-      function resetSemester() {
-        if (
-          confirm(
-            "Are you sure you want to reset the semester? This will remove all schedules."
-          )
-        ) {
-          fetch("/reset_semester", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        document.getElementById('announcementForm').addEventListener('submit', function(event) {
+          event.preventDefault();
+          const title = document.getElementById('title').value;
+          const content = document.getElementById('content').value;
+
+          fetch('/announcements', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
           })
-            .then((response) => response.json())
-            .then((data) => {
+          .then(response => response.json())
+          .then(data => {
               if (data.error) {
-                alert(data.error);
+              showToast(data.error, 'error');
               } else {
-                alert("Semester reset successfully");
-                fetchSchedule();
+              showToast('Announcement posted successfully', 'success');
+              closeAddAnnouncementModal();
+              fetchAnnouncements();
               }
             });
+        });
+
+        document.getElementById('addPurposeForm').addEventListener('submit', function(event) {
+          event.preventDefault();
+          const purposeName = document.getElementById('purposeName').value;
+
+          fetch('/admin/purposes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ purposeName: purposeName })
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.error) {
+              showToast(data.error, 'error');
+              } else {
+              showToast('Purpose added successfully', 'success');
+              closeAddPurposeModal();
+              fetchPurposes();
+              }
+            });
+        });
+      });
+
+      function fetchLabs() {
+        fetch("/manage_labs")
+          .then(response => response.json())
+          .then(labs => {
+            const labList = document.getElementById("labList");
+            if (!labList) return;
+            
+            labList.innerHTML = "";
+            labs.forEach(lab => {
+              const div = document.createElement("div");
+              div.className = "lab-item";
+              div.innerHTML = `
+                <div class="lab-info">
+                  <h4>${lab.LAB_NAME}</h4>
+                  <p>${lab.TOTAL_COMPUTERS} computers (${lab.AVAILABLE_COMPUTERS} available)</p>
+                </div>
+                <div class="lab-actions">
+                  <button onclick="deleteLab(${lab.LAB_ID})" class="delete-btn">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+              labList.appendChild(div);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching labs:', error);
+            showToast('Failed to load labs', 'error');
+          });
+      }
+
+      function fetchAnnouncements() {
+        fetch("/admin/announcements")
+          .then(response => response.json())
+          .then(announcements => {
+            const container = document.getElementById("announcementsList");
+            if (!container) return;
+            
+            container.innerHTML = "";
+            announcements.forEach(announcement => {
+              const div = document.createElement("div");
+              div.className = "announcement-item";
+              div.innerHTML = `
+                <h3>${announcement.title}</h3>
+                <p>${announcement.content}</p>
+                <div class="announcement-meta">
+                  <small>Posted by ${announcement.posted_by} on ${announcement.date_posted}</small>
+                </div>
+                <div class="announcement-actions">
+                  <button class="edit" onclick="editAnnouncement(${announcement.announcement_id}, '${announcement.title.replace(/'/g, "\\'")}', '${announcement.content.replace(/'/g, "\\'")}')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button class="delete" onclick="deleteAnnouncement(${announcement.announcement_id})">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              `;
+              container.appendChild(div);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching announcements:', error);
+            showToast('Failed to load announcements', 'error');
+          });
+      }
+
+      function fetchPurposes() {
+        fetch('/admin/purposes')
+          .then(response => response.json())
+          .then(purposes => {
+            const purposeList = document.getElementById('purposeList');
+            if (!purposeList) return;
+            
+            purposeList.innerHTML = '';
+            purposes.forEach(purpose => {
+              const div = document.createElement('div');
+              div.className = 'purpose-item';
+              div.innerHTML = `
+                <div class="purpose-info">
+                  <h4>${purpose.PURPOSE_NAME}</h4>
+                </div>
+                <div class="purpose-actions">
+                  <button onclick="deletePurpose(${purpose.PURPOSE_ID})" class="delete-btn">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+              purposeList.appendChild(div);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching purposes:', error);
+            showToast('Failed to load purposes', 'error');
+          });
+      }
+
+      function deletePurpose(purposeId) {
+        showConfirmDialog(
+          'delete_purpose',
+          'Delete Purpose',
+          'Are you sure you want to delete this purpose? This action cannot be undone.',
+          'Yes, Delete',
+          'Cancel',
+          purposeId
+        );
+      }
+
+      function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+          <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+          <span class="toast-message">${message}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+
+      // Profile picture functionality
+      function previewImage(input) {
+        if (input.files && input.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.querySelector('.preview-profile-image').src = e.target.result;
+            document.querySelector('.profile-image').src = e.target.result;
+            document.querySelector('.large-profile-image').src = e.target.result;
+          }
+          reader.readAsDataURL(input.files[0]);
         }
       }
 
-      document
-        .getElementById("addSubjectForm")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          const subjectName = document
-            .getElementById("subjectName")
-            .value.trim();
-          const description = document
-            .getElementById("description")
-            .value.trim();
-
-          fetch("/add_subject", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ subjectName, description }),
+      function updateProfilePicture(input) {
+        if (input.files && input.files[0]) {
+          const formData = new FormData();
+          formData.append('profile_picture', input.files[0]);
+          
+          fetch('{{ url_for("user.update_profile_picture") }}', {
+            method: 'POST',
+            body: formData
           })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.error) {
-                alert(data.error);
-              } else {
-                alert("Subject added successfully");
-                document.getElementById("subjectName").value = "";
-                document.getElementById("description").value = "";
-                fetchSubjects();
-              }
-            });
-        });
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              document.querySelector('.preview-profile-image').src = data.profile_picture_data;
+              document.querySelector('.profile-image').src = data.profile_picture_data;
+              document.querySelector('.large-profile-image').src = data.profile_picture_data;
+            }
+          });
+        }
+      }
 
-      document
-        .getElementById("scheduleSubjectForm")
-        .addEventListener("submit", function (event) {
+      // Modal functionality
+      const modal = document.getElementById("editModal");
+      const formGroups = document.querySelectorAll('.form-group');
+      
+      function openModal() {
+        modal.style.display = "block";
+        document.body.style.overflow = 'hidden';
+        animateFormGroups();
+      }
+      
+      function closeModal() {
+        modal.style.display = "none";
+        document.body.style.overflow = 'auto';
+      }
+      
+      function animateFormGroups() {
+        formGroups.forEach((group, index) => {
+          setTimeout(() => {
+            group.classList.add('show');
+          }, 100 * index);
+        });
+      }
+
+      // Ripple effect for buttons
+      document.querySelectorAll('.ripple').forEach(button => {
+        button.addEventListener('click', function(e) {
+          const ripple = document.createElement('span');
+          ripple.classList.add('ripple-effect');
+          this.appendChild(ripple);
+          
+          const rect = this.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          
+          setTimeout(() => ripple.remove(), 600);
+        });
+      });
+
+      // Profile dropdown
+      function toggleProfileMenu(event) {
           event.preventDefault();
-          const subject = document.getElementById("subject").value;
-          const lab = document.getElementById("lab").value;
-          const instructor = document.getElementById("instructor").value.trim();
-          const day = document.getElementById("day").value;
-          const startTime = document.getElementById("startTime").value;
-          const endTime = document.getElementById("endTime").value;
+        const dropdown = document.querySelector('.profile-dropdown-content');
+        dropdown.classList.toggle('show');
+      }
 
-          fetch("/schedule_subject", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              subject,
-              lab,
-              instructor,
-              day,
-              startTime,
-              endTime,
-            }),
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.error) {
-                alert(data.error);
-              } else {
-                alert("Subject scheduled successfully");
-                fetchSchedule();
-              }
-            });
+      // Lab Management
+      function openAddLabModal() {
+        const modal = document.getElementById('addLabModal');
+        if (modal) {
+          modal.style.display = 'block';
+          document.body.style.overflow = 'hidden';
+          animateFormGroups();
+        }
+      }
+
+      function closeAddLabModal() {
+        const modal = document.getElementById('addLabModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('addLabForm').reset();
+      }
+
+      // Announcements
+      function editAnnouncement(id, title, content) {
+        const modal = document.getElementById('editAnnouncementModal');
+        const idInput = document.getElementById('editAnnouncementId');
+        const titleInput = document.getElementById('editTitle');
+        const contentInput = document.getElementById('editContent');
+        
+        idInput.value = id;
+        titleInput.value = title;
+        contentInput.value = content;
+        
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeEditAnnouncementModal() {
+        const modal = document.getElementById('editAnnouncementModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('editAnnouncementForm').reset();
+      }
+
+      // Add event listener for edit form submission
+      document.getElementById('editAnnouncementForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const id = document.getElementById('editAnnouncementId').value;
+        const title = document.getElementById('editTitle').value;
+        const content = document.getElementById('editContent').value;
+
+        fetch(`/admin/announcements/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ title, content })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            showToast(data.error, 'error');
+          } else {
+            showToast('Announcement updated successfully', 'success');
+            closeEditAnnouncementModal();
+            fetchAnnouncements();
+          }
+        })
+        .catch(error => {
+          console.error('Error updating announcement:', error);
+          showToast('Failed to update announcement', 'error');
         });
+      });
 
-      function fetchSubjects() {
-        fetch("/get_subjects")
-          .then((response) => response.json())
-          .then((subjects) => {
-            const subjectSelect = document.getElementById("subject");
-            subjectSelect.innerHTML = "";
-            subjects.forEach((subject) => {
-              const option = document.createElement("option");
-              option.value = subject.SUBJECT_ID;
-              option.textContent = subject.SUBJECT_NAME;
-              subjectSelect.appendChild(option);
-            });
+      function deleteLab(labId) {
+        showConfirmDialog(
+          'delete_lab',
+          'Delete Laboratory',
+          'Are you sure you want to delete this laboratory? This action cannot be undone.',
+          'Yes, Delete',
+          'Cancel',
+          labId
+        );
+      }
 
-            const subjectList = document.getElementById("subjectList");
-            subjectList.innerHTML = "";
-            subjects.forEach((subject) => {
-              const li = document.createElement("li");
-              li.textContent = subject.SUBJECT_NAME;
-              subjectList.appendChild(li);
-            });
+      function deleteAnnouncement(announcementId) {
+        showConfirmDialog(
+          'delete_announcement',
+          'Delete Announcement',
+          'Are you sure you want to delete this announcement? This action cannot be undone.',
+          'Yes, Delete',
+          'Cancel',
+          announcementId
+        );
+      }
+
+      function deletePurpose(purposeId) {
+        showConfirmDialog(
+          'delete_purpose',
+          'Delete Purpose',
+          'Are you sure you want to delete this purpose? This action cannot be undone.',
+          'Yes, Delete',
+          'Cancel',
+          purposeId
+        );
+      }
+
+      function showConfirmDialog(action, title, message, confirmText, cancelText, itemId) {
+        const confirmDialog = document.getElementById('confirmDialog');
+        const confirmContent = confirmDialog.querySelector('.confirm-content');
+        
+        confirmContent.innerHTML = `
+          <h3>${title}</h3>
+          <p>${message}</p>
+          <div class="confirm-buttons">
+            <button onclick="handleConfirmedDelete('${action}', ${itemId})" class="confirm-btn confirm-yes">
+              ${confirmText}
+            </button>
+            <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">
+              ${cancelText}
+            </button>
+          </div>
+        `;
+        
+        confirmDialog.style.display = 'flex';
+      }
+
+      function closeConfirmDialog() {
+        const confirmDialog = document.getElementById('confirmDialog');
+        confirmDialog.style.display = 'none';
+      }
+
+      function handleConfirmedDelete(action, itemId) {
+        switch(action) {
+          case 'delete_lab':
+            handleLabDelete(itemId);
+            break;
+          case 'delete_announcement':
+            handleAnnouncementDelete(itemId);
+            break;
+          case 'delete_purpose':
+            handlePurposeDelete(itemId);
+            break;
+        }
+      }
+
+      function handleLabDelete(labId) {
+        fetch("/manage_labs", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lab_id: labId
+          })
+        })
+          .then(response => response.json())
+          .then(data => {
+            closeConfirmDialog();
+            if (data.error) {
+              showToast(data.error, 'error');
+            } else {
+              showToast('Laboratory deleted successfully', 'success');
+              fetchLabs();
+            }
+          })
+          .catch(error => {
+            closeConfirmDialog();
+            showToast('Failed to delete laboratory', 'error');
           });
       }
 
-      function fetchLabs() {
-        fetch("/get_labs")
-          .then((response) => response.json())
-          .then((labs) => {
-            const labSelect = document.getElementById("lab");
-            labSelect.innerHTML = "";
-            labs.forEach((lab) => {
-              const option = document.createElement("option");
-              option.value = lab.LAB_ID;
-              option.textContent = lab.LAB_NAME;
-              labSelect.appendChild(option);
-            });
+      function handleAnnouncementDelete(announcementId) {
+        fetch(`/admin/announcements/${announcementId}`, {
+          method: "DELETE"
+        })
+          .then(response => response.json())
+          .then(data => {
+            closeConfirmDialog();
+            if (data.error) {
+              showToast(data.error, 'error');
+            } else {
+              showToast('Announcement deleted successfully', 'success');
+              fetchAnnouncements();
+            }
+          })
+          .catch(error => {
+            closeConfirmDialog();
+            showToast('Failed to delete announcement', 'error');
           });
       }
 
-      function fetchSchedule() {
-        fetch("/get_schedule")
-          .then((response) => response.json())
-          .then((schedule) => {
-            const calendar = document.querySelector(".calendar");
-            calendar.innerHTML = "";
-            // Populate the calendar with the schedule
-            schedule.forEach((entry) => {
-              const div = document.createElement("div");
-              div.classList.add("calendar-entry");
-              div.textContent = `${entry.DAY} ${entry.START_TIME} - ${entry.END_TIME}: ${entry.SUBJECT_NAME} in ${entry.LAB_NAME}`;
-              calendar.appendChild(div);
-            });
+      function handlePurposeDelete(purposeId) {
+        fetch(`/admin/purposes/${purposeId}`, {
+          method: "DELETE"
+        })
+          .then(response => response.json())
+          .then(data => {
+            closeConfirmDialog();
+            if (data.error) {
+              showToast(data.error, 'error');
+            } else {
+              showToast('Purpose deleted successfully', 'success');
+              fetchPurposes();
+            }
+          })
+          .catch(error => {
+            closeConfirmDialog();
+            showToast('Failed to delete purpose', 'error');
           });
+      }
+
+      // Add these new functions for logout confirmation
+      let logoutForm = null;
+
+      function confirmLogout(event) {
+        event.preventDefault();
+        logoutForm = event.target;
+        const confirmDialog = document.getElementById('confirmDialog');
+        const confirmContent = confirmDialog.querySelector('.confirm-content');
+        
+        confirmContent.innerHTML = `
+          <h3>Confirm Logout</h3>
+          <p>Are you sure you want to logout?</p>
+          <div class="confirm-buttons">
+            <button onclick="handleLogout()" class="confirm-btn confirm-yes" style="background: #dd0c0c;">Yes, Logout</button>
+            <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">Cancel</button>
+          </div>
+        `;
+        
+        confirmDialog.style.display = 'flex';
+        return false;
+      }
+
+      function handleLogout() {
+        if (logoutForm) {
+          logoutForm.submit();
+        }
+      }
+
+      document.getElementById('editForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('{{ url_for("admin.edit_info") }}', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast(data.message, 'success');
+            // Update displayed name
+            document.querySelector('.profile-header h1').textContent = `Welcome, ${formData.get('firstname')} ${formData.get('lastname')}`;
+            closeModal();
+            // Update email in info box
+            document.querySelector('.info-box p:first-child').innerHTML = `<strong>Email:</strong> ${formData.get('email')}`;
+          } else {
+            showToast(data.error || 'An error occurred while updating the profile', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred while updating the profile', 'error');
+        });
+      });
+
+      function openAddAnnouncementModal() {
+        const modal = document.getElementById('addAnnouncementModal');
+        if (modal) {
+          modal.style.display = 'block';
+          document.body.style.overflow = 'hidden';
+          animateFormGroups();
+        }
+      }
+
+      function closeAddAnnouncementModal() {
+        const modal = document.getElementById('addAnnouncementModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.getElementById('announcementForm').reset();
+      }
+
+      function openAddPurposeModal() {
+        document.getElementById('addPurposeModal').style.display = 'block';
+      }
+
+      function closeAddPurposeModal() {
+        document.getElementById('addPurposeModal').style.display = 'none';
       }
     </script>
   </body>

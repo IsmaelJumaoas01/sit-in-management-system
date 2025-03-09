@@ -3,64 +3,1113 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <title>Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <style>
+      /* Records Card Styles */
+      .records-card {
+        height: calc(100vh - 140px);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .records-card .filters-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        margin-bottom: 15px;
+      }
+
+      .records-grid {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        align-content: start;
+      }
+
+      .record-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .record-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .record-details {
+        color: white;
+      }
+
+      .record-details p {
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .record-details i {
+        color: #45a049;
+        width: 20px;
+        text-align: center;
+      }
+
+      .status-badge,
+      .session-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        font-weight: 500;
+      }
+
+      .status-badge.pending {
+        background: #f0ad4e;
+        color: white;
+      }
+
+      .status-badge.approved {
+        background: #45a049;
+        color: white;
+      }
+
+      .status-badge.denied {
+        background: #d9534f;
+        color: white;
+      }
+
+      .session-badge.on_going {
+        background: #4a90e2;
+        color: white;
+      }
+
+      .session-badge.ended {
+        background: #666;
+        color: white;
+      }
+
+      .no-records {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.7);
+        grid-column: 1 / -1;
+      }
+
+      .no-records i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        display: block;
+      }
+
+      .no-records p {
+        font-size: 16px;
+        margin: 0;
+      }
+
+      /* Filter Styles */
+      .filter-group {
+        flex: 1;
+      }
+
+      .filter-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      .custom-select {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      .custom-select:focus {
+        outline: none;
+        border-color: #45a049;
+        box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
+      }
+
+      .custom-select option {
+        background: #2c3038;
+        color: #fff;
+      }
+
+      /* Loading State */
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.7);
+        grid-column: 1 / -1;
+      }
+
+      .loading:before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 15px;
+        border: 3px solid rgba(255, 255, 255, 0.2);
+        border-top-color: #45a049;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Error State */
+      .error {
+        text-align: center;
+        padding: 40px;
+        color: rgba(255, 255, 255, 0.7);
+        grid-column: 1 / -1;
+      }
+
+      .error i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        display: block;
+        color: #d9534f;
+      }
+
+      .error p {
+        font-size: 16px;
+        margin: 0;
+        color: #d9534f;
+      }
+
+      /* Toast Styles */
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+      }
+
+      .toast {
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        min-width: 250px;
+        backdrop-filter: blur(10px);
+        animation: slide-in 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .toast.error {
+        background: rgba(220, 53, 69, 0.9);
+      }
+
+      .toast-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .toast.fade-out {
+        animation: fade-out 0.3s ease-out forwards;
+      }
+
+      @keyframes slide-in {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fade-out {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+      }
+
+
+      /* General container for rules */
+.rules-container {
+  background-color: #f7f7f7;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Intro text */
+.intro-text {
+  font-size: 18px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* Main rules list */
+.rules-list {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.rules-list li {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.rules-list li strong {
+  color: #3b6cb3;
+}
+
+/* Nested list styling for decorum rules */
+.nested-list {
+  list-style-type: square;
+  margin-left: 20px;
+}
+
+.nested-list li {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* Disciplinary actions section */
+.disciplinary-actions {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 20px;
+}
+
+.disciplinary-actions li {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.disciplinary-actions li strong {
+  color: #c75f5f;
+}
+
+/* Animation effect on scroll */
+.animate-section {
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.animate-section.visible {
+  opacity: 1;
+}
+
+    </style>
   </head>
   <body>
-    <nav class="navbar">
+    <!-- Navbar -->
+    <header class="navbar">
       <div class="navbar-container">
-        <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">Home</a>
+        <a href="{{ url_for('user.dashboard') }}" class="navbar-logo">STUDENT</a>
         <div class="navbar-icons">
           <a href="#" class="navbar-icon" title="Notifications">
             <i class="fas fa-bell"></i>
+            <span class="notification-badge">3</span>
           </a>
           <a href="#" class="navbar-icon" title="Messages">
             <i class="fas fa-envelope"></i>
+            <span class="message-badge">5</span>
           </a>
-          <a href="#" class="navbar-icon" title="Profile">
-            <i class="fas fa-user"></i>
-          </a>
+          <div class="profile-dropdown">
+            <a href="#" class="navbar-icon profile-icon" title="Profile" onclick="toggleProfileMenu(event)">
+              <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                   alt="Profile" class="profile-image">
+            </a>
+            <div class="profile-dropdown-content">
+              <a href="#" onclick="openModal()"><i class="fas fa-user-edit"></i> Edit Profile</a>
+              <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirmLogout(event)">
+                <button type="submit" class="dropdown-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+              </form>
+            </div>
+          </div>
         </div>
-        <form action="{{ url_for('auth.logout') }}" method="post">
-          <button type="submit" class="navbar-button logout-button">Logout</button>
-        </form>
       </div>
-    </nav>
-    
-    <div class="wrapper">
-      <!-- Dashboard Container -->
-      <div class="dashboard-container">
-        <h1>Welcome, {{ firstname }} {{ middlename }} {{ lastname }}!</h1>
+    </header>
+
+    <div class="main-container">
+      <!-- Left Panel -->
+      <div class="left-panel">
+        <div class="profile-header">
+          <div class="profile-picture-container">
+            <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                 alt="Profile Picture" class="large-profile-image">
+            <button class="change-photo-btn" onclick="document.getElementById('profile-upload').click()">
+              <i class="fas fa-camera"></i>
+            </button>
+            <input type="file" id="profile-upload" hidden accept="image/*" onchange="previewImage(this)">
+          </div>
+          <h1>Welcome, {{ firstname }} {{ lastname }}!</h1>
+        </div>
         <div class="info-box">
           <p><strong>ID:</strong> {{ user_idno }}</p>
           <p><strong>Course:</strong> {{ course }}</p>
           <p><strong>Year:</strong> {{ year }}</p>
           <p><strong>Email:</strong> {{ email }}</p>
-          <form action="{{ url_for('user.edit_info') }}" method="get">
-            <button type="submit" class="navbar-button">Edit Info</button>
+        </div>
+
+        <!-- Add visible Edit and Logout buttons -->
+        <div class="action-buttons">
+          <button class="action-button edit-button" onclick="openModal()">
+            <i class="fas fa-user-edit"></i> Edit Profile
+          </button>
+          <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirmLogout(event)">
+            <button type="submit" class="action-button logout-button">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
           </form>
         </div>
+
+        <div class="button-container">
+          <button class="button ripple" onclick="showSection('announcements', this)">
+            <i class="fas fa-bullhorn"></i> Announcements
+          </button>
+          <button class="button ripple" onclick="showSection('rules', this)">
+            <i class="fas fa-history"></i> Sit-in Rules
+          </button>
+          <button class="button ripple" onclick="showSection('status', this)">
+            <i class="fas fa-history"></i> Sit-in History
+          </button>
+        </div>
       </div>
-      
-      <!-- Announcements Container -->
-      <div class="announcement-container">
-        <h2>Announcements</h2>
-        <div class="announcement-scrollable">
-          {% for group, announcements in grouped_announcements.items() %}
-            {% if announcements %}
-              <h3>{{ group }}</h3>
-              {% for ann in announcements %}
-                <div class="announcement-item">
-                  <h4>{{ ann.title }}</h4>
-                  <p>{{ ann.content }}</p>
-                  <small>Posted on: {{ ann.date_posted }} by {{ ann.posted_by }}</small>
+
+      <!-- Right Panel -->
+      <div class="right-panel">
+        <!-- Edit Profile Modal -->
+        <div id="editModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Edit Profile Information</h2>
+            <form action="{{ url_for('user.edit_info') }}" method="post" id="editForm" enctype="multipart/form-data">
+              <div class="modal-profile-picture">
+                <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
+                     alt="Profile Picture" class="preview-profile-image">
+                <div class="upload-overlay">
+                  <input type="file" name="profile_picture" id="modal-profile-upload" hidden accept="image/*" onchange="previewImage(this)">
+                  <label for="modal-profile-upload" class="upload-btn">
+                    <i class="fas fa-camera"></i> Change Photo
+                  </label>
                 </div>
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
+              </div>
+              
+              <div class="form-sections">
+                <div class="form-section">
+                  <h3>Personal Information</h3>
+                  <div class="form-group animate-up">
+                    <label for="firstname">First Name</label>
+                    <input type="text" id="firstname" name="firstname" value="{{ firstname }}" required>
+                  </div>
+                  <div class="form-group animate-up">
+                    <label for="middlename">Middle Initial</label>
+                    <input type="text" id="middlename" name="middlename" value="{{ middlename }}" maxlength="1">
+                  </div>
+                  <div class="form-group animate-up">
+                    <label for="lastname">Last Name</label>
+                    <input type="text" id="lastname" name="lastname" value="{{ lastname }}" required>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Academic Information</h3>
+                  <div class="form-group animate-up">
+                    <label for="course">Course</label>
+                    <select id="course" name="course" required class="custom-select">
+                      <option value="BSIT" {% if course == 'BSIT' %}selected{% endif %}>Bachelor of Science in Information Technology</option>
+                      <option value="BSCS" {% if course == 'BSCS' %}selected{% endif %}>Bachelor of Science in Computer Science</option>
+                      <option value="BSHM" {% if course == 'BSHM' %}selected{% endif %}>Bachelor of Science in Hospitality Management</option>
+                      <option value="BSBA" {% if course == 'BSBA' %}selected{% endif %}>Bachelor of Science in Business Administration</option>
+                      <option value="BSED" {% if course == 'BSED' %}selected{% endif %}>Bachelor of Science in Education</option>
+                      <option value="BSCRIM" {% if course == 'BSCRIM' %}selected{% endif %}>Bachelor of Science in Criminology</option>
+                      <option value="BSPSYCH" {% if course == 'BSPSYCH' %}selected{% endif %}>Bachelor of Science in Psychology</option>
+                      <option value="BSTM" {% if course == 'BSTM' %}selected{% endif %}>Bachelor of Science in Tourism Management</option>
+                    </select>
+                  </div>
+                  <div class="form-group animate-up">
+                    <label for="year">Year Level</label>
+                    <select id="year" name="year" required class="custom-select">
+                      <option value="1" {% if year == '1' %}selected{% endif %}>1st Year</option>
+                      <option value="2" {% if year == '2' %}selected{% endif %}>2nd Year</option>
+                      <option value="3" {% if year == '3' %}selected{% endif %}>3rd Year</option>
+                      <option value="4" {% if year == '4' %}selected{% endif %}>4th Year</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Contact Information</h3>
+                  <div class="form-group animate-up">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" value="{{ email }}" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="save-changes-btn">
+                  <i class="fas fa-save"></i> Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+
+        <!-- Announcements Section -->
+        <div id="announcements" class="content-section animate-section">
+          <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
+          <div class="announcement-container">
+            <!-- Announcements will be populated dynamically -->
+          </div>
+        </div>
+
+        
+        <div id="rules" class="content-section animate-section">
+          <h2><i class="fas fa-bullhorn"></i> Sitin Rules</h2>
+          <div class="announcement-container">
+
+            <p class="intro-text">To avoid embarrassment and maintain camaraderie with your friends and superiors at our laboratories, please observe the following:</p>
+            
+            <ul class="rules-list">
+              <li><strong>Maintain silence, proper decorum, and discipline inside the laboratory.</strong> Mobile phones, walkmans, and other personal pieces of equipment must be switched off.</li>
+              <li><strong>Games are not allowed inside the lab.</strong> This includes computer-related games, card games, and other games that may disturb the operation of the lab.</li>
+              <li><strong>Internet surfing is allowed only with the permission of the instructor.</strong> Downloading and installing of software are strictly prohibited.</li>
+              <li><strong>Observe computer time usage carefully.</strong> A fifteen-minute allowance is given for each use. Otherwise, the unit will be given to those who wish to "sit-in".</li>
+              <li><strong>Observe proper decorum while inside the laboratory:</strong>
+                <ul class="nested-list">
+                  <li>Do not get inside the lab unless the instructor is present.</li>
+                  <li>All bags, knapsacks, and the like must be deposited at the counter.</li>
+                  <li>Follow the seating arrangement of your instructor.</li>
+                  <li>At the end of class, all software programs must be closed.</li>
+                  <li>Return all chairs to their proper places after using.</li>
+                </ul>
+              </li>
+              <li><strong>Chewing gum, eating, drinking, smoking, and other forms of vandalism are prohibited inside the lab.</strong></li>
+              <li><strong>Anyone causing a continual disturbance will be asked to leave the lab.</strong> Acts or gestures offensive to the members of the community, including public display of physical intimacy, are not tolerated.</li>
+              <li><strong>For serious offenses, the lab personnel may call the Civil Security Office (CSU) for assistance.</strong></li>
+              <li><strong>Any technical problem or difficulty must be addressed to the laboratory supervisor, student assistant, or instructor immediately.</strong></li>
+            </ul>
+        
+            <h3>Disciplinary Action</h3>
+            <ul class="disciplinary-actions">
+              <li><strong>First Offense:</strong> The Head, Dean, or OIC recommends suspension from classes for each offender.</li>
+              <li><strong>Second and Subsequent Offenses:</strong> A recommendation for a heavier sanction will be endorsed to the Guidance Center.</li>
+            </ul>
+          </div>
+        </div>
+        
+
+        <!-- Sit-in History Section -->
+        <div id="status" class="content-section animate-section">
+          <h2><i class="fas fa-history"></i> Sit-in History</h2>
+          <div class="card-container">
+            <div class="card records-card">
+              <div class="filters-container">
+                <div class="filter-group">
+                  <label for="recordFilterLab">Filter by Lab:</label>
+                  <select id="recordFilterLab" class="custom-select" onchange="filterRecords()">
+                    <option value="">All Labs</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterPurpose">Filter by Purpose:</label>
+                  <select id="recordFilterPurpose" class="custom-select" onchange="filterRecords()">
+                    <option value="">All Purposes</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterStatus">Filter by Status:</label>
+                  <select id="recordFilterStatus" class="custom-select" onchange="filterRecords()">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="DENIED">Denied</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterSession">Filter by Session:</label>
+                  <select id="recordFilterSession" class="custom-select" onchange="filterRecords()">
+                    <option value="">All Sessions</option>
+                    <option value="ON_GOING">Ongoing</option>
+                    <option value="ENDED">Ended</option>
+                  </select>
+                </div>
+              </div>
+              <div class="records-grid custom-scrollbar">
+                <!-- Records will be populated dynamically -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- Image Cropper Modal -->
+    <div id="cropperModal" class="cropper-modal">
+      <div class="cropper-container">
+        <span class="close" onclick="closeCropperModal()">&times;</span>
+        <div id="cropperArea">
+          <img id="cropperImage" src="" alt="Image to crop">
+        </div>
+        <div class="cropper-buttons">
+          <button class="cropper-btn save" onclick="saveCroppedImage()">Save</button>
+          <button class="cropper-btn cancel" onclick="closeCropperModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirmation Dialog -->
+    <div id="confirmDialog" class="confirm-dialog">
+      <div class="confirm-content">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to logout?</p>
+        <div class="confirm-buttons">
+          <button onclick="handleLogout()" class="confirm-btn confirm-yes" style="background: #dd0c0c;">Yes, Logout</button>
+          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script>
+      let cropper = null;
+      let logoutForm = null;
+
+      function confirmLogout(event) {
+        event.preventDefault();
+        logoutForm = event.target;
+        document.getElementById('confirmDialog').style.display = 'flex';
+        return false;
+      }
+
+      function handleLogout() {
+        if (logoutForm) {
+          logoutForm.submit();
+        }
+      }
+
+      function closeConfirmDialog() {
+        document.getElementById('confirmDialog').style.display = 'none';
+      }
+
+      // Close dialog when clicking outside
+      document.getElementById('confirmDialog').addEventListener('click', function(event) {
+        if (event.target === this) {
+          closeConfirmDialog();
+        }
+      });
+
+      // Show/Hide Sections
+      function showSection(sectionId, button) {
+        document.querySelectorAll(".content-section").forEach(section => {
+          section.style.display = "none";
+          section.classList.remove("show");
+        });
+        const section = document.getElementById(sectionId);
+        section.style.display = "block";
+        setTimeout(() => section.classList.add("show"), 10);
+        
+        document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
+        button.classList.add("selected");
+        
+        // Load records when showing the status section
+        if (sectionId === 'status') {
+          loadFilters();
+          filterRecords();
+        }
+      }
+
+      // Initialize dashboard
+      document.addEventListener("DOMContentLoaded", function() {
+        showSection("announcements", document.querySelector(".button"));
+        fetchAnnouncements();
+        fetchSitinStatus();
+        
+        // Ensure all modals are closed on page load
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+          modal.style.display = 'none';
+        });
+        
+        // Ensure cropper modal is closed
+        const cropperModal = document.getElementById('cropperModal');
+        if (cropperModal) {
+          cropperModal.style.display = 'none';
+        }
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+          if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+            document.body.style.overflow = 'auto';
+          }
+        }
+      });
+
+      // Profile picture functionality
+      function previewImage(input) {
+        if (input.files && input.files[0]) {
+          const file = input.files[0];
+          const reader = new FileReader();
+          
+          reader.onload = function(e) {
+            const cropperModal = document.getElementById('cropperModal');
+            const cropperImage = document.getElementById('cropperImage');
+            
+            // Reset cropper if it exists
+            if (cropper) {
+              cropper.destroy();
+              cropper = null;
+            }
+            
+            cropperImage.src = e.target.result;
+            cropperModal.style.display = 'flex';
+            
+            // Wait for image to load before initializing cropper
+            cropperImage.onload = function() {
+              cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                ready: function() {
+                  // Center the crop box when the cropper is ready
+                  const containerData = cropper.getContainerData();
+                  const cropBoxData = cropper.getCropBoxData();
+                  const left = (containerData.width - cropBoxData.width) / 2;
+                  const top = (containerData.height - cropBoxData.height) / 2;
+                  cropper.setCropBoxData({ left: left, top: top });
+                }
+              });
+            };
+          };
+          
+          reader.readAsDataURL(file);
+        }
+      }
+
+      function closeCropperModal() {
+        const cropperModal = document.getElementById('cropperModal');
+        cropperModal.style.display = 'none';
+        if (cropper) {
+          cropper.destroy();
+          cropper = null;
+        }
+        // Reset file inputs
+        document.getElementById('profile-upload').value = '';
+        document.getElementById('modal-profile-upload').value = '';
+      }
+
+      function saveCroppedImage() {
+        if (!cropper) return;
+        
+        const canvas = cropper.getCroppedCanvas({
+          width: 400,
+          height: 400
+        });
+        
+        canvas.toBlob(function(blob) {
+          const formData = new FormData();
+          formData.append('profile_picture', blob, 'profile.jpg');
+          
+          fetch('{{ url_for("user.update_profile_picture") }}', {
+            method: 'POST',
+            body: formData
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              document.querySelector('.preview-profile-image').src = data.profile_picture_data;
+              document.querySelector('.profile-image').src = data.profile_picture_data;
+              document.querySelector('.large-profile-image').src = data.profile_picture_data;
+              closeCropperModal();
+            }
+          });
+        }, 'image/jpeg', 0.95);
+      }
+
+      // Modal functionality
+      const modal = document.getElementById("editModal");
+      const formGroups = document.querySelectorAll('.form-group');
+      
+      function openModal() {
+        modal.style.display = "block";
+        document.body.style.overflow = 'hidden';
+        animateFormGroups();
+      }
+      
+      function closeModal() {
+        modal.style.display = "none";
+        document.body.style.overflow = 'auto';
+      }
+      
+      function animateFormGroups() {
+        formGroups.forEach((group, index) => {
+          setTimeout(() => {
+            group.classList.add('show');
+          }, 100 * index);
+        });
+      }
+
+      // Profile dropdown
+      function toggleProfileMenu(event) {
+        event.preventDefault();
+        const dropdown = document.querySelector('.profile-dropdown-content');
+        dropdown.classList.toggle('show');
+      }
+
+      // Close dropdown when clicking outside
+      window.onclick = function(event) {
+        if (!event.target.matches('.profile-icon')) {
+          const dropdowns = document.getElementsByClassName('profile-dropdown-content');
+          for (let dropdown of dropdowns) {
+            if (dropdown.classList.contains('show')) {
+              dropdown.classList.remove('show');
+            }
+          }
+        }
+        if (event.target == modal) {
+          closeModal();
+        }
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000); // difference in seconds
+        
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + ' minutes ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + ' hours ago';
+        if (diff < 604800) return Math.floor(diff / 86400) + ' days ago';
+        if (diff < 2592000) return Math.floor(diff / 604800) + ' weeks ago';
+        if (diff < 31536000) return Math.floor(diff / 2592000) + ' months ago';
+        return Math.floor(diff / 31536000) + ' years ago';
+      }
+
+      function fetchAnnouncements() {
+        fetch('/get_announcements')
+          .then(response => response.json())
+          .then(data => {
+            const container = document.querySelector('.announcement-container');
+            container.innerHTML = '';
+            
+            // Get the grouped announcements
+            const groups = data.grouped_announcements;
+            
+            // Render each group
+            Object.entries(groups).forEach(([groupName, announcements]) => {
+              if (announcements.length > 0) {
+                const group = document.createElement('div');
+                group.className = 'announcement-group';
+                group.innerHTML = `<h3>${groupName}</h3>`;
+                
+                announcements.forEach(announcement => {
+                  const date = new Date(announcement.date_posted);
+                  const timeAgo = getTimeAgo(date);
+                  
+                  const item = document.createElement('div');
+                  item.className = 'announcement-item';
+                  item.innerHTML = `
+                    <h4>${announcement.title}</h4>
+                    <p>${announcement.content}</p>
+                    <small>Posted ${timeAgo} by ${announcement.posted_by}</small>
+                  `;
+                  group.appendChild(item);
+                });
+                
+                container.appendChild(group);
+              }
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching announcements:', error);
+            const container = document.querySelector('.announcement-container');
+            container.innerHTML = '<p class="error-message">Failed to load announcements. Please try again later.</p>';
+          });
+      }
+
+      function fetchSitinStatus() {
+        fetch('/get_sitin_status')
+          .then(response => response.json())
+          .then(status => {
+            const statusContainer = document.querySelector('.status-container');
+            statusContainer.innerHTML = '';
+            status.forEach(entry => {
+              const div = document.createElement('div');
+              div.classList.add('status-item');
+              div.innerHTML = `
+                <h4>Request #${entry.RECORD_ID}</h4>
+                <p>Lab: ${entry.LAB_NAME}</p>
+                <p>Date: ${entry.DATE}</p>
+                <p>Status: <span class="status-badge ${entry.STATUS.toLowerCase()}">${entry.STATUS}</span></p>
+              `;
+              statusContainer.appendChild(div);
+            });
+          });
+      }
+
+      function loadFilters() {
+        // Load labs for filters
+        fetch('/laboratories')
+          .then(response => response.json())
+          .then(data => {
+            const select = document.getElementById('recordFilterLab');
+            if (select) {
+              select.innerHTML = '<option value="">All Labs</option>';
+              if (Array.isArray(data)) {
+                data.forEach(lab => {
+                  select.innerHTML += `<option value="${lab.LAB_ID}">${lab.LAB_NAME}</option>`;
+                });
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error loading labs:', error);
+            showToast('Error loading labs', 'error');
+          });
+        
+        // Load purposes for filters
+        fetch('/purposes')
+          .then(response => response.json())
+          .then(data => {
+            const select = document.getElementById('recordFilterPurpose');
+            if (select) {
+              select.innerHTML = '<option value="">All Purposes</option>';
+              if (Array.isArray(data)) {
+                data.forEach(purpose => {
+                  select.innerHTML += `<option value="${purpose.PURPOSE_ID}">${purpose.PURPOSE_NAME}</option>`;
+                });
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error loading purposes:', error);
+            showToast('Error loading purposes', 'error');
+          });
+      }
+
+      function filterRecords() {
+        const labId = document.getElementById('recordFilterLab').value;
+        const purposeId = document.getElementById('recordFilterPurpose').value;
+        const status = document.getElementById('recordFilterStatus').value;
+        const session = document.getElementById('recordFilterSession').value;
+        
+        let url = '/sitin_records';
+        const params = new URLSearchParams();
+        if (labId) params.append('lab_id', labId);
+        if (purposeId) params.append('purpose_id', purposeId);
+        if (status) params.append('status', status);
+        if (session) params.append('session', session);
+        if (params.toString()) url += '?' + params.toString();
+        
+        const container = document.querySelector('.records-grid');
+        container.innerHTML = '<div class="loading">Loading records...</div>';
+        
+        fetch(url)
+          .then(response => response.json())
+          .then(records => {
+            container.innerHTML = '';
+            
+            if (records.length === 0) {
+              container.innerHTML = `
+                <div class="no-records">
+                  <i class="fas fa-history"></i>
+                  <p>No records found</p>
+                </div>
+              `;
+              return;
+            }
+            
+            records.forEach(record => {
+              const card = document.createElement('div');
+              card.className = 'record-card';
+              card.innerHTML = `
+                <div class="record-details">
+                  <p><i class="fas fa-desktop"></i> ${record.LAB_NAME}</p>
+                  <p><i class="fas fa-tasks"></i> ${record.PURPOSE_NAME}</p>
+                  <p><i class="fas fa-clock"></i> Started: ${formatDate(record.DATE)}</p>
+                  ${record.END_TIME ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(record.END_TIME)}</p>` : ''}
+                  <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${record.STATUS.toLowerCase()}">${record.STATUS}</span></p>
+                  <p><i class="fas fa-spinner"></i> Session: <span class="session-badge ${record.SESSION.toLowerCase()}">${record.SESSION}</span></p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            container.innerHTML = `
+              <div class="error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading records: ${error.message}</p>
+              </div>
+            `;
+            showToast('Error loading records: ' + error.message, 'error');
+          });
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+      }
+
+      // Add toast functionality
+      function showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+          toastContainer = document.createElement('div');
+          toastContainer.className = 'toast-container';
+          document.body.appendChild(toastContainer);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+          <div class="toast-content">
+            <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+          </div>
+        `;
+
+        // Add toast to container
+        toastContainer.appendChild(toast);
+
+        // Remove toast after 3 seconds
+        setTimeout(() => {
+          toast.classList.add('fade-out');
+          setTimeout(() => {
+            toast.remove();
+            if (toastContainer.children.length === 0) {
+              toastContainer.remove();
+            }
+          }, 300);
+        }, 3000);
+      }
+
+      // Add toast styles
+      const style = document.createElement('style');
+      style.textContent = `
+        .toast-container {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+        }
+
+        .toast {
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          min-width: 250px;
+          backdrop-filter: blur(10px);
+          animation: slide-in 0.3s ease-out;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.error {
+          background: rgba(220, 53, 69, 0.9);
+        }
+
+        .toast-content {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .toast.fade-out {
+          animation: fade-out 0.3s ease-out forwards;
+        }
+
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        @keyframes fade-out {
+          from {
+            transform: translateX(0);
+            opacity: 1;
+          }
+          to {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // To make the content appear with animation when scrolled into view
+      document.addEventListener('DOMContentLoaded', function () {
+        const sections = document.querySelectorAll('.animate-section');
+
+        const isInViewport = (element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= window.innerHeight;
+        };
+
+        const checkScroll = () => {
+          sections.forEach((section) => {
+            if (isInViewport(section)) {
+              section.classList.add('visible');
+            }
+          });
+        };
+
+        window.addEventListener('scroll', checkScroll);
+        checkScroll(); // Initial check in case the section is already in view
+      });
+
+    </script>
   </body>
 </html>

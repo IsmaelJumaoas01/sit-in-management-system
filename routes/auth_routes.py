@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from db import get_db_connection
 import re
+import os
 
 auth_bp = Blueprint('auth', __name__)
+
+# Add path for default profile picture
+DEFAULT_PROFILE_IMAGE = os.path.join('static', 'images', 'default-image.png')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -54,19 +58,39 @@ def register():
             conn.close()
             return render_template('register.html', form_data=form_data)
 
-        user_type = 'student'
+        user_type = 'STUDENT'
 
-        cursor.execute(
-            "INSERT INTO USERS (IDNO, LASTNAME, FIRSTNAME, MIDDLENAME, COURSE, YEAR, EMAIL, PASSWORD, USER_TYPE) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (form_data['idno'], form_data['lastname'], form_data['firstname'], form_data['middlename'],
-             form_data['course'], form_data['year'], form_data['email'], form_data['password'], user_type)
-        )
-        conn.commit()
-        cursor.close()
-        conn.close()
+        # Read the default profile picture
+        try:
+            with open(DEFAULT_PROFILE_IMAGE, 'rb') as f:
+                default_profile_picture = f.read()
+        except Exception as e:
+            default_profile_picture = None
 
-        flash('Registration successful! You can now login.', 'success')
-        return redirect(url_for('auth.login'))
+        try:
+            # Insert the new user
+            cursor.execute(
+                "INSERT INTO USERS (IDNO, LASTNAME, FIRSTNAME, MIDDLENAME, COURSE, YEAR, EMAIL, PASSWORD, USER_TYPE, PROFILE_PICTURE) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (form_data['idno'], form_data['lastname'], form_data['firstname'], form_data['middlename'],
+                 form_data['course'], form_data['year'], form_data['email'], form_data['password'], user_type, default_profile_picture)
+            )
+            
+            # Set initial sit-in limit to 30
+            cursor.execute(
+                "INSERT INTO SIT_IN_LIMITS (USER_IDNO, SIT_IN_COUNT) VALUES (%s, 30)",
+                (form_data['idno'],)
+            )
+            
+            conn.commit()
+            flash('Registration successful! You can now login.', 'success')
+            return redirect(url_for('auth.login'))
+        except Exception as e:
+            conn.rollback()
+            flash(f'An error occurred during registration: {str(e)}', 'error')
+            return render_template('register.html', form_data=form_data)
+        finally:
+            cursor.close()
+            conn.close()
 
     return render_template('register.html', form_data=form_data)
 
@@ -95,7 +119,13 @@ def login():
             session['YEAR'] = user[5]
             session['EMAIL'] = user[6]
 
-            return redirect(url_for('user.dashboard'))
+            # Redirect based on user type
+            if user[8] == 'ADMIN':
+                return redirect(url_for('admin.admin_dashboard'))
+            elif user[8] == 'STAFF':
+                return redirect(url_for('staff.staff_dashboard'))
+            else:
+                return redirect(url_for('user.dashboard'))
 
         flash('Invalid credentials, please try again.', 'error')
 

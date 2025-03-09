@@ -55,22 +55,43 @@ body {
 .button-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+    margin-top: 30px;
 }
 
 .button {
-    padding: 10px;
-    background-color: #45a049;
+    padding: 12px 20px;
+    background-color: #4a90e2;
     color: white;
     border: none;
-    border-radius: 5px;
-    font-size: 18px;
+    border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    width: 100%;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .button:hover {
-    background-color: #33833b;
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+}
+
+.button.selected {
+    background-color: #45a049;
+    color: white;
+}
+
+.button i {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
 }
 
 .content-section {
@@ -150,11 +171,6 @@ p {
     background-color: #45a049;
 }
 
-.button.selected {
-    background-color: #33833b; /* Different color for selected button */
-    color: white; /* Ensure text stays white */
-}
-
 #addSubjectForm, #scheduleSubjectForm, #setSemesterDatesForm {
     display: flex;
     flex-direction: column;
@@ -202,4 +218,574 @@ p {
     border-radius: 8px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     text-align: center;
+}
+
+/* Profile Picture Styles */
+.profile-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    transition: transform 0.3s ease;
+}
+
+.profile-image:hover {
+    transform: scale(1.1);
+}
+
+.large-profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 15px;
+}
+
+.profile-picture-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.change-photo-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: rgba(74, 144, 226, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.change-photo-btn:hover {
+    background: #357abd;
+    transform: scale(1.1);
+}
+
+/* Profile Dropdown */
+.profile-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: rgba(40, 44, 52, 0.95);
+    min-width: 200px;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    z-index: 1000;
+    animation: dropdownFade 0.3s ease;
+}
+
+.profile-dropdown-content.show {
+    display: block;
+}
+
+.profile-dropdown-content a,
+.profile-dropdown-content button {
+    display: block;
+    padding: 12px 16px;
+    color: white;
+    text-decoration: none;
+    transition: background 0.3s ease;
+    border: none;
+    width: 100%;
+    text-align: left;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.profile-dropdown-content a:hover,
+.profile-dropdown-content button:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.animate-modal {
+    animation: modalSlideDown 0.4s ease-out;
+}
+
+.modal-profile-picture {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.preview-profile-image {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    margin-bottom: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease;
+}
+
+.preview-profile-image:hover {
+    transform: scale(1.05);
+}
+
+.upload-overlay {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.upload-btn {
+    background: #4a90e2;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    box-shadow: 0 3px 10px rgba(74, 144, 226, 0.3);
+}
+
+.upload-btn:hover {
+    background: #357abd;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+}
+
+/* Notification Badge */
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 4px 8px;
+    font-size: 12px;
+    animation: pulse 2s infinite;
+}
+
+/* Animations */
+@keyframes modalSlideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Ripple Effect */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Section Animations */
+.animate-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.animate-section.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Form Groups Animation */
+.form-group {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.form-group.show {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.5s ease;
+}
+
+/* Enhanced Button Styles */
+.button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #45a049 0%, #33833b 100%);
+}
+
+.button i {
+    font-size: 18px;
+}
+
+.button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(69, 160, 73, 0.4);
+}
+
+/* Content Section Enhancements */
+.content-section {
+    padding: 20px;
+    border-radius: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+}
+
+.content-section:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.content-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24px;
+    margin-bottom: 25px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lab-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease;
+}
+
+.lab-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lab-item h3 {
+    color: #fff;
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.lab-item p {
+    color: #ccc;
+    margin: 5px 0;
+}
+
+.delete-btn {
+    background: #ff4444;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.delete-btn:hover {
+    background: #ff6666;
+    transform: translateY(-2px);
+}
+
+.delete-btn i {
+    font-size: 14px;
+}
+
+.announcement-container {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+.announcement-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.announcement-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.announcement-item h3 {
+    color: #fff;
+    margin: 0 0 10px 0;
+    font-size: 20px;
+}
+
+.announcement-item p {
+    color: #ccc;
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.announcement-item small {
+    color: #888;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 15px;
+}
+
+.announcement-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+#announcementForm {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+textarea.custom-input {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.action-button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: white;
+}
+
+.edit-button {
+    background: #4a90e2;
+}
+
+.edit-button:hover {
+    background: #357abd;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+}
+
+.logout-button {
+    background: #dd0c0c;
+}
+
+.logout-button:hover {
+    background: #ff4444;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(221, 12, 12, 0.4);
+}
+
+/* Confirmation Dialog */
+.confirm-dialog {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.confirm-content {
+    background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalSlideDown 0.3s ease-out;
+}
+
+.confirm-content h3 {
+    margin: 0 0 15px 0;
+    font-size: 24px;
+    color: #fff;
+}
+
+.confirm-content p {
+    margin: 0 0 20px 0;
+    color: #ccc;
+    font-size: 16px;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.confirm-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.confirm-yes {
+    background: #dd0c0c;
+    color: white;
+}
+
+.confirm-yes:hover {
+    background: #ff4444;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(221, 12, 12, 0.4);
+}
+
+.confirm-no {
+    background: #4a90e2;
+    color: white;
+}
+
+.confirm-no:hover {
+    background: #357abd;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
 }

@@ -377,6 +377,7 @@
           <p><strong>Course:</strong> {{ course }}</p>
           <p><strong>Year:</strong> {{ year }}</p>
           <p><strong>Email:</strong> {{ email }}</p>
+          <p><strong>Remaining Sit-in Sessions:</strong> <span class="session-count">{{ remaining_sessions }}</span></p>
         </div>
 
         <!-- Add visible Edit and Logout buttons -->
@@ -403,7 +404,7 @@
           </button>
         </div>
       </div>
-
+      
       <!-- Right Panel -->
       <div class="right-panel">
         <!-- Edit Profile Modal -->
@@ -496,7 +497,7 @@
         
         <div id="rules" class="content-section animate-section">
           <h2><i class="fas fa-bullhorn"></i> Sitin Rules</h2>
-          <div class="announcement-container">
+      <div class="announcement-container">
 
             <p class="intro-text">To avoid embarrassment and maintain camaraderie with your friends and superiors at our laboratories, please observe the following:</p>
             

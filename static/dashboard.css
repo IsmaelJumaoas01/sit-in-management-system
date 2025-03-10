@@ -1148,7 +1148,7 @@ body {
 
 .card h3 {
   color: #fff;
-  margin-bottom: 20px;
+    margin-bottom: 20px;
   font-size: 1.2em;
   display: flex;
   align-items: center;
@@ -1408,4 +1408,18 @@ body {
 .animate-up.show {
   opacity: 1;
   transform: translateY(0);
+}
+
+.session-count {
+  color: #45a049;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.remaining-sessions {
+  display: inline-block;
+  margin-left: 10px;
+  color: #45a049;
+  font-size: 0.9em;
+  font-weight: bold;
 }

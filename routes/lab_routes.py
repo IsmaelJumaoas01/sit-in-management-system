@@ -82,16 +82,23 @@ def search_student(idno):
     cursor = conn.cursor()
     
     try:
+        # Get student info
         cursor.execute("SELECT IDNO, LASTNAME, FIRSTNAME, EMAIL, COURSE, YEAR FROM USERS WHERE IDNO = %s AND USER_TYPE = 'STUDENT'", (idno,))
         student = cursor.fetchone()
         
         if student:
+            # Get remaining sessions
+            cursor.execute("SELECT SIT_IN_COUNT FROM SIT_IN_LIMITS WHERE USER_IDNO = %s", (idno,))
+            sessions_result = cursor.fetchone()
+            remaining_sessions = sessions_result[0] if sessions_result else 0
+            
             student_data = {
                 "IDNO": student[0],
                 "NAME": f"{student[2]} {student[1]}",
                 "EMAIL": student[3],
                 "COURSE": student[4],
-                "YEAR": student[5]
+                "YEAR": student[5],
+                "REMAINING_SESSIONS": remaining_sessions
             }
             return jsonify([student_data])
         else:

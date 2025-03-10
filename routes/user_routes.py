@@ -142,9 +142,19 @@ def dashboard():
         year = session.get('YEAR')
         email = session.get('EMAIL')
 
-        # Get announcements for student dashboard
+        # Get remaining sit-in sessions
+        remaining_sessions = 0
         conn = get_db_connection()
         cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT SIT_IN_COUNT FROM SIT_IN_LIMITS WHERE USER_IDNO = %s", (user_idno,))
+            result = cursor.fetchone()
+            if result:
+                remaining_sessions = result[0]
+        except Exception as e:
+            print(f"Error getting remaining sessions: {e}")
+
+        # Get announcements for student dashboard
         try:
             cursor.execute("""
                 SELECT ANNOUNCEMENT_ID, TITLE, CONTENT, DATE_POSTED, POSTED_BY 
@@ -182,6 +192,7 @@ def dashboard():
                             course=course,
                             year=year,
                             email=email,
+                            remaining_sessions=remaining_sessions,
                             grouped_announcements=grouped_announcements)
     else:
         flash('You must be logged in to view the dashboard.', 'error')
@@ -358,6 +369,24 @@ def get_purposes():
         cursor.execute("SELECT PURPOSE_ID, PURPOSE_NAME FROM PURPOSES ORDER BY PURPOSE_NAME")
         purposes = cursor.fetchall()
         return jsonify([{'PURPOSE_ID': purpose[0], 'PURPOSE_NAME': purpose[1]} for purpose in purposes])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/remaining_sessions')
+def get_remaining_sessions():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("SELECT SIT_IN_COUNT FROM SIT_IN_LIMITS WHERE USER_IDNO = %s", (session['IDNO'],))
+        result = cursor.fetchone()
+        return jsonify({'remaining_sessions': result[0] if result else 0})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

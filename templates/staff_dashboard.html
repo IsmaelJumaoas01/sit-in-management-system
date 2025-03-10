@@ -1916,10 +1916,11 @@
                          class="student-profile-pic"
                          onerror="this.src='/static/default_profile.png'">
                     ${student.IDNO}
+                    <span class="remaining-sessions">(${student.REMAINING_SESSIONS} sessions left)</span>
                   </td>
-            <td>${student.NAME}</td>
-            <td>${student.COURSE}</td>
-            <td>${student.YEAR}</td>
+                  <td>${student.NAME}</td>
+                  <td>${student.COURSE}</td>
+                  <td>${student.YEAR}</td>
                   <td>${student.EMAIL}</td>
                   <td>
                     <button class="action-button start-sitin-btn" onclick="openSitInModal('${student.IDNO}', '${student.NAME}')">

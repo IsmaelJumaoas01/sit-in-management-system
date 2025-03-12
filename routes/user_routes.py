@@ -392,3 +392,123 @@ def get_remaining_sessions():
     finally:
         cursor.close()
         conn.close()
+
+@user_bp.route('/feedback_history')
+def get_feedback_history():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT 
+                f.FEEDBACK_ID,
+                f.RECORD_ID,
+                f.FEEDBACK_TEXT,
+                f.DATE_SUBMITTED,
+                l.LAB_NAME,
+                p.PURPOSE_NAME,
+                s.DATE as SESSION_DATE
+            FROM FEEDBACKS f
+            JOIN SIT_IN_RECORDS s ON f.RECORD_ID = s.RECORD_ID
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE f.USER_IDNO = %s
+            ORDER BY f.DATE_SUBMITTED DESC
+        """, (session['IDNO'],))
+        
+        feedbacks = []
+        for row in cursor.fetchall():
+            feedbacks.append({
+                'feedback_id': row[0],
+                'record_id': row[1],
+                'feedback_text': row[2],
+                'date_submitted': row[3].strftime("%Y-%m-%d %H:%M:%S") if row[3] else None,
+                'lab_name': row[4],
+                'purpose_name': row[5],
+                'session_date': row[6].strftime("%Y-%m-%d %H:%M:%S") if row[6] else None
+            })
+        
+        return jsonify(feedbacks)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/check_feedback/<int:record_id>')
+def check_feedback(record_id):
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM FEEDBACKS 
+            WHERE RECORD_ID = %s AND USER_IDNO = %s
+        """, (record_id, session['IDNO']))
+        
+        count = cursor.fetchone()[0]
+        return jsonify({'has_feedback': count > 0})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@user_bp.route('/submit_feedback', methods=['POST'])
+def submit_feedback():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    data = request.get_json()
+    record_id = data.get('record_id')
+    feedback_text = data.get('feedback_text')
+
+    if not record_id or not feedback_text:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Check if feedback already exists
+        cursor.execute("""
+            SELECT COUNT(*) FROM FEEDBACKS 
+            WHERE RECORD_ID = %s AND USER_IDNO = %s
+        """, (record_id, session['IDNO']))
+        
+        if cursor.fetchone()[0] > 0:
+            return jsonify({'error': 'Feedback already submitted for this session'}), 400
+
+        # Verify the record belongs to the user and is not ongoing
+        cursor.execute("""
+            SELECT SESSION FROM SIT_IN_RECORDS 
+            WHERE RECORD_ID = %s AND USER_IDNO = %s
+        """, (record_id, session['IDNO']))
+        
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({'error': 'Record not found or unauthorized'}), 404
+        
+        if result[0] == 'ON_GOING':
+            return jsonify({'error': 'Cannot submit feedback for ongoing sessions'}), 400
+
+        # Insert the feedback
+        cursor.execute("""
+            INSERT INTO FEEDBACKS (RECORD_ID, USER_IDNO, FEEDBACK_TEXT, DATE_SUBMITTED)
+            VALUES (%s, %s, %s, NOW())
+        """, (record_id, session['IDNO'], feedback_text))
+        
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Feedback submitted successfully'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()

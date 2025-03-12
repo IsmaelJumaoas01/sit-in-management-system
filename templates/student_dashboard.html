@@ -1,0 +1,259 @@
+<!-- Add this to your CSS section -->
+<style>
+  /* Feedback History Styles */
+  .feedback-history {
+    margin-top: 20px;
+  }
+
+  .feedback-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    backdrop-filter: blur(10px);
+  }
+
+  .feedback-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .feedback-meta {
+    color: #ccc;
+    font-size: 0.9em;
+  }
+
+  .feedback-content {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+
+  /* Feedback Modal Styles */
+  .feedback-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+  }
+
+  .feedback-modal-content {
+    background: #2c3e50;
+    color: white;
+    width: 90%;
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .feedback-modal textarea {
+    width: 100%;
+    min-height: 150px;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    border: none;
+  }
+
+  .feedback-modal button {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .feedback-modal button:hover {
+    background: #219a52;
+  }
+
+  .feedback-modal .close {
+    color: white;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .feedback-modal .close:hover {
+    color: #ccc;
+  }
+
+  .feedback-error {
+    color: #e74c3c;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: 5px;
+    display: none;
+  }
+</style>
+
+<!-- Add this to your HTML where you want the feedback history to appear -->
+<div id="feedbackHistory" class="content-section" style="display: none;">
+  <h2><i class="fas fa-history"></i> Feedback History</h2>
+  <div class="feedback-history">
+    <!-- Feedback cards will be populated here -->
+  </div>
+</div>
+
+<!-- Update your feedback modal -->
+<div id="feedbackModal" class="feedback-modal">
+  <div class="feedback-modal-content">
+    <span class="close" onclick="closeFeedbackModal()">&times;</span>
+    <h2><i class="fas fa-comment"></i> Submit Feedback</h2>
+    <p>Please share your experience about this session:</p>
+    <textarea id="feedbackText" placeholder="Enter your feedback here..."></textarea>
+    <div id="feedbackError" class="feedback-error"></div>
+    <button onclick="submitFeedback()">Submit Feedback</button>
+  </div>
+</div>
+
+<!-- Add this to your JavaScript section -->
+<script>
+let currentRecordId = null;
+
+function showFeedbackModal(recordId) {
+  currentRecordId = recordId;
+  
+  // Check if feedback already exists
+  fetch(`/check_feedback/${recordId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.has_feedback) {
+        alert('You have already submitted feedback for this session.');
+        return;
+      }
+      document.getElementById('feedbackModal').style.display = 'block';
+      document.getElementById('feedbackError').style.display = 'none';
+      document.getElementById('feedbackText').value = '';
+    })
+    .catch(error => {
+      console.error('Error checking feedback:', error);
+      alert('Error checking feedback status');
+    });
+}
+
+function closeFeedbackModal() {
+  document.getElementById('feedbackModal').style.display = 'none';
+  currentRecordId = null;
+}
+
+function submitFeedback() {
+  const feedbackText = document.getElementById('feedbackText').value.trim();
+  const errorDiv = document.getElementById('feedbackError');
+  
+  if (!feedbackText) {
+    errorDiv.textContent = 'Please enter your feedback';
+    errorDiv.style.display = 'block';
+    return;
+  }
+
+  fetch('/submit_feedback', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      record_id: currentRecordId,
+      feedback_text: feedbackText
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      errorDiv.textContent = data.error;
+      errorDiv.style.display = 'block';
+    } else {
+      alert('Feedback submitted successfully!');
+      closeFeedbackModal();
+      fetchFeedbackHistory(); // Refresh the feedback history
+    }
+  })
+  .catch(error => {
+    console.error('Error submitting feedback:', error);
+    errorDiv.textContent = 'Error submitting feedback. Please try again.';
+    errorDiv.style.display = 'block';
+  });
+}
+
+function fetchFeedbackHistory() {
+  const container = document.querySelector('.feedback-history');
+  if (!container) return;
+
+  container.innerHTML = '<div class="loading">Loading feedback history...</div>';
+
+  fetch('/feedback_history')
+    .then(response => response.json())
+    .then(feedbacks => {
+      container.innerHTML = '';
+      
+      if (!feedbacks.length) {
+        container.innerHTML = `
+          <div class="no-feedback">
+            <p>No feedback history available</p>
+          </div>
+        `;
+        return;
+      }
+
+      feedbacks.forEach(feedback => {
+        const card = document.createElement('div');
+        card.className = 'feedback-card';
+        card.innerHTML = `
+          <div class="feedback-header">
+            <div class="feedback-meta">
+              <strong>${feedback.lab_name}</strong> - ${feedback.purpose_name}
+              <br>
+              <small>Session: ${new Date(feedback.session_date).toLocaleString()}</small>
+            </div>
+            <div class="feedback-date">
+              <small>Submitted: ${new Date(feedback.date_submitted).toLocaleString()}</small>
+            </div>
+          </div>
+          <div class="feedback-content">
+            <p>${feedback.feedback_text}</p>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    })
+    .catch(error => {
+      console.error('Error loading feedback history:', error);
+      container.innerHTML = `
+        <div class="error-message">
+          <p>Error loading feedback history. Please try again later.</p>
+        </div>
+      `;
+    });
+}
+
+// Add this to your existing showSection function
+function showSection(sectionId) {
+  // ... existing code ...
+  
+  if (sectionId === 'feedbackHistory') {
+    fetchFeedbackHistory();
+  }
+}
+
+// Add button to navigation
+document.querySelector('.button-container').innerHTML += `
+  <button class="button ripple" onclick="showSection('feedbackHistory')">
+    <i class="fas fa-history"></i> Feedback History
+  </button>
+`;
+</script> 

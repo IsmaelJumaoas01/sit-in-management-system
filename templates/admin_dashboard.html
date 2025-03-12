@@ -240,6 +240,165 @@
       }
 
       /* ... existing styles ... */
+
+      /* Statistics Styles */
+      .statistics-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stat-card i {
+        font-size: 2em;
+        color: #45a049;
+        margin-bottom: 10px;
+      }
+
+      .stat-card h3 {
+        margin: 10px 0;
+        font-size: 1.2em;
+        color: #fff;
+      }
+
+      .stat-card p {
+        font-size: 2em;
+        font-weight: bold;
+        color: #45a049;
+        margin: 10px 0;
+      }
+
+      .charts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .chart-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        min-height: 300px;
+      }
+
+      .chart-card h3 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .chart-card canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 400px;
+      }
+
+      /* Feedback Styles */
+      .feedbacks-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        max-height: 600px;
+        overflow-y: auto;
+      }
+
+      .feedback-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+      }
+
+      .feedback-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .feedback-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+      }
+
+      .student-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .student-info img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .student-info h3 {
+        margin: 0;
+        font-size: 1.2em;
+      }
+
+      .student-info p {
+        margin: 5px 0;
+        color: #ccc;
+      }
+
+      .session-info {
+        text-align: right;
+      }
+
+      .session-info p {
+        margin: 5px 0;
+        color: #ccc;
+      }
+
+      .session-info i {
+        margin-right: 5px;
+        color: #45a049;
+      }
+
+      .feedback-content {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+      }
+
+      .feedback-content p {
+        margin: 0;
+        line-height: 1.5;
+      }
+
+      .no-feedbacks {
+        text-align: center;
+        padding: 40px;
+        color: #ccc;
+      }
+
+      .no-feedbacks i {
+        font-size: 3em;
+        margin-bottom: 10px;
+        color: #45a049;
+      }
     </style>
   </head>
 
@@ -324,7 +483,16 @@
             <i class="fas fa-desktop"></i> Manage Labs
           </button>
           <button class="button ripple" onclick="showSection('announcements', this)">
-            <i class="fas fa-bullhorn"></i> Announcements
+            <i class="fas fa-bullhorn"></i> Manage Announcements
+          </button>
+          <button class="button ripple" onclick="showSection('sitInRecords', this)">
+            <i class="fas fa-history"></i> Sit-in Records
+          </button>
+          <button class="button ripple" onclick="showSection('statistics', this)">
+            <i class="fas fa-chart-pie"></i> Statistics
+          </button>
+          <button class="button ripple" onclick="showSection('feedbacks', this)">
+            <i class="fas fa-comments"></i> Student Feedbacks
         </button>
       </div>
       </div>
@@ -476,8 +644,8 @@
                 <div id="labList" class="grid-list"></div>
               </div>
             </div>
-          </div>
-        </div>
+      </div>
+    </div>
 
         <div id="announcements" class="content-section animate-section" style="display: none">
           <h2><i class="fas fa-bullhorn"></i> Announcements</h2>
@@ -602,6 +770,64 @@
             </form>
           </div>
         </div>
+
+        <!-- Statistics Section -->
+        <div id="statistics" class="content-section animate-section" style="display: none">
+          <h2><i class="fas fa-chart-pie"></i> System Statistics</h2>
+          <div class="card-container">
+            <div class="card">
+              <div class="statistics-container">
+                <div class="stats-cards">
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Registered Students</h3>
+                        <p id="registeredStudents">0</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Current Sit-ins</h3>
+                        <p id="currentSitins">0</p>
+                    </div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Sit-ins</h3>
+                        <p id="totalSitins">0</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="charts-container">
+                  <div class="chart-card">
+                    <h3>Sit-ins by Purpose</h3>
+                    <canvas id="purposeChart"></canvas>
+                  </div>
+                  <div class="chart-card">
+                    <h3>Sit-ins by Laboratory</h3>
+                    <canvas id="labChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedbacks Section -->
+        <div id="feedbacks" class="content-section" style="display: none">
+          <h2><i class="fas fa-comments"></i> Student Feedbacks</h2>
+          <div class="feedbacks-container custom-scrollbar">
+            <!-- Feedbacks will be populated here -->
+          </div>
+        </div>
       </div>
     </div>
 
@@ -617,6 +843,7 @@
       </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       function showSection(sectionId, button) {
         document.querySelectorAll(".content-section").forEach(section => {
@@ -631,6 +858,12 @@
         
         document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
         if (button) button.classList.add("selected");
+
+        if (sectionId === 'statistics') {
+          fetchStatistics();
+        } else if (sectionId === 'feedbacks') {
+          fetchFeedbacks();
+        }
       }
 
       document.addEventListener("DOMContentLoaded", function () {
@@ -983,9 +1216,9 @@
         })
         .then(response => response.json())
         .then(data => {
-          if (data.error) {
+              if (data.error) {
             showToast(data.error, 'error');
-          } else {
+              } else {
             showToast('Announcement updated successfully', 'success');
             closeEditAnnouncementModal();
             fetchAnnouncements();
@@ -994,8 +1227,8 @@
         .catch(error => {
           console.error('Error updating announcement:', error);
           showToast('Failed to update announcement', 'error');
+            });
         });
-      });
 
       function deleteLab(labId) {
         showConfirmDialog(
@@ -1075,16 +1308,16 @@
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+            body: JSON.stringify({
             lab_id: labId
           })
         })
           .then(response => response.json())
           .then(data => {
             closeConfirmDialog();
-            if (data.error) {
+              if (data.error) {
               showToast(data.error, 'error');
-            } else {
+              } else {
               showToast('Laboratory deleted successfully', 'success');
               fetchLabs();
             }
@@ -1187,8 +1420,8 @@
         .catch(error => {
           console.error('Error:', error);
           showToast('An error occurred while updating the profile', 'error');
-        });
-      });
+            });
+          });
 
       function openAddAnnouncementModal() {
         const modal = document.getElementById('addAnnouncementModal');
@@ -1212,6 +1445,169 @@
 
       function closeAddPurposeModal() {
         document.getElementById('addPurposeModal').style.display = 'none';
+      }
+
+      async function fetchStatistics() {
+        try {
+            // Destroy existing charts if they exist and are valid Chart instances
+            if (window.purposeChart instanceof Chart) {
+                window.purposeChart.destroy();
+            }
+            if (window.labChart instanceof Chart) {
+                window.labChart.destroy();
+            }
+
+            const response = await fetch('/admin/statistics');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Statistics data received:", data);  // Debug log
+
+            // Update statistics cards
+            document.getElementById('registeredStudents').textContent = data.registered_students;
+            document.getElementById('currentSitins').textContent = data.current_sitins;
+            document.getElementById('totalSitins').textContent = data.total_sitins;
+
+            // Create purpose chart if there is data
+            if (data.purpose_stats && data.purpose_stats.length > 0) {
+                const purposeCtx = document.getElementById('purposeChart').getContext('2d');
+                window.purposeChart = new Chart(purposeCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.purpose_stats.map(stat => stat.purpose_name),
+                        datasets: [{
+                            data: data.purpose_stats.map(stat => stat.count),
+                            backgroundColor: generateColors(data.purpose_stats.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Create lab chart if there is data
+            if (data.lab_stats && data.lab_stats.length > 0) {
+                const labCtx = document.getElementById('labChart').getContext('2d');
+                window.labChart = new Chart(labCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.lab_stats.map(stat => stat.lab_name),
+                        datasets: [{
+                            data: data.lab_stats.map(stat => stat.count),
+                            backgroundColor: generateColors(data.lab_stats.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+            // Clear any partial data
+            document.getElementById('registeredStudents').textContent = '0';
+            document.getElementById('currentSitins').textContent = '0';
+            document.getElementById('totalSitins').textContent = '0';
+        }
+    }
+
+      function formatDate(date) {
+        return new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      }
+
+      function fetchFeedbacks() {
+        const container = document.querySelector('.feedbacks-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading">Loading feedbacks...</div>';
+
+        fetch('/admin/feedbacks')
+          .then(response => response.json())
+          .then(feedbacks => {
+            container.innerHTML = '';
+            
+            if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+              container.innerHTML = `
+                <div class="no-feedbacks">
+                  <i class="fas fa-comments"></i>
+                  <p>No feedbacks found</p>
+                </div>
+              `;
+              return;
+            }
+
+            feedbacks.forEach(feedback => {
+              const card = document.createElement('div');
+              card.className = 'feedback-card';
+              card.innerHTML = `
+                <div class="feedback-header">
+                  <div class="student-info">
+                    <img src="/get_profile_picture/${feedback.USER_IDNO}" 
+                         alt="Student" 
+                         class="student-profile-pic"
+                         onerror="this.src='/static/default_profile.png'">
+                    <div>
+                      <h3>${feedback.STUDENT_NAME}</h3>
+                      <p>${feedback.USER_IDNO}</p>
+                    </div>
+                  </div>
+                  <div class="session-info">
+                    <p><i class="fas fa-desktop"></i> ${feedback.LAB_NAME}</p>
+                    <p><i class="fas fa-calendar"></i> ${formatDate(new Date(feedback.DATE))}</p>
+                  </div>
+                </div>
+                <div class="feedback-content">
+                  <p>${feedback.FEEDBACK_TEXT}</p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading feedbacks:', error);
+            container.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading feedbacks: ${error.message}</p>
+              </div>
+            `;
+            showToast('Error loading feedbacks: ' + error.message, 'error');
+          });
+      }
+
+      function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+          const hue = (i * 360) / count;
+          colors.push(`hsla(${hue}, 70%, 60%, 0.8)`);
+        }
+        return colors;
       }
     </script>
   </body>

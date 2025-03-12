@@ -37,65 +37,79 @@
 
       .record-card {
         background: rgba(255, 255, 255, 0.1);
-        border-radius: 15px;
         padding: 20px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
       }
 
       .record-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .record-header h3 {
+        margin: 0;
+        font-size: 1.2em;
       }
 
       .record-details {
-        color: white;
+        margin-bottom: 15px;
       }
 
       .record-details p {
-        margin: 10px 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        margin: 5px 0;
+        color: #ccc;
       }
 
       .record-details i {
-        color: #45a049;
         width: 20px;
-        text-align: center;
+        margin-right: 10px;
+        color: #45a049;
       }
 
-      .status-badge,
-      .session-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.9em;
-        font-weight: 500;
+      .record-actions {
+        display: flex;
+        justify-content: flex-end;
       }
 
-      .status-badge.pending {
-        background: #f0ad4e;
+      .feedback-btn {
+        background: #45a049;
         color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
       }
 
-      .status-badge.approved {
+      .feedback-btn:hover {
+        background: #33833b;
+        transform: translateY(-2px);
+      }
+
+      .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.9em;
+        font-weight: bold;
+      }
+
+      .status-badge.on_going {
         background: #45a049;
         color: white;
       }
 
-      .status-badge.denied {
-        background: #d9534f;
-        color: white;
-      }
-
-      .session-badge.on_going {
-        background: #4a90e2;
-        color: white;
-      }
-
-      .session-badge.ended {
+      .status-badge.ended {
         background: #666;
         color: white;
       }
@@ -325,6 +339,113 @@
 .animate-section.visible {
   opacity: 1;
 }
+
+/* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+      }
+
+      .modal-content {
+        position: relative;
+        background: linear-gradient(135deg, #2c3038 0%, #1a1d23 100%);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        animation: slideDown 0.3s ease-out;
+      }
+
+      .modal-content h2 {
+        color: #fff;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .modal-content .form-group {
+        margin-bottom: 20px;
+      }
+
+      .modal-content label {
+        display: block;
+        margin-bottom: 8px;
+        color: #fff;
+        font-weight: 500;
+      }
+
+      .modal-content textarea {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #fff;
+        font-size: 16px;
+        resize: vertical;
+        min-height: 120px;
+      }
+
+      .modal-content textarea:focus {
+        outline: none;
+        border-color: #45a049;
+        box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
+      }
+
+      .modal-content .submit-btn {
+        background: #45a049;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 20px;
+      }
+
+      .modal-content .submit-btn:hover {
+        background: #33833b;
+        transform: translateY(-2px);
+      }
+
+      .modal-content .close {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        font-size: 24px;
+        color: #fff;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .modal-content .close:hover {
+        color: #ff4444;
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(-100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
 
     </style>
   </head>
@@ -570,6 +691,35 @@
                 <!-- Records will be populated dynamically -->
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Sit-in Records Section -->
+        <div id="sitInRecords" class="content-section" style="display: none">
+          <h2><i class="fas fa-history"></i> Sit-in Records</h2>
+          <div class="filter-container">
+            <!-- ... existing filters ... -->
+          </div>
+          <div class="records-grid custom-scrollbar">
+            <!-- Records will be populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Feedback Modal -->
+        <div id="feedbackModal" class="modal">
+          <div class="modal-content animate-modal">
+            <span class="close" onclick="closeFeedbackModal()">&times;</span>
+            <h2><i class="fas fa-comment"></i> Submit Feedback</h2>
+            <form id="feedbackForm">
+              <input type="hidden" id="feedbackRecordId">
+              <div class="form-group animate-up">
+                <label for="feedbackText">Your Feedback</label>
+                <textarea id="feedbackText" class="custom-input" rows="4" required></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">Submit Feedback</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -963,21 +1113,7 @@
               return;
             }
             
-            records.forEach(record => {
-              const card = document.createElement('div');
-              card.className = 'record-card';
-              card.innerHTML = `
-                <div class="record-details">
-                  <p><i class="fas fa-desktop"></i> ${record.LAB_NAME}</p>
-                  <p><i class="fas fa-tasks"></i> ${record.PURPOSE_NAME}</p>
-                  <p><i class="fas fa-clock"></i> Started: ${formatDate(record.DATE)}</p>
-                  ${record.END_TIME ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(record.END_TIME)}</p>` : ''}
-                  <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${record.STATUS.toLowerCase()}">${record.STATUS}</span></p>
-                  <p><i class="fas fa-spinner"></i> Session: <span class="session-badge ${record.SESSION.toLowerCase()}">${record.SESSION}</span></p>
-                </div>
-              `;
-              container.appendChild(card);
-            });
+            displayRecords(records);
           })
           .catch(error => {
             container.innerHTML = `
@@ -990,9 +1126,85 @@
           });
       }
 
+      function displayRecords(records) {
+        const container = document.querySelector('.records-grid');
+        container.innerHTML = '';
+
+        records.forEach(record => {
+          const card = document.createElement('div');
+          card.className = 'record-card';
+          
+          const date = new Date(record.DATE);
+          const endTime = record.END_TIME ? new Date(record.END_TIME) : null;
+          
+          card.innerHTML = `
+            <div class="record-header">
+                <h3>${record.LAB_NAME}</h3>
+                <span class="status-badge ${record.SESSION.toLowerCase()}">${record.SESSION}</span>
+            </div>
+            <div class="record-details">
+                <p><i class="fas fa-calendar"></i> ${formatDate(date)}</p>
+                <p><i class="fas fa-clock"></i> ${formatTime(date)} - ${endTime ? formatTime(endTime) : 'Ongoing'}</p>
+                <p><i class="fas fa-tasks"></i> ${record.PURPOSE_NAME}</p>
+            </div>
+            ${record.SESSION === 'ENDED' ? `
+                <div class="record-actions">
+                    <button onclick="openFeedbackModal(${record.RECORD_ID})" class="feedback-btn">
+                        <i class="fas fa-comment"></i> Submit Feedback
+                    </button>
+                </div>
+            ` : ''}
+        `;
+          container.appendChild(card);
+        });
+      }
+
+      function openFeedbackModal(recordId) {
+        document.getElementById('feedbackRecordId').value = recordId;
+        document.getElementById('feedbackText').value = '';
+        document.getElementById('feedbackModal').style.display = 'block';
+      }
+
+      function closeFeedbackModal() {
+        document.getElementById('feedbackModal').style.display = 'none';
+      }
+
+      document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const recordId = document.getElementById('feedbackRecordId').value;
+        const feedbackText = document.getElementById('feedbackText').value;
+
+        fetch('/submit_feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            record_id: recordId,
+            feedback_text: feedbackText
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('Feedback submitted successfully!', 'success');
+            closeFeedbackModal();
+          } else {
+            showToast(data.error || 'Failed to submit feedback', 'error');
+          }
+        })
+        .catch(error => {
+          showToast('An error occurred while submitting feedback', 'error');
+        });
+      });
+
       function formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleString();
+      }
+
+      function formatTime(date) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
       // Add toast functionality

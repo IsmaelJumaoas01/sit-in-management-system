@@ -4,29 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Staff Dashboard</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='dashboard.css') }}"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css"
+    />
   </head>
   <body>
     <!-- Navbar -->
     <header class="navbar">
       <div class="navbar-container">
-        <a href="{{ url_for('staff.staff_dashboard') }}" class="navbar-logo">STAFF</a>
+        <a href="{{ url_for('staff.staff_dashboard') }}" class="navbar-logo"
+          >STAFF</a
+        >
         <div class="navbar-icons">
           <a href="#" class="navbar-icon" title="Notifications">
             <i class="fas fa-bell"></i>
             <span class="notification-badge">3</span>
           </a>
           <div class="profile-dropdown">
-            <a href="#" class="navbar-icon profile-icon" title="Profile" onclick="toggleProfileMenu(event)">
-              <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
-                   alt="Profile" class="profile-image">
+            <a
+              href="#"
+              class="navbar-icon profile-icon"
+              title="Profile"
+              onclick="toggleProfileMenu(event)"
+            >
+              <img
+                src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}"
+                alt="Profile"
+                class="profile-image"
+              />
             </a>
             <div class="profile-dropdown-content">
-              <a href="#" onclick="openModal()"><i class="fas fa-user-edit"></i> Edit Profile</a>
-              <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirmLogout(event)">
-                <button type="submit" class="dropdown-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+              <a href="#" onclick="openModal()"
+                ><i class="fas fa-user-edit"></i> Edit Profile</a
+              >
+              <form
+                action="{{ url_for('auth.logout') }}"
+                method="post"
+                onsubmit="return confirmLogout(event)"
+              >
+                <button type="submit" class="dropdown-logout">
+                  <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
           </form>
             </div>
           </div>
@@ -39,12 +66,24 @@
       <div class="left-panel">
         <div class="profile-header">
           <div class="profile-picture-container">
-            <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
-                 alt="Profile Picture" class="large-profile-image">
-            <button class="change-photo-btn" onclick="document.getElementById('profile-upload').click()">
+            <img
+              src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}"
+              alt="Profile Picture"
+              class="large-profile-image"
+            />
+            <button
+              class="change-photo-btn"
+              onclick="document.getElementById('profile-upload').click()"
+            >
               <i class="fas fa-camera"></i>
             </button>
-            <input type="file" id="profile-upload" hidden accept="image/*" onchange="previewImage(this)">
+            <input
+              type="file"
+              id="profile-upload"
+              hidden
+              accept="image/*"
+              onchange="previewImage(this)"
+            />
           </div>
           <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}!</h1>
         </div>
@@ -58,28 +97,59 @@
           <button class="action-button edit-button" onclick="openModal()">
             <i class="fas fa-user-edit"></i> Edit Profile
           </button>
-          <form action="{{ url_for('auth.logout') }}" method="post" onsubmit="return confirmLogout(event)">
+          <form
+            action="{{ url_for('auth.logout') }}"
+            method="post"
+            onsubmit="return confirmLogout(event)"
+          >
             <button type="submit" class="action-button logout-button">
               <i class="fas fa-sign-out-alt"></i> Logout
-          </button>
+            </button>
           </form>
         </div>
 
         <div class="button-container">
-          <button class="button ripple" onclick="showSection('manageLabs', this)">
+          <button
+            class="button ripple"
+            onclick="showSection('manageLabs', this)"
+          >
             <i class="fas fa-desktop"></i> Manage Labs
           </button>
-          <button class="button ripple" onclick="showSection('searchStudents', this)">
+          <button
+            class="button ripple"
+            onclick="showSection('searchStudents', this)"
+          >
             <i class="fas fa-search"></i> Search Students
           </button>
-          <button class="button ripple" onclick="showSection('announcements', this)">
+          <button
+            class="button ripple"
+            onclick="showSection('announcements', this)"
+          >
             <i class="fas fa-bullhorn"></i> Manage Announcements
           </button>
-          <button class="button ripple" onclick="showSection('activeSessions', this)">
+          <button
+            class="button ripple"
+            onclick="showSection('activeSessions', this)"
+          >
             <i class="fas fa-users"></i> Active Sit-ins
           </button>
-          <button class="button ripple" onclick="showSection('sitInRecords', this)">
+          <button
+            class="button ripple"
+            onclick="showSection('sitInRecords', this)"
+          >
             <i class="fas fa-history"></i> Sit-in Records
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('statistics', this)"
+          >
+            <i class="fas fa-chart-pie"></i> Statistics
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('feedbacks', this)"
+          >
+            <i class="fas fa-comments"></i> Student Feedbacks
           </button>
         </div>
       </div>
@@ -91,33 +161,68 @@
           <div class="modal-content animate-modal">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Edit Profile Information</h2>
-            <form action="{{ url_for('staff.edit_info') }}" method="post" id="editForm" enctype="multipart/form-data">
+          <form
+              action="{{ url_for('staff.edit_info') }}"
+              method="post"
+              id="editForm"
+              enctype="multipart/form-data"
+            >
               <div class="modal-profile-picture">
-                <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
-                     alt="Profile Picture" class="preview-profile-image">
+                <img
+                  src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}"
+                  alt="Profile Picture"
+                  class="preview-profile-image"
+                />
                 <div class="upload-overlay">
-                  <input type="file" name="profile_picture" id="modal-profile-upload" hidden accept="image/*" onchange="previewImage(this)">
+                  <input
+                    type="file"
+                    name="profile_picture"
+                    id="modal-profile-upload"
+                    hidden
+                    accept="image/*"
+                    onchange="previewImage(this)"
+                  />
                   <label for="modal-profile-upload" class="upload-btn">
                     <i class="fas fa-camera"></i> Change Photo
                   </label>
                 </div>
-        </div>
+              </div>
 
               <div class="form-group animate-up">
                 <label for="firstname">First Name:</label>
-                <input type="text" id="firstname" name="firstname" value="{{ staff_firstname }}" required>
-            </div>
-              <div class="form-group animate-up">
-                <label for="lastname">Last Name:</label>
-                <input type="text" id="lastname" name="lastname" value="{{ staff_lastname }}" required>
-            </div>
-              <div class="form-group animate-up">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="{{ staff_email }}" required>
+            <input
+              type="text"
+                  id="firstname"
+                  name="firstname"
+                  value="{{ staff_firstname }}"
+              required
+            />
               </div>
               <div class="form-group animate-up">
-                <label for="password">New Password (leave blank to keep current):</label>
-                <input type="password" id="password" name="password">
+                <label for="lastname">Last Name:</label>
+                <input
+                  type="text"
+                  id="lastname"
+                  name="lastname"
+                  value="{{ staff_lastname }}"
+                  required
+                />
+              </div>
+              <div class="form-group animate-up">
+                <label for="email">Email:</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value="{{ staff_email }}"
+                  required
+                />
+              </div>
+              <div class="form-group animate-up">
+                <label for="password"
+                  >New Password (leave blank to keep current):</label
+                >
+                <input type="password" id="password" name="password" />
               </div>
               <button type="submit" class="button pulse">
                 <i class="fas fa-save"></i> Save Changes
@@ -135,7 +240,7 @@
                 <h3><i class="fas fa-list"></i> Existing Labs</h3>
                 <button class="add-btn pulse-hover" onclick="openAddLabModal()">
                   <i class="fas fa-plus"></i> Add New Lab
-              </button>
+                </button>
               </div>
               <div class="data-container custom-scrollbar">
                 <div id="labList" class="grid-list"></div>
@@ -152,46 +257,67 @@
             <form id="addLabForm">
               <div class="form-group animate-up">
                 <label for="labId">Lab Name/ID</label>
-                <input type="text" id="labId" name="labId" required placeholder="e.g., LAB-101">
+                <input
+                  type="text"
+                  id="labId"
+                  name="labId"
+                  required
+                  placeholder="e.g., LAB-101"
+                />
                 <span class="focus-border"></span>
               </div>
               <div class="form-group animate-up">
                 <label for="totalComputers">Total Computers</label>
-                <input type="number" id="totalComputers" name="totalComputers" required min="1" placeholder="Enter number of computers">
+                <input
+                  type="number"
+                  id="totalComputers"
+                  name="totalComputers"
+                  required
+                  min="1"
+                  placeholder="Enter number of computers"
+                />
                 <span class="focus-border"></span>
               </div>
               <button type="submit" class="submit-btn pulse-hover">
                 <i class="fas fa-plus"></i> Add Lab
               </button>
-          </form>
+            </form>
           </div>
         </div>
-        
-          <!-- Update the active sessions section in the right panel -->
-    <div id="activeSessions" class="content-section" style="display: none;">
-      <h2><i class="fas fa-users"></i> Active Sit-in Sessions</h2>
-      <div class="card-container">
-        <div class="card active-sessions-card">
-          <div class="filters-container">
-            <div class="filter-group">
-              <label for="filterLab">Filter by Lab:</label>
-              <select id="filterLab" class="custom-select" onchange="filterSessions()">
-                <option value="">All Labs</option>
-              </select>
+
+        <!-- Update the active sessions section in the right panel -->
+        <div id="activeSessions" class="content-section" style="display: none">
+          <h2><i class="fas fa-users"></i> Active Sit-in Sessions</h2>
+          <div class="card-container">
+            <div class="card active-sessions-card">
+              <div class="filters-container">
+                <div class="filter-group">
+                  <label for="filterLab">Filter by Lab:</label>
+                  <select
+                    id="filterLab"
+                    class="custom-select"
+                    onchange="filterSessions()"
+                  >
+                    <option value="">All Labs</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="filterPurpose">Filter by Purpose:</label>
+                  <select
+                    id="filterPurpose"
+                    class="custom-select"
+                    onchange="filterSessions()"
+                  >
+                    <option value="">All Purposes</option>
+                  </select>
+                </div>
+              </div>
+              <div class="active-sessions-grid custom-scrollbar">
+                <!-- Active sessions will be populated dynamically -->
+              </div>
             </div>
-            <div class="filter-group">
-              <label for="filterPurpose">Filter by Purpose:</label>
-              <select id="filterPurpose" class="custom-select" onchange="filterSessions()">
-                <option value="">All Purposes</option>
-              </select>
-            </div>
-          </div>
-          <div class="active-sessions-grid custom-scrollbar">
-            <!-- Active sessions will be populated dynamically -->
           </div>
         </div>
-      </div>
-    </div>
         <!-- Search Students Section -->
         <div id="searchStudents" class="content-section" style="display: none">
           <h2><i class="fas fa-search"></i> Search Students</h2>
@@ -199,10 +325,16 @@
             <div class="card search-card">
               <form class="search-form">
                 <div class="search-group">
-                  <input type="text" id="studentId" name="studentId" required placeholder="Enter Student ID">
+                  <input
+                    type="text"
+                    id="studentId"
+                    name="studentId"
+                    required
+                    placeholder="Enter Student ID"
+                  />
                   <button type="submit" class="search-btn pulse-hover">
                     <i class="fas fa-search"></i>
-              </button>
+                  </button>
                 </div>
               </form>
               <div class="results-container custom-scrollbar">
@@ -228,48 +360,64 @@
           </div>
         </div>
 
-         <!-- Add Sit-in Records Section -->
-    <div id="sitInRecords" class="content-section" style="display: none">
-      <h2><i class="fas fa-history"></i> Sit-in Records</h2>
-      <div class="card-container">
-        <div class="card records-card">
-          <div class="filters-container">
-            <div class="filter-group">
-              <label for="recordFilterLab">Filter by Lab:</label>
-              <select id="recordFilterLab" class="custom-select" onchange="filterRecords()">
-                <option value="">All Labs</option>
-              </select>
+        <!-- Add Sit-in Records Section -->
+        <div id="sitInRecords" class="content-section" style="display: none">
+          <h2><i class="fas fa-history"></i> Sit-in Records</h2>
+          <div class="card-container">
+            <div class="card records-card">
+              <div class="filters-container">
+                <div class="filter-group">
+                  <label for="recordFilterLab">Filter by Lab:</label>
+                  <select
+                    id="recordFilterLab"
+                    class="custom-select"
+                    onchange="filterRecords()"
+                  >
+                    <option value="">All Labs</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterPurpose">Filter by Purpose:</label>
+                  <select
+                    id="recordFilterPurpose"
+                    class="custom-select"
+                    onchange="filterRecords()"
+                  >
+                    <option value="">All Purposes</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterStatus">Filter by Status:</label>
+                  <select
+                    id="recordFilterStatus"
+                    class="custom-select"
+                    onchange="filterRecords()"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="DENIED">Denied</option>
+                  </select>
+                </div>
+                <div class="filter-group">
+                  <label for="recordFilterSession">Filter by Session:</label>
+                  <select
+                    id="recordFilterSession"
+                    class="custom-select"
+                    onchange="filterRecords()"
+                  >
+                    <option value="">All Sessions</option>
+                    <option value="ON_GOING">Ongoing</option>
+                    <option value="ENDED">Ended</option>
+                  </select>
+                </div>
+              </div>
+              <div class="records-grid custom-scrollbar">
+                <!-- Records will be populated dynamically -->
+              </div>
             </div>
-            <div class="filter-group">
-              <label for="recordFilterPurpose">Filter by Purpose:</label>
-              <select id="recordFilterPurpose" class="custom-select" onchange="filterRecords()">
-                <option value="">All Purposes</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label for="recordFilterStatus">Filter by Status:</label>
-              <select id="recordFilterStatus" class="custom-select" onchange="filterRecords()">
-                <option value="">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="APPROVED">Approved</option>
-                <option value="DENIED">Denied</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label for="recordFilterSession">Filter by Session:</label>
-              <select id="recordFilterSession" class="custom-select" onchange="filterRecords()">
-                <option value="">All Sessions</option>
-                <option value="ON_GOING">Ongoing</option>
-                <option value="ENDED">Ended</option>
-              </select>
-            </div>
-          </div>
-          <div class="records-grid custom-scrollbar">
-            <!-- Records will be populated dynamically -->
           </div>
         </div>
-      </div>
-    </div>
 
         <!-- Announcements Section -->
         <div id="announcements" class="content-section" style="display: none">
@@ -278,11 +426,71 @@
             <div class="card announcements-list-card">
               <div class="header-with-button">
                 <h3><i class="fas fa-list"></i> Posted Announcements</h3>
-                <button class="add-btn pulse-hover" onclick="openAddAnnouncementModal()">
+                <button
+                  class="add-btn pulse-hover"
+                  onclick="openAddAnnouncementModal()"
+                >
                   <i class="fas fa-plus"></i> New Announcement
-              </button>
+                </button>
               </div>
-              <div class="data-container custom-scrollbar" id="announcementsList"></div>
+              <div
+                class="data-container custom-scrollbar"
+                id="announcementsList"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div
+          id="statistics"
+          class="content-section animate-section"
+          style="display: none"
+        >
+          <h2><i class="fas fa-chart-pie"></i> System Statistics</h2>
+          <div class="card-container">
+            <div class="card">
+              <div class="statistics-container">
+                <div class="stats-cards">
+                  <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Registered Students</h3>
+                        <p id="registeredStudents">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Current Sit-ins</h3>
+                        <p id="currentSitins">0</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Sit-ins</h3>
+                        <p id="totalSitins">0</p>
+                    </div>
+                </div>
+                </div>
+                <div class="charts-container">
+                  <div class="chart-card">
+                    <h3>Sit-ins by Purpose</h3>
+                    <canvas id="purposeChart"></canvas>
+                  </div>
+                  <div class="chart-card">
+                    <h3>Sit-ins by Laboratory</h3>
+                    <canvas id="labChart"></canvas>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -290,41 +498,62 @@
         <!-- Add Announcement Modal -->
         <div id="addAnnouncementModal" class="modal">
           <div class="modal-content animate-modal">
-            <span class="close" onclick="closeAddAnnouncementModal()">&times;</span>
+            <span class="close" onclick="closeAddAnnouncementModal()"
+              >&times;</span
+            >
             <h2><i class="fas fa-bullhorn"></i> New Announcement</h2>
             <form id="announcementForm">
               <div class="form-group animate-up">
                 <label for="title">Title</label>
-                <input type="text" id="title" name="title" required placeholder="Enter announcement title">
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  required
+                  placeholder="Enter announcement title"
+                />
                 <span class="focus-border"></span>
               </div>
               <div class="form-group animate-up">
                 <label for="content">Content</label>
-                <textarea id="content" name="content" rows="4" required placeholder="Enter announcement content"></textarea>
+            <textarea
+                  id="content"
+                  name="content"
+                  rows="4"
+              required
+                  placeholder="Enter announcement content"
+            ></textarea>
                 <span class="focus-border"></span>
               </div>
               <button type="submit" class="submit-btn pulse-hover">
                 <i class="fas fa-paper-plane"></i> Post Announcement
               </button>
           </form>
-            </div>
-            </div>
           </div>
+        </div>
+      </div>
         </div>
 
         <!-- Edit Announcement Modal -->
         <div id="editAnnouncementModal" class="modal">
           <div class="modal-content">
-
             <div class="modal-header">
-
               <h3>Edit Announcement</h3>
             </div>
             <div class="modal-body">
           <form id="editAnnouncementForm">
-            <input type="hidden" id="editAnnouncementId">
-            <input type="text" id="editAnnouncementTitle" placeholder="Title" required>
-            <textarea id="editAnnouncementContent" placeholder="Content" required></textarea>
+            <input type="hidden" id="editAnnouncementId" />
+              <input
+                type="text"
+                id="editAnnouncementTitle"
+                placeholder="Title"
+                required
+              />
+              <textarea
+                id="editAnnouncementContent"
+                placeholder="Content"
+                required
+              ></textarea>
             <button type="submit">Update Announcement</button>
           </form>
             </div>
@@ -336,23 +565,39 @@
       <div class="cropper-container">
         <span class="close" onclick="closeCropperModal()">&times;</span>
         <div id="cropperArea">
-          <img id="cropperImage" src="" alt="Image to crop">
-            </div>
-        <div class="cropper-buttons">
-          <button class="cropper-btn save" onclick="saveCroppedImage()">Save</button>
-          <button class="cropper-btn cancel" onclick="closeCropperModal()">Cancel</button>
-          </div>
+          <img id="cropperImage" src="" alt="Image to crop" />
         </div>
+        <div class="cropper-buttons">
+          <button class="cropper-btn save" onclick="saveCroppedImage()">
+            Save
+              </button>
+          <button class="cropper-btn cancel" onclick="closeCropperModal()">
+            Cancel
+              </button>
+            </div>
+          </div>
         </div>
 
     <!-- Custom Confirmation Dialog -->
-    <div id="confirmDialog" class="confirm-dialog" onclick="if(event.target === this) closeConfirmDialog()">
+    <div
+      id="confirmDialog"
+      class="confirm-dialog"
+      onclick="if(event.target === this) closeConfirmDialog()"
+    >
       <div class="confirm-content">
         <h3>Confirm Logout</h3>
         <p>Are you sure you want to logout?</p>
         <div class="confirm-buttons">
-          <button onclick="handleLogout()" class="confirm-btn confirm-yes" style="background: #dd0c0c;">Yes, Logout</button>
-          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">Cancel</button>
+          <button
+            onclick="handleLogout()"
+            class="confirm-btn confirm-yes"
+            style="background: #dd0c0c"
+          >
+            Yes, Logout
+              </button>
+          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">
+            Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -361,27 +606,39 @@
     <div id="toast" class="toast">
       <i class="fas"></i>
       <span class="toast-message"></span>
-            </div>
-
-  
+    </div>
 
     <!-- End Session Modal -->
-    <div id="endSessionModal" class="confirm-dialog" onclick="if(event.target === this) closeEndSessionModal()">
+    <div
+      id="endSessionModal"
+      class="confirm-dialog"
+      onclick="if(event.target === this) closeEndSessionModal()"
+    >
       <div class="confirm-content">
         <h3><i class="fas fa-sign-out-alt"></i> End Sit-in Session</h3>
         <div class="student-info-end">
-          <img src="" alt="Student" id="endSessionStudentImg" class="student-profile-pic">
+          <img
+            src=""
+            alt="Student"
+            id="endSessionStudentImg"
+            class="student-profile-pic"
+          />
           <div class="student-details">
             <h4 id="endSessionStudentName"></h4>
             <p id="endSessionDetails"></p>
           </div>
         </div>
-        <p class="confirmation-message">Are you sure you want to end this student's sit-in session?</p>
+        <p class="confirmation-message">
+          Are you sure you want to end this student's sit-in session?
+        </p>
         <div class="confirm-buttons">
           <button onclick="confirmEndSession()" class="confirm-btn confirm-yes">
             <i class="fas fa-check"></i> Yes, End Session
               </button>
-          <button onclick="closeEndSessionModal()" class="confirm-btn confirm-no">
+          <button
+            onclick="closeEndSessionModal()"
+            class="confirm-btn confirm-no"
+          >
             <i class="fas fa-times"></i> Cancel
               </button>
             </div>
@@ -396,7 +653,7 @@
           <h2><i class="fas fa-sign-in-alt"></i> Start Sit-in</h2>
             </div>
         <form id="sitInForm" onsubmit="startSitIn(event)">
-          <input type="hidden" id="sitInStudentId">
+          <input type="hidden" id="sitInStudentId" />
           <div class="student-info">
             <h3 id="sitInStudentName"></h3>
           </div>
@@ -416,8 +673,6 @@
         </form>
       </div>
     </div>
-
-   
 
     <style>
       /* Card Styles */
@@ -712,7 +967,11 @@
       }
 
       .confirm-content {
-        background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(40, 44, 52, 0.95) 0%,
+          rgba(25, 29, 37, 0.95) 100%
+        );
         padding: 30px;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -892,7 +1151,7 @@
         object-fit: cover;
         border: 3px solid #fff;
         margin-bottom: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       }
 
       .upload-overlay {
@@ -955,7 +1214,11 @@
         width: 90%;
         padding: 30px;
         border-radius: 15px;
-        background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(40, 44, 52, 0.95) 0%,
+          rgba(25, 29, 37, 0.95) 100%
+        );
       }
 
       #editAnnouncementModal .modal-header {
@@ -1136,7 +1399,11 @@
 
       /* Sit-in Modal Styles */
       #sitInModal .modal-content {
-        background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(25, 29, 37, 0.95) 100%);
+        background: linear-gradient(
+          135deg,
+          rgba(40, 44, 52, 0.95) 0%,
+          rgba(25, 29, 37, 0.95) 100%
+        );
         color: white;
         padding: 30px;
         border-radius: 15px;
@@ -1363,7 +1630,11 @@
       .compact-modal {
         max-width: 400px !important;
         padding: 20px !important;
-        background: linear-gradient(135deg, rgba(40, 44, 52, 0.98) 0%, rgba(25, 29, 37, 0.98) 100%) !important;
+        background: linear-gradient(
+          135deg,
+          rgba(40, 44, 52, 0.98) 0%,
+          rgba(25, 29, 37, 0.98) 100%
+        ) !important;
       }
 
       .compact-modal .modal-header {
@@ -1544,9 +1815,151 @@
         font-size: 16px;
         margin: 0;
       }
+
+      /* Statistics Styles */
+      .statistics-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stat-card i {
+        font-size: 2em;
+        color: #45a049;
+        margin-bottom: 10px;
+      }
+
+      .stat-card h3 {
+        margin: 10px 0;
+        font-size: 1.2em;
+        color: #fff;
+      }
+
+      .stat-card p {
+        font-size: 2em;
+        font-weight: bold;
+        color: #45a049;
+        margin: 10px 0;
+      }
+
+      .charts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .chart-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        min-height: 300px;
+      }
+
+      .chart-card h3 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #fff;
+      }
+
+      .chart-card canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 400px;
+      }
+
+      /* Feedback Styles */
+      .feedbacks-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+      }
+
+      .feedback-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      .feedback-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+      }
+
+      .student-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .student-info img {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .student-details h3 {
+        margin: 0;
+        color: #fff;
+      }
+
+      .student-details p {
+        margin: 5px 0;
+        color: #ccc;
+      }
+
+      .session-info {
+        text-align: right;
+        color: #ccc;
+      }
+
+      .feedback-content {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        color: #fff;
+      }
+
+      .no-feedbacks {
+        text-align: center;
+        padding: 40px;
+        color: #ccc;
+      }
+
+      .no-feedbacks i {
+        font-size: 3em;
+        margin-bottom: 10px;
+        color: #45a049;
+      }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
       let cropper = null;
@@ -1554,10 +1967,17 @@
       let currentSessionToEnd = null;
 
       // Update the confirmation dialog handling
-      function showConfirmDialog(type, title, message, yesText, noText, yesAction) {
-        const dialog = document.getElementById('confirmDialog');
-        const content = dialog.querySelector('.confirm-content');
-        
+      function showConfirmDialog(
+        type,
+        title,
+        message,
+        yesText,
+        noText,
+        yesAction
+      ) {
+        const dialog = document.getElementById("confirmDialog");
+        const content = dialog.querySelector(".confirm-content");
+
         content.innerHTML = `
           <h3>${title}</h3>
           <p>${message}</p>
@@ -1570,42 +1990,44 @@
             </button>
           </div>
         `;
-        
+
         dialog.dataset.dialogType = type;
-        dialog.dataset.actionData = yesAction ? JSON.stringify(yesAction) : '';
-        dialog.style.display = 'flex';
+        dialog.dataset.actionData = yesAction ? JSON.stringify(yesAction) : "";
+        dialog.style.display = "flex";
       }
 
       function handleDialogAction(type, confirmed) {
-        const dialog = document.getElementById('confirmDialog');
+        const dialog = document.getElementById("confirmDialog");
         if (confirmed) {
-          const actionData = dialog.dataset.actionData ? JSON.parse(dialog.dataset.actionData) : null;
-          switch(type) {
-            case 'logout':
+          const actionData = dialog.dataset.actionData
+            ? JSON.parse(dialog.dataset.actionData)
+            : null;
+          switch (type) {
+            case "logout":
               if (logoutForm) logoutForm.submit();
               break;
-            case 'delete_announcement':
+            case "delete_announcement":
               if (actionData) handleAnnouncementDelete(actionData);
               break;
-            case 'delete_lab':
+            case "delete_lab":
               if (actionData) handleLabDelete(actionData);
               break;
           }
         }
-        dialog.style.display = 'none';
-        dialog.dataset.dialogType = '';
-        dialog.dataset.actionData = '';
+        dialog.style.display = "none";
+        dialog.dataset.dialogType = "";
+        dialog.dataset.actionData = "";
       }
 
       function confirmLogout(event) {
-          event.preventDefault();
+        event.preventDefault();
         logoutForm = event.target;
         showConfirmDialog(
-          'logout',
-          'Confirm Logout',
-          'Are you sure you want to logout?',
-          'Yes, Logout',
-          'Cancel'
+          "logout",
+          "Confirm Logout",
+          "Are you sure you want to logout?",
+          "Yes, Logout",
+          "Cancel"
         );
         return false;
       }
@@ -1618,45 +2040,48 @@
       }
 
       function closeConfirmDialog() {
-        document.getElementById('confirmDialog').style.display = 'none';
+        document.getElementById("confirmDialog").style.display = "none";
       }
 
       // Close dialog when clicking outside
-      document.getElementById('confirmDialog').addEventListener('click', function(event) {
-        if (event.target === this) {
-          closeConfirmDialog();
-        }
-      });
+      document
+        .getElementById("confirmDialog")
+        .addEventListener("click", function (event) {
+          if (event.target === this) {
+            closeConfirmDialog();
+          }
+        });
 
       // Update modal behavior to close when clicking outside
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener("DOMContentLoaded", function () {
         // Get all modals
-        const modals = document.querySelectorAll('.modal, .confirm-dialog');
-        
+        const modals = document.querySelectorAll(".modal, .confirm-dialog");
+
         // Add click event listener to each modal
-        modals.forEach(modal => {
-          modal.addEventListener('click', function(event) {
+        modals.forEach((modal) => {
+          modal.addEventListener("click", function (event) {
             if (event.target === this) {
               // If clicked outside modal content
-              if (modal.id === 'editModal') closeModal();
-              else if (modal.id === 'addLabModal') closeAddLabModal();
-              else if (modal.id === 'addAnnouncementModal') closeAddAnnouncementModal();
-              else if (modal.id === 'endSessionModal') closeEndSessionModal();
-              else if (modal.id === 'cropperModal') closeCropperModal();
-              else if (modal.id === 'confirmDialog') closeConfirmDialog();
-              }
-            });
+              if (modal.id === "editModal") closeModal();
+              else if (modal.id === "addLabModal") closeAddLabModal();
+              else if (modal.id === "addAnnouncementModal")
+                closeAddAnnouncementModal();
+              else if (modal.id === "endSessionModal") closeEndSessionModal();
+              else if (modal.id === "cropperModal") closeCropperModal();
+              else if (modal.id === "confirmDialog") closeConfirmDialog();
+            }
+          });
         });
 
         // Initialize dashboard
-        showSection('manageLabs', document.querySelector('.button'));
+        showSection("manageLabs", document.querySelector(".button"));
         fetchLabs();
         fetchAnnouncements();
         loadActiveSessions();
       });
 
       // Add styles for confirmation buttons
-      const style = document.createElement('style');
+      const style = document.createElement("style");
       style.textContent = `
         .confirm-yes {
           background: #dd0c0c !important;
@@ -1670,20 +2095,28 @@
 
       // Show/Hide Sections
       function showSection(sectionId, button) {
-        document.querySelectorAll(".content-section").forEach(section => {
+        document.querySelectorAll(".content-section").forEach((section) => {
           section.style.display = "none";
           section.classList.remove("show");
         });
         const section = document.getElementById(sectionId);
         section.style.display = "block";
         setTimeout(() => section.classList.add("show"), 10);
-        
-        document.querySelectorAll(".button").forEach(btn => btn.classList.remove("selected"));
+
+        document
+          .querySelectorAll(".button")
+          .forEach((btn) => btn.classList.remove("selected"));
         button.classList.add("selected");
-        
+
         // Load records when showing the records section
-        if (sectionId === 'sitInRecords') {
+        if (sectionId === "sitInRecords") {
           filterRecords();
+        }
+
+        if (sectionId === "statistics") {
+          fetchStatistics();
+        } else if (sectionId === "feedbacks") {
+          fetchFeedbacks();
         }
       }
 
@@ -1692,26 +2125,26 @@
         if (input.files && input.files[0]) {
           const file = input.files[0];
           const reader = new FileReader();
-          
-          reader.onload = function(e) {
-            const cropperModal = document.getElementById('cropperModal');
-            const cropperImage = document.getElementById('cropperImage');
-            
+
+          reader.onload = function (e) {
+            const cropperModal = document.getElementById("cropperModal");
+            const cropperImage = document.getElementById("cropperImage");
+
             // Reset cropper if it exists
             if (cropper) {
               cropper.destroy();
               cropper = null;
             }
-            
+
             cropperImage.src = e.target.result;
-            cropperModal.style.display = 'flex';
-            
+            cropperModal.style.display = "flex";
+
             // Wait for image to load before initializing cropper
-            cropperImage.onload = function() {
+            cropperImage.onload = function () {
               cropper = new Cropper(cropperImage, {
                 aspectRatio: 1,
                 viewMode: 1,
-                dragMode: 'move',
+                dragMode: "move",
                 autoCropArea: 0.8,
                 restore: false,
                 guides: true,
@@ -1720,149 +2153,165 @@
                 cropBoxMovable: true,
                 cropBoxResizable: true,
                 toggleDragModeOnDblclick: false,
-                ready: function() {
+                ready: function () {
                   // Center the crop box when the cropper is ready
                   const containerData = cropper.getContainerData();
                   const cropBoxData = cropper.getCropBoxData();
                   const left = (containerData.width - cropBoxData.width) / 2;
                   const top = (containerData.height - cropBoxData.height) / 2;
                   cropper.setCropBoxData({ left: left, top: top });
-                }
+                },
               });
             };
           };
-          
+
           reader.readAsDataURL(file);
         }
       }
 
       function closeCropperModal() {
-        const cropperModal = document.getElementById('cropperModal');
-        cropperModal.style.display = 'none';
+        const cropperModal = document.getElementById("cropperModal");
+        cropperModal.style.display = "none";
         if (cropper) {
           cropper.destroy();
           cropper = null;
         }
         // Reset file inputs
-        document.getElementById('profile-upload').value = '';
-        document.getElementById('modal-profile-upload').value = '';
+        document.getElementById("profile-upload").value = "";
+        document.getElementById("modal-profile-upload").value = "";
       }
 
       function saveCroppedImage() {
         if (!cropper) return;
-        
+
         const canvas = cropper.getCroppedCanvas({
           width: 400,
-          height: 400
+          height: 400,
         });
-        
-        canvas.toBlob(function(blob) {
-          const formData = new FormData();
-          formData.append('profile_picture', blob, 'profile.jpg');
-          
-          fetch('{{ url_for("staff.update_profile_picture") }}', {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-            if (data.success) {
-              document.querySelector('.preview-profile-image').src = data.profile_picture_data;
-              document.querySelector('.profile-image').src = data.profile_picture_data;
-              document.querySelector('.large-profile-image').src = data.profile_picture_data;
-              closeCropperModal();
-            }
-          });
-        }, 'image/jpeg', 0.95);
+
+        canvas.toBlob(
+          function (blob) {
+            const formData = new FormData();
+            formData.append("profile_picture", blob, "profile.jpg");
+
+            fetch('{{ url_for("staff.update_profile_picture") }}', {
+              method: "POST",
+              body: formData,
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.success) {
+                  document.querySelector(".preview-profile-image").src =
+                    data.profile_picture_data;
+                  document.querySelector(".profile-image").src =
+                    data.profile_picture_data;
+                  document.querySelector(".large-profile-image").src =
+                    data.profile_picture_data;
+                  closeCropperModal();
+                }
+              });
+          },
+          "image/jpeg",
+          0.95
+        );
       }
 
       // Modal functionality
       const modal = document.getElementById("editModal");
-      const formGroups = document.querySelectorAll('.form-group');
-      
+      const formGroups = document.querySelectorAll(".form-group");
+
       function openModal() {
         // Get current values from the page
         const currentFirstName = "{{ staff_firstname }}";
         const currentLastName = "{{ staff_lastname }}";
         const currentEmail = "{{ staff_email }}";
-        
+
         // Set the form field values
-        document.getElementById('firstname').value = currentFirstName;
-        document.getElementById('lastname').value = currentLastName;
-        document.getElementById('email').value = currentEmail;
-        
+        document.getElementById("firstname").value = currentFirstName;
+        document.getElementById("lastname").value = currentLastName;
+        document.getElementById("email").value = currentEmail;
+
         modal.style.display = "block";
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow = "hidden";
         animateFormGroups();
       }
-      
+
       function closeModal() {
         modal.style.display = "none";
-        document.body.style.overflow = 'auto';
+        document.body.style.overflow = "auto";
       }
-      
+
       function animateFormGroups() {
         formGroups.forEach((group, index) => {
           setTimeout(() => {
-            group.classList.add('show');
+            group.classList.add("show");
           }, 100 * index);
         });
       }
 
       // Profile dropdown
       function toggleProfileMenu(event) {
-          event.preventDefault();
-        const dropdown = document.querySelector('.profile-dropdown-content');
-        dropdown.classList.toggle('show');
+        event.preventDefault();
+        const dropdown = document.querySelector(".profile-dropdown-content");
+        dropdown.classList.toggle("show");
       }
 
       // Close dropdown when clicking outside
-      window.onclick = function(event) {
-        if (!event.target.matches('.profile-icon')) {
-          const dropdowns = document.getElementsByClassName('profile-dropdown-content');
+      window.onclick = function (event) {
+        if (!event.target.matches(".profile-icon")) {
+          const dropdowns = document.getElementsByClassName(
+            "profile-dropdown-content"
+          );
           for (let dropdown of dropdowns) {
-            if (dropdown.classList.contains('show')) {
-              dropdown.classList.remove('show');
+            if (dropdown.classList.contains("show")) {
+              dropdown.classList.remove("show");
             }
           }
         }
         if (event.target == modal) {
           closeModal();
         }
-      }
+      };
 
       // Lab Management
-      document.getElementById('addLabForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const labName = document.getElementById('labId').value;
-        const totalComputers = parseInt(document.getElementById('totalComputers').value);
+      document
+        .getElementById("addLabForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const labName = document.getElementById("labId").value;
+          const totalComputers = parseInt(
+            document.getElementById("totalComputers").value
+          );
 
-        fetch('/manage_labs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lab_name: labName, total_computers: totalComputers })
-        })
-        .then(response => response.json())
-        .then(data => {
+          fetch("/manage_labs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lab_name: labName,
+              total_computers: totalComputers,
+            }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
               if (data.error) {
-            showToast(data.error, 'error');
-            } else {
-            showToast('Lab added successfully', 'success');
-            closeAddLabModal();
+                showToast(data.error, "error");
+              } else {
+                showToast("Lab added successfully", "success");
+                closeAddLabModal();
                 fetchLabs();
               }
             });
         });
 
       function fetchLabs() {
-        fetch('/manage_labs')
-          .then(response => response.json())
-          .then(labs => {
-            const labList = document.getElementById('labList');
-            labList.innerHTML = '';
-            labs.forEach(lab => {
-              const div = document.createElement('div');
-              div.className = 'lab-item';
+        fetch("/manage_labs")
+          .then((response) => response.json())
+          .then((labs) => {
+            const labList = document.getElementById("labList");
+            labList.innerHTML = "";
+            labs.forEach((lab) => {
+              const div = document.createElement("div");
+              div.className = "lab-item";
               div.innerHTML = `
                 <div class="lab-info">
                   <h4>${lab.LAB_NAME}</h4>
@@ -1881,35 +2330,41 @@
 
       function deleteLab(labId) {
         showConfirmDialog(
-          'delete_lab',
-          'Delete Lab',
-          'Are you sure you want to delete this lab?',
-          'Yes, Delete',
-          'Cancel',
+          "delete_lab",
+          "Delete Lab",
+          "Are you sure you want to delete this lab?",
+          "Yes, Delete",
+          "Cancel",
           labId
         );
       }
 
       // Student Search with Profile Pictures
-      document.querySelector('.search-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const studentId = document.getElementById('studentId').value;
-        const noResults = document.getElementById('noResults');
-        const searchResults = document.getElementById('searchResults');
+      document
+        .querySelector(".search-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const studentId = document.getElementById("studentId").value;
+          const noResults = document.getElementById("noResults");
+          const searchResults = document.getElementById("searchResults");
 
-        fetch(`/search_student/${studentId}`)
-          .then(response => response.json())
-          .then(students => {
-            searchResults.innerHTML = '';
-            if (students.length === 0) {
-              noResults.style.display = 'block';
-              searchResults.closest('.results-container').classList.add('empty');
-            } else {
-              noResults.style.display = 'none';
-              searchResults.closest('.results-container').classList.remove('empty');
-              students.forEach(student => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
+          fetch(`/search_student/${studentId}`)
+            .then((response) => response.json())
+            .then((students) => {
+              searchResults.innerHTML = "";
+              if (students.length === 0) {
+                noResults.style.display = "block";
+                searchResults
+                  .closest(".results-container")
+                  .classList.add("empty");
+              } else {
+                noResults.style.display = "none";
+                searchResults
+                  .closest(".results-container")
+                  .classList.remove("empty");
+                students.forEach((student) => {
+                  const tr = document.createElement("tr");
+                  tr.innerHTML = `
                   <td>
                     <img src="/get_profile_picture/${student.IDNO}" 
                          alt="Profile" 
@@ -1918,9 +2373,9 @@
                     ${student.IDNO}
                     <span class="remaining-sessions">(${student.REMAINING_SESSIONS} sessions left)</span>
                   </td>
-                  <td>${student.NAME}</td>
-                  <td>${student.COURSE}</td>
-                  <td>${student.YEAR}</td>
+            <td>${student.NAME}</td>
+            <td>${student.COURSE}</td>
+            <td>${student.YEAR}</td>
                   <td>${student.EMAIL}</td>
                   <td>
                     <button class="action-button start-sitin-btn" onclick="openSitInModal('${student.IDNO}', '${student.NAME}')">
@@ -1928,64 +2383,75 @@
                     </button>
                   </td>
                 `;
-                searchResults.appendChild(tr);
-              });
-            }
-          });
-      });
+                  searchResults.appendChild(tr);
+                });
+              }
+            });
+        });
 
       // Announcements Management
-      document.getElementById('announcementForm').addEventListener('submit', function(event) {
+      document
+        .getElementById("announcementForm")
+        .addEventListener("submit", function (event) {
           event.preventDefault();
-        const title = document.getElementById('title').value;
-        const content = document.getElementById('content').value;
+          const title = document.getElementById("title").value;
+          const content = document.getElementById("content").value;
 
-        fetch('/announcements', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
+          fetch("/announcements", {
+            method: "POST",
+          headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, content }),
         })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            showToast(data.error, 'error');
-          } else {
-            showToast('Announcement posted successfully', 'success');
-            closeAddAnnouncementModal();
-            fetchAnnouncements();
-          }
+          .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                showToast(data.error, "error");
+              } else {
+                showToast("Announcement posted successfully", "success");
+                closeAddAnnouncementModal();
+                fetchAnnouncements();
+              }
+            });
         });
-      });
 
       function fetchAnnouncements() {
-        fetch('/announcements')
-          .then(response => response.json())
-          .then(announcements => {
-            const container = document.getElementById('announcementsList');
-            container.innerHTML = '';
-            announcements.forEach(announcement => {
-              const div = document.createElement('div');
-              div.className = 'announcement-item';
-              
+        fetch("/announcements")
+          .then((response) => response.json())
+          .then((announcements) => {
+            const container = document.getElementById("announcementsList");
+            container.innerHTML = "";
+            announcements.forEach((announcement) => {
+              const div = document.createElement("div");
+              div.className = "announcement-item";
+
               // Check if the current staff member is the poster
-              const isOwner = announcement.posted_by === '{{ session["IDNO"] }}';
-              
+              const isOwner =
+                announcement.posted_by === '{{ session["IDNO"] }}';
+
               div.innerHTML = `
           <h3>${announcement.title}</h3>
           <p>${announcement.content}</p>
                 <div class="announcement-meta">
                   <small>Posted on ${announcement.date_posted}</small>
                 </div>
-                ${isOwner ? `
+                ${
+                  isOwner
+                    ? `
           <div class="announcement-actions">
-                    <button class="edit" onclick='editAnnouncement(${JSON.stringify(announcement).replace(/'/g, "\\'")})'">
+                    <button class="edit" onclick='editAnnouncement(${JSON.stringify(
+                      announcement
+                    ).replace(/'/g, "\\'")})'">
                       <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="delete" onclick="deleteAnnouncement(${announcement.announcement_id})">
+                    <button class="delete" onclick="deleteAnnouncement(${
+                      announcement.announcement_id
+                    })">
                       <i class="fas fa-trash"></i> Delete
                     </button>
           </div>
-                ` : ''}
+                `
+                    : ""
+                }
               `;
               container.appendChild(div);
             });
@@ -1994,7 +2460,7 @@
 
       function editAnnouncement(announcement) {
         // Create a form for editing
-        const form = document.createElement('form');
+        const form = document.createElement("form");
         form.innerHTML = `
           <div class="form-group">
             <input type="text" value="${announcement.title}" required>
@@ -2009,133 +2475,136 @@
         `;
 
         // Replace the announcement content with the form
-        const announcementItem = event.target.closest('.announcement-item');
+        const announcementItem = event.target.closest(".announcement-item");
         const originalContent = announcementItem.innerHTML;
-        announcementItem.innerHTML = '';
+        announcementItem.innerHTML = "";
         announcementItem.appendChild(form);
 
-        form.addEventListener('submit', function(e) {
+        form.addEventListener("submit", function (e) {
           e.preventDefault();
-          const newTitle = form.querySelector('input').value;
-          const newContent = form.querySelector('textarea').value;
+          const newTitle = form.querySelector("input").value;
+          const newContent = form.querySelector("textarea").value;
 
           fetch(`/announcements/${announcement.announcement_id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title: newTitle, content: newContent })
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: newTitle, content: newContent }),
           })
-          .then(response => response.json())
-          .then(data => {
-            if (data.error) {
-              showToast(data.error, 'error');
-            } else {
-              showToast('Announcement updated successfully', 'success');
-                  fetchAnnouncements();
-                }
-          });
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.error) {
+                showToast(data.error, "error");
+              } else {
+                showToast("Announcement updated successfully", "success");
+                fetchAnnouncements();
+              }
+            });
         });
 
-        form.querySelector('.cancel').addEventListener('click', function() {
+        form.querySelector(".cancel").addEventListener("click", function () {
           announcementItem.innerHTML = originalContent;
         });
       }
 
       function deleteAnnouncement(announcementId) {
         showConfirmDialog(
-          'delete_announcement',
-          'Delete Announcement',
-          'Are you sure you want to delete this announcement?',
-          'Yes, Delete',
-          'Cancel',
+          "delete_announcement",
+          "Delete Announcement",
+          "Are you sure you want to delete this announcement?",
+          "Yes, Delete",
+          "Cancel",
           announcementId
         );
       }
 
       function handleAnnouncementDelete(announcementId) {
         fetch(`/announcements/${announcementId}`, {
-            method: 'DELETE'
+          method: "DELETE",
         })
-        .then(response => response.json())
-        .then(data => {
+          .then((response) => response.json())
+          .then((data) => {
             closeConfirmDialog();
             if (data.error) {
-                showToast(data.error, 'error');
+              showToast(data.error, "error");
             } else {
-                showToast('Announcement deleted successfully', 'success');
+              showToast("Announcement deleted successfully", "success");
               fetchAnnouncements();
             }
-        });
+          });
       }
 
       // Add success/error toast notifications
-      function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const icon = toast.querySelector('i');
-        const messageSpan = toast.querySelector('.toast-message');
-        
+      function showToast(message, type = "success") {
+        const toast = document.getElementById("toast");
+        const icon = toast.querySelector("i");
+        const messageSpan = toast.querySelector(".toast-message");
+
         // Set icon based on type
-        icon.className = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+        icon.className =
+          type === "success"
+            ? "fas fa-check-circle"
+            : "fas fa-exclamation-circle";
         messageSpan.textContent = message;
-        
+
         // Add appropriate class
         toast.className = `toast ${type}`;
-        toast.classList.add('show');
-        
+        toast.classList.add("show");
+
         // Hide after 3 seconds
         setTimeout(() => {
-          toast.classList.remove('show');
+          toast.classList.remove("show");
         }, 3000);
       }
 
       // Add these new functions
       function openAddLabModal() {
-        const modal = document.getElementById('addLabModal');
+        const modal = document.getElementById("addLabModal");
         if (modal) {
-          modal.style.display = 'block';
-          document.body.style.overflow = 'hidden';
+          modal.style.display = "block";
+          document.body.style.overflow = "hidden";
           animateFormGroups();
         }
       }
 
       function closeAddLabModal() {
-        const modal = document.getElementById('addLabModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        document.getElementById('addLabForm').reset();
+        const modal = document.getElementById("addLabModal");
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+        document.getElementById("addLabForm").reset();
       }
 
       function openAddAnnouncementModal() {
-        const modal = document.getElementById('addAnnouncementModal');
+        const modal = document.getElementById("addAnnouncementModal");
         if (modal) {
-          modal.style.display = 'block';
-          document.body.style.overflow = 'hidden';
+          modal.style.display = "block";
+          document.body.style.overflow = "hidden";
           animateFormGroups();
         }
       }
 
       function closeAddAnnouncementModal() {
-        const modal = document.getElementById('addAnnouncementModal');
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-        document.getElementById('announcementForm').reset();
+        const modal = document.getElementById("addAnnouncementModal");
+        modal.style.display = "none";
+        document.body.style.overflow = "auto";
+        document.getElementById("announcementForm").reset();
       }
 
       function openEditAnnouncementModal(announcement) {
-        const modal = document.getElementById('editAnnouncementModal');
-        const titleInput = document.getElementById('editAnnouncementTitle');
-        const contentInput = document.getElementById('editAnnouncementContent');
-        const idInput = document.getElementById('editAnnouncementId');
+        const modal = document.getElementById("editAnnouncementModal");
+        const titleInput = document.getElementById("editAnnouncementTitle");
+        const contentInput = document.getElementById("editAnnouncementContent");
+        const idInput = document.getElementById("editAnnouncementId");
 
         titleInput.value = announcement.title;
         contentInput.value = announcement.content;
         idInput.value = announcement.announcement_id;
 
-        modal.style.display = 'block';
+        modal.style.display = "block";
       }
 
       function closeEditAnnouncementModal() {
-        const modal = document.getElementById('editAnnouncementModal');
-        modal.style.display = 'none';
+        const modal = document.getElementById("editAnnouncementModal");
+        modal.style.display = "none";
       }
 
       // Update the editAnnouncement function
@@ -2144,146 +2613,174 @@
       }
 
       // Add event listener for edit form submission
-      document.getElementById('editAnnouncementForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const announcementId = document.getElementById('editAnnouncementId').value;
-        const title = document.getElementById('editAnnouncementTitle').value;
-        const content = document.getElementById('editAnnouncementContent').value;
+      document
+        .getElementById("editAnnouncementForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const announcementId =
+            document.getElementById("editAnnouncementId").value;
+          const title = document.getElementById("editAnnouncementTitle").value;
+          const content = document.getElementById(
+            "editAnnouncementContent"
+          ).value;
 
-        fetch(`/announcements/${announcementId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ title, content })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-              alert(data.error);
-            } else {
-            closeEditAnnouncementModal();
-            fetchAnnouncements(); // Refresh the announcements list
-          }
+          fetch(`/announcements/${announcementId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ title, content }),
+          })
+          .then((response) => response.json())
+          .then((data) => {
+              if (data.error) {
+                alert(data.error);
+              } else {
+                closeEditAnnouncementModal();
+                fetchAnnouncements(); // Refresh the announcements list
+              }
+            });
         });
-      });
 
       // Close modal when clicking outside
-      window.onclick = function(event) {
-        const editModal = document.getElementById('editAnnouncementModal');
+      window.onclick = function (event) {
+        const editModal = document.getElementById("editAnnouncementModal");
         if (event.target == editModal) {
           closeEditAnnouncementModal();
         }
-      }
+      };
 
       function openSitInModal(studentId, studentName) {
         // First check if student has an ongoing session
         fetch(`/staff/sitin_records?student_id=${studentId}&session=ON_GOING`)
-            .then(response => response.json())
-            .then(records => {
-                if (records && records.length > 0) {
-                    showToast('Student already has an ongoing sit-in session', 'error');
-                    return;
-                }
-                
-                // Check remaining sessions only if there's no ongoing session
-                fetch(`/staff/check_remaining_sessions/${studentId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error || data.remaining_sessions <= 0) {
-                            showToast('Student has no remaining sit-in sessions', 'error');
-                            return;
-                        }
-                        
-                        document.getElementById('sitInStudentId').value = studentId;
-                        document.getElementById('sitInStudentName').textContent = studentName;
-                        
-                        // Fetch labs and purposes for dropdowns with loading indicators
-                        const labSelect = document.getElementById('sitInLab');
-                        const purposeSelect = document.getElementById('sitInPurpose');
-                        
-                        labSelect.innerHTML = '<option value="">Loading labs...</option>';
-                        purposeSelect.innerHTML = '<option value="">Loading purposes...</option>';
-                        
-                        Promise.all([
-                            fetch('/staff/laboratories').then(response => {
-                                if (!response.ok) throw new Error('Failed to fetch labs');
-                                return response.json();
-                            }),
-                            fetch('/staff/purposes').then(response => {
-                                if (!response.ok) throw new Error('Failed to fetch purposes');
-                                return response.json();
-                            })
-                        ]).then(([labs, purposes]) => {
-                            labSelect.innerHTML = '<option value="">Select Lab</option>';
-                            purposeSelect.innerHTML = '<option value="">Select Purpose</option>';
-                            
-                            labs.forEach(lab => {
-                                labSelect.innerHTML += `<option value="${lab.LAB_ID}">${lab.LAB_NAME}</option>`;
-                            });
-                            
-                            purposes.forEach(purpose => {
-                                purposeSelect.innerHTML += `<option value="${purpose.PURPOSE_ID}">${purpose.PURPOSE_NAME}</option>`;
-                            });
-                            
-                            document.getElementById('sitInModal').style.display = 'flex';
-                        }).catch(error => {
-                            console.error('Error loading data:', error);
-                            labSelect.innerHTML = '<option value="">Error loading labs</option>';
-                            purposeSelect.innerHTML = '<option value="">Error loading purposes</option>';
-                            showToast(error.message, 'error');
-                        });
-                    })
-                    .catch(error => {
-                        showToast('Error checking remaining sessions: ' + error.message, 'error');
+          .then((response) => response.json())
+          .then((records) => {
+            if (records && records.length > 0) {
+              showToast(
+                "Student already has an ongoing sit-in session",
+                "error"
+              );
+              return;
+            }
+
+            // Check remaining sessions only if there's no ongoing session
+            fetch(`/staff/check_remaining_sessions/${studentId}`)
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.error || data.remaining_sessions <= 0) {
+                  showToast(
+                    "Student has no remaining sit-in sessions",
+                    "error"
+                  );
+              return;
+            }
+
+                document.getElementById("sitInStudentId").value = studentId;
+                document.getElementById("sitInStudentName").textContent =
+                  studentName;
+
+                // Fetch labs and purposes for dropdowns with loading indicators
+                const labSelect = document.getElementById("sitInLab");
+                const purposeSelect = document.getElementById("sitInPurpose");
+
+                labSelect.innerHTML =
+                  '<option value="">Loading labs...</option>';
+                purposeSelect.innerHTML =
+                  '<option value="">Loading purposes...</option>';
+
+                Promise.all([
+                  fetch("/staff/laboratories").then((response) => {
+                    if (!response.ok) throw new Error("Failed to fetch labs");
+                    return response.json();
+                  }),
+                  fetch("/staff/purposes").then((response) => {
+                    if (!response.ok)
+                      throw new Error("Failed to fetch purposes");
+                    return response.json();
+                  }),
+                ])
+                  .then(([labs, purposes]) => {
+                    labSelect.innerHTML =
+                      '<option value="">Select Lab</option>';
+                    purposeSelect.innerHTML =
+                      '<option value="">Select Purpose</option>';
+
+                    labs.forEach((lab) => {
+                      labSelect.innerHTML += `<option value="${lab.LAB_ID}">${lab.LAB_NAME}</option>`;
                     });
-            })
-            .catch(error => {
-                showToast('Error checking ongoing sessions: ' + error.message, 'error');
-            });
+
+                    purposes.forEach((purpose) => {
+                      purposeSelect.innerHTML += `<option value="${purpose.PURPOSE_ID}">${purpose.PURPOSE_NAME}</option>`;
+                    });
+
+                    document.getElementById("sitInModal").style.display =
+                      "flex";
+                  })
+                  .catch((error) => {
+                    console.error("Error loading data:", error);
+                    labSelect.innerHTML =
+                      '<option value="">Error loading labs</option>';
+                    purposeSelect.innerHTML =
+                      '<option value="">Error loading purposes</option>';
+                    showToast(error.message, "error");
+                  });
+              })
+              .catch((error) => {
+                showToast(
+                  "Error checking remaining sessions: " + error.message,
+                  "error"
+                );
+              });
+          })
+          .catch((error) => {
+            showToast(
+              "Error checking ongoing sessions: " + error.message,
+              "error"
+            );
+          });
       }
 
       function closeSitInModal() {
-        document.getElementById('sitInModal').style.display = 'none';
-        document.getElementById('sitInForm').reset();
+        document.getElementById("sitInModal").style.display = "none";
+        document.getElementById("sitInForm").reset();
       }
 
       function loadActiveSessions() {
-        const container = document.querySelector('.active-sessions-grid');
-        const labFilter = document.getElementById('filterLab').value;
-        const purposeFilter = document.getElementById('filterPurpose').value;
-        
-        let url = '/staff/active_sessions';
+        const container = document.querySelector(".active-sessions-grid");
+        const labFilter = document.getElementById("filterLab").value;
+        const purposeFilter = document.getElementById("filterPurpose").value;
+
+        let url = "/staff/active_sessions";
         if (labFilter || purposeFilter) {
           const params = new URLSearchParams();
-          if (labFilter) params.append('lab_id', labFilter);
-          if (purposeFilter) params.append('purpose_id', purposeFilter);
-          url += '?' + params.toString();
+          if (labFilter) params.append("lab_id", labFilter);
+          if (purposeFilter) params.append("purpose_id", purposeFilter);
+          url += "?" + params.toString();
         }
-        
+
         container.innerHTML = '<div class="loading">Loading sessions...</div>';
-        
+
         fetch(url)
-          .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch sessions');
+          .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch sessions");
             return response.json();
           })
-          .then(sessions => {
-            container.innerHTML = '';
-            
+          .then((sessions) => {
+            container.innerHTML = "";
+
             if (sessions.length === 0) {
               container.innerHTML = `
                 <div class="no-sessions">
                   <i class="fas fa-users-slash"></i>
                   <p>No active sessions found</p>
-                </div>
-              `;
-          return;
-        }
-            
-            sessions.forEach(session => {
-              const card = document.createElement('div');
-              card.className = 'session-card';
+          </div>
+        `;
+              return;
+            }
+
+            sessions.forEach((session) => {
+              const card = document.createElement("div");
+              card.className = "session-card";
               card.innerHTML = `
                 <div class="student-info">
                   <img src="/get_profile_picture/${session.STUDENT_ID}" 
@@ -2298,49 +2795,65 @@
                 <div class="session-details">
                   <p><i class="fas fa-desktop"></i> ${session.LAB_NAME}</p>
                   <p><i class="fas fa-tasks"></i> ${session.PURPOSE_NAME}</p>
-                  <p><i class="fas fa-clock"></i> Started: ${formatDate(session.DATE)}</p>
-                  ${session.END_TIME ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(session.END_TIME)}</p>` : ''}
+                  <p><i class="fas fa-clock"></i> Started: ${formatDate(
+                    session.DATE
+                  )}</p>
+                  ${
+                    session.END_TIME
+                      ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(
+                          session.END_TIME
+                        )}</p>`
+                      : ""
+                  }
                 </div>
-                ${!session.END_TIME ? `
+                ${
+                  !session.END_TIME
+                    ? `
                   <button class="end-session-btn" onclick="openEndSessionModal('${session.RECORD_ID}', '${session.STUDENT_NAME}', '${session.STUDENT_ID}', '${session.LAB_NAME}', '${session.PURPOSE_NAME}')">
                     <i class="fas fa-sign-out-alt"></i> End Session
                   </button>
-                ` : ''}
+                `
+                    : ""
+                }
               `;
               container.appendChild(card);
             });
           })
-          .catch(error => {
+          .catch((error) => {
             container.innerHTML = `
               <div class="error">
                 <i class="fas fa-exclamation-circle"></i>
                 <p>Error loading sessions: ${error.message}</p>
               </div>
             `;
-            showToast('Error loading sessions: ' + error.message, 'error');
+            showToast("Error loading sessions: " + error.message, "error");
           });
       }
 
       function loadFilters() {
         // Load labs for filter
-        fetch('/staff/laboratories')
-          .then(response => response.json())
-          .then(labs => {
-            const labSelect = document.getElementById('filterLab');
-            labs.forEach(lab => {
+        fetch("/staff/laboratories")
+          .then((response) => response.json())
+          .then((labs) => {
+            const labSelect = document.getElementById("filterLab");
+            labs.forEach((lab) => {
               if (!labSelect.querySelector(`option[value="${lab.LAB_ID}"]`)) {
                 labSelect.innerHTML += `<option value="${lab.LAB_ID}">${lab.LAB_NAME}</option>`;
               }
             });
           });
-        
+
         // Load purposes for filter
-        fetch('/staff/purposes')
-          .then(response => response.json())
-          .then(purposes => {
-            const purposeSelect = document.getElementById('filterPurpose');
-            purposes.forEach(purpose => {
-              if (!purposeSelect.querySelector(`option[value="${purpose.PURPOSE_ID}"]`)) {
+        fetch("/staff/purposes")
+          .then((response) => response.json())
+          .then((purposes) => {
+            const purposeSelect = document.getElementById("filterPurpose");
+            purposes.forEach((purpose) => {
+              if (
+                !purposeSelect.querySelector(
+                  `option[value="${purpose.PURPOSE_ID}"]`
+                )
+              ) {
                 purposeSelect.innerHTML += `<option value="${purpose.PURPOSE_ID}">${purpose.PURPOSE_NAME}</option>`;
               }
             });
@@ -2356,94 +2869,108 @@
         return date.toLocaleString();
       }
 
-      function openEndSessionModal(recordId, studentName, studentId, labName, purposeName) {
+      function openEndSessionModal(
+        recordId,
+        studentName,
+        studentId,
+        labName,
+        purposeName
+      ) {
         currentSessionToEnd = recordId;
-        const modal = document.getElementById('endSessionModal');
-        const studentImg = document.getElementById('endSessionStudentImg');
-        const nameElement = document.getElementById('endSessionStudentName');
-        const detailsElement = document.getElementById('endSessionDetails');
-        
+        const modal = document.getElementById("endSessionModal");
+        const studentImg = document.getElementById("endSessionStudentImg");
+        const nameElement = document.getElementById("endSessionStudentName");
+        const detailsElement = document.getElementById("endSessionDetails");
+
         studentImg.src = `/get_profile_picture/${studentId}`;
-        studentImg.onerror = () => studentImg.src = '/static/default_profile.png';
+        studentImg.onerror = () =>
+          (studentImg.src = "/static/default_profile.png");
         nameElement.textContent = studentName;
         detailsElement.textContent = `${labName} - ${purposeName}`;
-        
-        modal.style.display = 'flex';
+
+        modal.style.display = "flex";
       }
 
       function closeEndSessionModal() {
-        document.getElementById('endSessionModal').style.display = 'none';
+        document.getElementById("endSessionModal").style.display = "none";
         currentSessionToEnd = null;
       }
 
       function confirmEndSession() {
         if (!currentSessionToEnd) return;
-        
+
         fetch(`/staff/end_session/${currentSessionToEnd}`, {
-          method: 'POST'
+          method: "POST",
         })
-        .then(response => response.json())
-        .then(data => {
+          .then((response) => response.json())
+          .then((data) => {
             if (data.error) {
-            showToast(data.error, 'error');
+              showToast(data.error, "error");
             } else {
-            showToast('Session ended successfully', 'success');
-            closeEndSessionModal();
-            loadActiveSessions();
-          }
-        })
-        .catch(error => {
-          showToast('Error ending session: ' + error.message, 'error');
-        });
+              showToast("Session ended successfully", "success");
+              closeEndSessionModal();
+              loadActiveSessions();
+            }
+          })
+          .catch((error) => {
+            showToast("Error ending session: " + error.message, "error");
+          });
       }
 
       // Initialize active sessions when the page loads
-      document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('activeSessions').style.display !== 'none') {
+      document.addEventListener("DOMContentLoaded", function () {
+        if (
+          document.getElementById("activeSessions").style.display !== "none"
+        ) {
           loadActiveSessions();
         }
       });
 
       function startSitIn(event) {
         event.preventDefault();
-        const studentId = document.getElementById('sitInStudentId').value;
-        const labId = document.getElementById('sitInLab').value;
-        const purposeId = document.getElementById('sitInPurpose').value;
+        const studentId = document.getElementById("sitInStudentId").value;
+        const labId = document.getElementById("sitInLab").value;
+        const purposeId = document.getElementById("sitInPurpose").value;
 
         if (!studentId || !labId || !purposeId) {
-          showToast('Please fill in all fields', 'error');
+          showToast("Please fill in all fields", "error");
           return;
         }
 
-        fetch('/staff/start_sitin', {
-          method: 'POST',
+        fetch("/staff/start_sitin", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             student_id: studentId,
             lab_id: labId,
-            purpose_id: purposeId
-          })
+            purpose_id: purposeId,
+          }),
         })
-        .then(response => response.json())
-        .then(data => {
+          .then((response) => response.json())
+          .then((data) => {
             if (data.error) {
-            showToast(data.error, 'error');
+              showToast(data.error, "error");
             } else {
-            showToast('Sit-in session started successfully', 'success');
-            closeSitInModal();
-            loadActiveSessions();
-          }
-        })
-        .catch(error => {
-          showToast('Error starting sit-in session: ' + error.message, 'error');
-        });
+              showToast("Sit-in session started successfully", "success");
+              closeSitInModal();
+              loadActiveSessions();
+            }
+          })
+          .catch((error) => {
+            showToast(
+              "Error starting sit-in session: " + error.message,
+              "error"
+            );
+          });
       }
 
       // Initialize filters and data when page loads
-      document.addEventListener('DOMContentLoaded', function() {
-        if (document.getElementById('activeSessions').style.display !== 'none') {
+      document.addEventListener("DOMContentLoaded", function () {
+        if (
+          document.getElementById("activeSessions").style.display !== "none"
+        ) {
           loadActiveSessions();
         }
         loadFilters();
@@ -2451,31 +2978,31 @@
 
       function loadFilters() {
         // Load labs for filters
-        fetch('/staff/laboratories')
-          .then(response => response.json())
-          .then(labs => {
-            const labSelects = ['filterLab', 'recordFilterLab'];
-            labSelects.forEach(selectId => {
+        fetch("/staff/laboratories")
+          .then((response) => response.json())
+          .then((labs) => {
+            const labSelects = ["filterLab", "recordFilterLab"];
+            labSelects.forEach((selectId) => {
               const select = document.getElementById(selectId);
               if (select) {
                 select.innerHTML = '<option value="">All Labs</option>';
-                labs.forEach(lab => {
+                labs.forEach((lab) => {
                   select.innerHTML += `<option value="${lab.LAB_ID}">${lab.LAB_NAME}</option>`;
                 });
               }
             });
           });
-        
+
         // Load purposes for filters
-        fetch('/staff/purposes')
-          .then(response => response.json())
-          .then(purposes => {
-            const purposeSelects = ['filterPurpose', 'recordFilterPurpose'];
-            purposeSelects.forEach(selectId => {
+        fetch("/staff/purposes")
+          .then((response) => response.json())
+          .then((purposes) => {
+            const purposeSelects = ["filterPurpose", "recordFilterPurpose"];
+            purposeSelects.forEach((selectId) => {
               const select = document.getElementById(selectId);
               if (select) {
                 select.innerHTML = '<option value="">All Purposes</option>';
-                purposes.forEach(purpose => {
+                purposes.forEach((purpose) => {
                   select.innerHTML += `<option value="${purpose.PURPOSE_ID}">${purpose.PURPOSE_NAME}</option>`;
                 });
               }
@@ -2484,27 +3011,27 @@
       }
 
       function filterRecords() {
-        const labId = document.getElementById('recordFilterLab').value;
-        const purposeId = document.getElementById('recordFilterPurpose').value;
-        const status = document.getElementById('recordFilterStatus').value;
-        const session = document.getElementById('recordFilterSession').value;
-        
-        let url = '/staff/sitin_records';
+        const labId = document.getElementById("recordFilterLab").value;
+        const purposeId = document.getElementById("recordFilterPurpose").value;
+        const status = document.getElementById("recordFilterStatus").value;
+        const session = document.getElementById("recordFilterSession").value;
+
+        let url = "/staff/sitin_records";
         const params = new URLSearchParams();
-        if (labId) params.append('lab_id', labId);
-        if (purposeId) params.append('purpose_id', purposeId);
-        if (status) params.append('status', status);
-        if (session) params.append('session', session);
-        if (params.toString()) url += '?' + params.toString();
-        
-        const container = document.querySelector('.records-grid');
+        if (labId) params.append("lab_id", labId);
+        if (purposeId) params.append("purpose_id", purposeId);
+        if (status) params.append("status", status);
+        if (session) params.append("session", session);
+        if (params.toString()) url += "?" + params.toString();
+
+        const container = document.querySelector(".records-grid");
         container.innerHTML = '<div class="loading">Loading records...</div>';
-        
+
         fetch(url)
-          .then(response => response.json())
-          .then(records => {
-            container.innerHTML = '';
-            
+          .then((response) => response.json())
+          .then((records) => {
+            container.innerHTML = "";
+
             if (records.length === 0) {
               container.innerHTML = `
                 <div class="no-records">
@@ -2512,12 +3039,12 @@
                   <p>No records found</p>
                 </div>
               `;
-              return;
+          return;
             }
-            
-            records.forEach(record => {
-              const card = document.createElement('div');
-              card.className = 'record-card';
+
+            records.forEach((record) => {
+              const card = document.createElement("div");
+              card.className = "record-card";
               card.innerHTML = `
                 <div class="student-info">
                   <img src="/get_profile_picture/${record.STUDENT_ID}" 
@@ -2532,23 +3059,35 @@
                 <div class="record-details">
                   <p><i class="fas fa-desktop"></i> ${record.LAB_NAME}</p>
                   <p><i class="fas fa-tasks"></i> ${record.PURPOSE_NAME}</p>
-                  <p><i class="fas fa-clock"></i> Started: ${formatDate(record.DATE)}</p>
-                  ${record.END_TIME ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(record.END_TIME)}</p>` : ''}
-                  <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${record.STATUS.toLowerCase()}">${record.STATUS}</span></p>
-                  <p><i class="fas fa-spinner"></i> Session: <span class="session-badge ${record.SESSION.toLowerCase()}">${record.SESSION}</span></p>
+                  <p><i class="fas fa-clock"></i> Started: ${formatDate(
+                    record.DATE
+                  )}</p>
+                  ${
+                    record.END_TIME
+                      ? `<p><i class="fas fa-clock"></i> Ended: ${formatDate(
+                          record.END_TIME
+                        )}</p>`
+                      : ""
+                  }
+                  <p><i class="fas fa-info-circle"></i> Status: <span class="status-badge ${record.STATUS.toLowerCase()}">${
+                record.STATUS
+              }</span></p>
+                  <p><i class="fas fa-spinner"></i> Session: <span class="session-badge ${record.SESSION.toLowerCase()}">${
+                record.SESSION
+              }</span></p>
                 </div>
               `;
               container.appendChild(card);
             });
           })
-          .catch(error => {
+          .catch((error) => {
             container.innerHTML = `
               <div class="error">
                 <i class="fas fa-exclamation-circle"></i>
                 <p>Error loading records: ${error.message}</p>
               </div>
             `;
-            showToast('Error loading records: ' + error.message, 'error');
+            showToast("Error loading records: " + error.message, "error");
           });
       }
 
@@ -2559,24 +3098,175 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            lab_id: labId
+            lab_id: labId,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              showToast(data.error, "error");
+            } else {
+              showToast("Lab deleted successfully", "success");
+              fetchLabs();
+            }
           })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            showToast(data.error, 'error');
-          } else {
-            showToast('Lab deleted successfully', 'success');
-            fetchLabs();
-          }
-        })
-        .catch(error => {
-          showToast('Error deleting lab: ' + error.message, 'error');
-        });
+          .catch((error) => {
+            showToast("Error deleting lab: " + error.message, "error");
+          });
+      }
+
+      async function fetchStatistics() {
+        try {
+            // Destroy existing charts if they exist and are valid Chart instances
+            if (window.purposeChart instanceof Chart) {
+                window.purposeChart.destroy();
+            }
+            if (window.labChart instanceof Chart) {
+                window.labChart.destroy();
+            }
+
+            const response = await fetch('/staff/statistics');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Statistics data received:", data);  // Debug log
+
+            // Update statistics cards
+            document.getElementById('registeredStudents').textContent = data.registered_students;
+            document.getElementById('currentSitins').textContent = data.current_sitins;
+            document.getElementById('totalSitins').textContent = data.total_sitins;
+
+            // Create purpose chart if there is data
+            if (data.purpose_stats && data.purpose_stats.length > 0) {
+                const purposeCtx = document.getElementById('purposeChart').getContext('2d');
+                window.purposeChart = new Chart(purposeCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.purpose_stats.map(stat => stat.purpose_name),
+                        datasets: [{
+                            data: data.purpose_stats.map(stat => stat.count),
+                            backgroundColor: generateColors(data.purpose_stats.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Create lab chart if there is data
+            if (data.lab_stats && data.lab_stats.length > 0) {
+                const labCtx = document.getElementById('labChart').getContext('2d');
+                window.labChart = new Chart(labCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: data.lab_stats.map(stat => stat.lab_name),
+                        datasets: [{
+                            data: data.lab_stats.map(stat => stat.count),
+                            backgroundColor: generateColors(data.lab_stats.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching statistics:', error);
+            // Clear any partial data
+            document.getElementById('registeredStudents').textContent = '0';
+            document.getElementById('currentSitins').textContent = '0';
+            document.getElementById('totalSitins').textContent = '0';
+        }
+    }
+
+      function fetchFeedbacks() {
+        const container = document.querySelector('.feedbacks-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading">Loading feedbacks...</div>';
+
+        fetch('/staff/feedbacks')
+          .then(response => response.json())
+          .then(feedbacks => {
+            container.innerHTML = '';
+            
+            if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+              container.innerHTML = `
+                <div class="no-feedbacks">
+                  <i class="fas fa-comments"></i>
+                  <p>No feedbacks found</p>
+                </div>
+              `;
+              return;
+            }
+
+            feedbacks.forEach(feedback => {
+              const card = document.createElement('div');
+              card.className = 'feedback-card';
+              card.innerHTML = `
+                <div class="feedback-header">
+                  <div class="student-info">
+                    <img src="/get_profile_picture/${feedback.USER_IDNO}" 
+                         alt="Student" 
+                         class="student-profile-pic"
+                         onerror="this.src='/static/default_profile.png'">
+                    <div>
+                      <h3>${feedback.STUDENT_NAME}</h3>
+                      <p>${feedback.USER_IDNO}</p>
+                    </div>
+                  </div>
+                  <div class="session-info">
+                    <p><i class="fas fa-desktop"></i> ${feedback.LAB_NAME}</p>
+                    <p><i class="fas fa-calendar"></i> ${formatDate(new Date(feedback.DATE))}</p>
+                  </div>
+                </div>
+                <div class="feedback-content">
+                  <p>${feedback.FEEDBACK_TEXT}</p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading feedbacks:', error);
+            container.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading feedbacks: ${error.message}</p>
+              </div>
+            `;
+            showToast('Error loading feedbacks: ' + error.message, 'error');
+          });
+      }
+
+      function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+          const hue = (i * 360) / count;
+          colors.push(`hsla(${hue}, 70%, 60%, 0.8)`);
+        }
+        return colors;
       }
     </script>
   </body>
 </html>
-
-</rewritten_file>

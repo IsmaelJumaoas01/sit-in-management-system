@@ -473,4 +473,138 @@ def get_sitin_records():
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
+
+@staff_bp.route('/statistics')
+def get_statistics():
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        print("Unauthorized access attempt to staff statistics")
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        print("Starting staff statistics retrieval...")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get registered students count
+        cursor.execute("SELECT COUNT(IDNO) FROM USERS WHERE USER_TYPE = 'STUDENT'")
+        registered_students = cursor.fetchone()[0] or 0
+        print(f"Found {registered_students} registered students")
+
+        # Get current sit-ins count
+        cursor.execute("""
+            SELECT COUNT(RECORD_ID) 
+            FROM SIT_IN_RECORDS 
+            WHERE SESSION = 'ON_GOING'
+        """)
+        current_sitins = cursor.fetchone()[0] or 0
+        print(f"Found {current_sitins} current sit-ins")
+
+        # Get total sit-ins count
+        cursor.execute("SELECT COUNT(RECORD_ID) FROM SIT_IN_RECORDS")
+        total_sitins = cursor.fetchone()[0] or 0
+        print(f"Found {total_sitins} total sit-ins")
+
+        # Get sit-ins by purpose with proper join
+        cursor.execute("""
+            SELECT 
+                p.PURPOSE_NAME,
+                COALESCE(COUNT(s.RECORD_ID), 0) as count
+            FROM PURPOSES p
+            LEFT JOIN SIT_IN_RECORDS s ON p.PURPOSE_ID = s.PURPOSE_ID
+            GROUP BY p.PURPOSE_ID, p.PURPOSE_NAME
+            ORDER BY count DESC
+        """)
+        purpose_stats = []
+        for row in cursor.fetchall():
+            if row[0]:  # Only add if purpose name exists
+                purpose_stats.append({
+                    'purpose_name': row[0],
+                    'count': int(row[1])
+                })
+        print(f"Found purpose stats: {purpose_stats}")
+
+        # Get sit-ins by lab with proper join
+        cursor.execute("""
+            SELECT 
+                l.LAB_NAME,
+                COALESCE(COUNT(s.RECORD_ID), 0) as count
+            FROM LABORATORIES l
+            LEFT JOIN SIT_IN_RECORDS s ON l.LAB_ID = s.LAB_ID
+            GROUP BY l.LAB_ID, l.LAB_NAME
+            ORDER BY count DESC
+        """)
+        lab_stats = []
+        for row in cursor.fetchall():
+            if row[0]:  # Only add if lab name exists
+                lab_stats.append({
+                    'lab_name': row[0],
+                    'count': int(row[1])
+                })
+        print(f"Found lab stats: {lab_stats}")
+
+        cursor.close()
+        conn.close()
+
+        response_data = {
+            'registered_students': registered_students,
+            'current_sitins': current_sitins,
+            'total_sitins': total_sitins,
+            'purpose_stats': purpose_stats,
+            'lab_stats': lab_stats
+        }
+        print("Sending response:", response_data)
+        return jsonify(response_data)
+
+    except Exception as e:
+        print(f"Error in staff statistics: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@staff_bp.route('/feedbacks')
+def get_feedbacks():
+    if 'IDNO' not in session or session.get('USER_TYPE') != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT 
+                f.FEEDBACK_ID,
+                f.RECORD_ID,
+                f.FEEDBACK_TEXT,
+                f.DATE_SUBMITTED,
+                u.IDNO as USER_IDNO,
+                CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
+                l.LAB_NAME,
+                s.DATE as SESSION_DATE,
+                p.PURPOSE_NAME
+            FROM FEEDBACKS f
+            JOIN SIT_IN_RECORDS s ON f.RECORD_ID = s.RECORD_ID
+            JOIN USERS u ON f.USER_IDNO = u.IDNO
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            ORDER BY f.DATE_SUBMITTED DESC
+        """)
+        
+        feedbacks = []
+        for row in cursor.fetchall():
+            feedbacks.append({
+                'feedback_id': row[0],
+                'record_id': row[1],
+                'feedback_text': row[2],
+                'date_submitted': row[3].strftime("%Y-%m-%d %H:%M:%S") if row[3] else None,
+                'user_idno': row[4],
+                'student_name': row[5],
+                'lab_name': row[6],
+                'session_date': row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
+                'purpose_name': row[8]
+            })
+        
+        return jsonify(feedbacks)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
         conn.close() 

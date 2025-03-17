@@ -70,10 +70,10 @@ def get_profile_picture(idno):
             )
         else:
             # Return a default profile picture from static folder
-            return redirect(url_for('static', filename='static/images/default-profile.png'))
+            return redirect(url_for('static', filename='images/default-profile.png'))
     except Exception as e:
         # Return a default profile picture from static folder
-        return redirect(url_for('static', filename='static/images/default-profile.png'))
+        return redirect(url_for('static', filename='images/default-profile.png'))
     finally:
         cursor.close()
         conn.close()

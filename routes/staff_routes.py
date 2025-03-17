@@ -1,8 +1,20 @@
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, send_file, Response
 from db import get_db_connection
 import os
 from werkzeug.utils import secure_filename
 import base64
+import pandas as pd
+from io import BytesIO, StringIO
+from datetime import datetime, timedelta
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+import xlsxwriter
+import csv
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
 
 staff_bp = Blueprint('staff', __name__)
 
@@ -268,6 +280,51 @@ def get_active_sessions():
             'LAB_NAME': s[7],
             'PURPOSE_NAME': s[8]
         } for s in sessions])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route('/ended_sessions')
+def get_ended_sessions():
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    date = request.args.get('date')
+    if not date:
+        return jsonify({'error': 'Date parameter is required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        query = """
+            SELECT s.RECORD_ID, s.USER_IDNO, s.LAB_ID, s.DATE, s.END_TIME,
+                   u.FIRSTNAME, u.LASTNAME,
+                   l.LAB_NAME,
+                   p.PURPOSE_NAME
+            FROM SIT_IN_RECORDS s
+            JOIN USERS u ON s.USER_IDNO = u.IDNO
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE DATE(s.DATE) = %s
+            AND s.SESSION = 'ENDED'
+            ORDER BY s.END_TIME DESC
+        """
+        cursor.execute(query, (date,))
+        records = cursor.fetchall()
+
+        return jsonify([{
+            'RECORD_ID': r[0],
+            'STUDENT_ID': r[1],
+            'LAB_ID': r[2],
+            'DATE': r[3].isoformat(),
+            'END_TIME': r[4].isoformat() if r[4] else None,
+            'STUDENT_NAME': f"{r[5]} {r[6]}",
+            'LAB_NAME': r[7],
+            'PURPOSE_NAME': r[8]
+        } for r in records])
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:
@@ -607,4 +664,658 @@ def get_feedbacks():
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
-        conn.close() 
+        conn.close()
+
+@staff_bp.route('/generate_reports')
+def generate_reports():
+    if 'IDNO' not in session or session.get('USER_TYPE') != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    report_type = request.args.get('type')
+    report_format = request.args.get('format', 'excel')
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if report_type == 'statistics':
+            # Get statistics data
+            cursor.execute("SELECT COUNT(IDNO) FROM USERS WHERE USER_TYPE = 'STUDENT'")
+            registered_students = cursor.fetchone()[0] or 0
+
+            cursor.execute("SELECT COUNT(RECORD_ID) FROM SIT_IN_RECORDS WHERE SESSION = 'ON_GOING'")
+            current_sitins = cursor.fetchone()[0] or 0
+
+            cursor.execute("SELECT COUNT(RECORD_ID) FROM SIT_IN_RECORDS")
+            total_sitins = cursor.fetchone()[0] or 0
+
+            # Get sit-ins by purpose
+            cursor.execute("""
+                SELECT p.PURPOSE_NAME, COUNT(s.RECORD_ID)
+                FROM PURPOSES p
+                LEFT JOIN SIT_IN_RECORDS s ON p.PURPOSE_ID = s.PURPOSE_ID
+                GROUP BY p.PURPOSE_NAME
+                ORDER BY COUNT(s.RECORD_ID) DESC
+            """)
+            purpose_stats = cursor.fetchall()
+
+            # Get sit-ins by lab
+            cursor.execute("""
+                SELECT l.LAB_NAME, COUNT(s.RECORD_ID)
+                FROM LABORATORIES l
+                LEFT JOIN SIT_IN_RECORDS s ON l.LAB_ID = s.LAB_ID
+                GROUP BY l.LAB_NAME
+                ORDER BY COUNT(s.RECORD_ID) DESC
+            """)
+            lab_stats = cursor.fetchall()
+
+            # Prepare data for report
+            data = [
+                ['Metric', 'Value'],
+                ['Registered Students', registered_students],
+                ['Current Sit-ins', current_sitins],
+                ['Total Sit-ins', total_sitins],
+                ['', ''],  # Empty row for spacing
+                ['Sit-ins by Purpose', ''],
+                *[(row[0], row[1]) for row in purpose_stats],
+                ['', ''],  # Empty row for spacing
+                ['Sit-ins by Laboratory', ''],
+                *[(row[0], row[1]) for row in lab_stats]
+            ]
+            title = 'System Statistics Report'
+            filename = f'statistics_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+
+        elif report_type == 'feedback':
+            # Get feedback data
+            cursor.execute("""
+                SELECT 
+                    f.FEEDBACK_ID,
+                    f.FEEDBACK_TEXT,
+                    f.DATE_SUBMITTED,
+                    u.IDNO as USER_IDNO,
+                    CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
+                    l.LAB_NAME,
+                    s.DATE as SESSION_DATE,
+                    p.PURPOSE_NAME
+                FROM FEEDBACKS f
+                JOIN SIT_IN_RECORDS s ON f.RECORD_ID = s.RECORD_ID
+                JOIN USERS u ON f.USER_IDNO = u.IDNO
+                JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+                JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+                ORDER BY f.DATE_SUBMITTED DESC
+            """)
+            feedbacks = cursor.fetchall()
+
+            # Prepare data for report
+            data = [
+                ['Student ID', 'Student Name', 'Lab', 'Purpose', 'Session Date', 'Feedback', 'Submitted Date']
+            ]
+            for feedback in feedbacks:
+                data.append([
+                    feedback[3],  # Student ID
+                    feedback[4],  # Student Name
+                    feedback[5],  # Lab Name
+                    feedback[7],  # Purpose Name
+                    feedback[6].strftime("%Y-%m-%d %H:%M:%S") if feedback[6] else 'N/A',  # Session Date
+                    feedback[1],  # Feedback Text
+                    feedback[2].strftime("%Y-%m-%d %H:%M:%S") if feedback[2] else 'N/A'  # Date Submitted
+                ])
+            title = 'Student Feedback Report'
+            filename = f'feedback_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+
+        elif report_type == 'sit_ins':
+            # Get filters
+            lab_id = request.args.get('lab_id')
+            purpose_id = request.args.get('purpose_id')
+            status = request.args.get('status')
+            session_status = request.args.get('session')
+
+            # Build query
+            query = """
+                SELECT 
+                    s.RECORD_ID,
+                    u.IDNO,
+                    CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
+                    l.LAB_NAME,
+                    p.PURPOSE_NAME,
+                    s.DATE,
+                    s.END_TIME,
+                    s.STATUS,
+                    s.SESSION
+                FROM SIT_IN_RECORDS s
+                JOIN USERS u ON s.USER_IDNO = u.IDNO
+                JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+                JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+                WHERE 1=1
+            """
+            params = []
+
+            if lab_id:
+                query += " AND s.LAB_ID = %s"
+                params.append(lab_id)
+            if purpose_id:
+                query += " AND s.PURPOSE_ID = %s"
+                params.append(purpose_id)
+            if status:
+                query += " AND s.STATUS = %s"
+                params.append(status)
+            if session_status:
+                query += " AND s.SESSION = %s"
+                params.append(session_status)
+
+            query += " ORDER BY s.DATE DESC"
+            cursor.execute(query, params)
+            records = cursor.fetchall()
+
+            # Prepare data for report
+            data = [
+                ['Record ID', 'Student ID', 'Student Name', 'Lab', 'Purpose', 'Start Time', 'End Time', 'Status', 'Session']
+            ]
+            for record in records:
+                data.append([
+                    record[0],  # Record ID
+                    record[1],  # Student ID
+                    record[2],  # Student Name
+                    record[3],  # Lab Name
+                    record[4],  # Purpose Name
+                    record[5].strftime("%Y-%m-%d %H:%M:%S") if record[5] else 'N/A',  # Start Time
+                    record[6].strftime("%Y-%m-%d %H:%M:%S") if record[6] else 'N/A',  # End Time
+                    record[7],  # Status
+                    record[8]   # Session
+                ])
+            title = 'Sit-in Records Report'
+            filename = f'sitin_records_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+        else:
+            return jsonify({'error': 'Invalid report type'}), 400
+
+        if report_format == 'excel':
+            output = BytesIO()
+            workbook = Workbook()
+            sheet = workbook.active
+            
+            # Set title
+            sheet['A1'] = title
+            sheet['A1'].font = Font(size=14, bold=True)
+            sheet.merge_cells(f'A1:{get_column_letter(len(data[0]))}1')
+            
+            # Add generation timestamp
+            sheet['A2'] = f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
+            sheet['A2'].font = Font(italic=True)
+            sheet.merge_cells(f'A2:{get_column_letter(len(data[0]))}2')
+            
+            # Add empty row
+            current_row = 4
+            
+            # Add data with formatting
+            for row_idx, row in enumerate(data):
+                for col_idx, value in enumerate(row, 1):
+                    cell = sheet.cell(row=current_row, column=col_idx)
+                    cell.value = str(value)  # Convert all values to string
+                    if current_row == 4:  # Headers
+                        cell.font = Font(bold=True)
+                        cell.fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
+                        cell.alignment = Alignment(horizontal='center')
+                    else:
+                        cell.alignment = Alignment(wrap_text=True)
+                current_row += 1
+            
+            # Set column widths
+            for col in sheet.columns:
+                max_length = 0
+                for cell in col:
+                    try:
+                        max_length = max(max_length, len(str(cell.value)))
+                    except:
+                        pass
+                adjusted_width = min(max_length + 2, 50)  # Cap width at 50 characters
+                sheet.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
+            
+            workbook.save(output)
+            output.seek(0)
+            
+            response = send_file(
+                output,
+                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                as_attachment=True,
+                download_name=f'{filename}.xlsx'
+            )
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            return response
+            
+        elif report_format == 'csv':
+            output = StringIO()
+            writer = csv.writer(output)
+            writer.writerow([title])
+            writer.writerow([f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'])
+            writer.writerow([])  # Empty row
+            writer.writerows(data)
+            
+            response = Response(
+                output.getvalue(),
+                mimetype='text/csv',
+                headers={
+                    'Content-Disposition': f'attachment; filename={filename}.csv',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            )
+            return response
+            
+        elif report_format == 'pdf':
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(
+                buffer,
+                pagesize=landscape(letter),
+                rightMargin=30,
+                leftMargin=30,
+                topMargin=30,
+                bottomMargin=30
+            )
+            
+            elements = []
+            styles = getSampleStyleSheet()
+            
+            # Add title
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Heading1'],
+                fontSize=16,
+                alignment=1,
+                spaceAfter=20
+            )
+            elements.append(Paragraph(title, title_style))
+            
+            # Add timestamp
+            elements.append(Paragraph(
+                f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
+                ParagraphStyle('Timestamp', fontSize=10, alignment=1, spaceAfter=20)
+            ))
+            
+            # Convert all data to strings
+            table_data = [[str(cell) for cell in row] for row in data]
+            
+            # Create table
+            table_style = TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.green),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                ('TOPPADDING', (0, 0), (-1, -1), 3),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ])
+            
+            # Calculate column widths based on content
+            col_widths = []
+            for col in zip(*table_data):
+                max_width = max(len(str(cell)) for cell in col) * 6  # Approximate width
+                col_widths.append(min(max_width, 120))  # Cap width at 120 points
+            
+            table = Table(table_data, colWidths=col_widths, repeatRows=1)
+            table.setStyle(table_style)
+            elements.append(table)
+            
+            doc.build(elements)
+            buffer.seek(0)
+            
+            response = send_file(
+                buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'{filename}.pdf'
+            )
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+            return response
+
+        return jsonify({'error': 'Invalid report format'}), 400
+
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        return jsonify({'error': 'Failed to generate report'}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route('/search_student/<string:student_id>')
+def search_student(student_id):
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT IDNO, FIRSTNAME, LASTNAME, COURSE, YEAR, EMAIL 
+            FROM USERS 
+            WHERE IDNO = %s AND USER_TYPE = 'STUDENT'
+        """, (student_id,))
+        
+        student = cursor.fetchone()
+        if not student:
+            return jsonify({'error': 'Student not found'}), 404
+
+        return jsonify({
+            'IDNO': student[0],
+            'FIRSTNAME': student[1],
+            'LASTNAME': student[2],
+            'COURSE': student[3],
+            'YEAR': student[4],
+            'EMAIL': student[5]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route('/generate_report', methods=['GET'])
+def generate_report():
+    try:
+        report_type = request.args.get('type', 'statistics')
+        format_type = request.args.get('format', 'pdf')
+        
+        # Get current timestamp for filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if report_type == 'statistics':
+            # Fetch statistics data
+            cursor.execute("""
+                SELECT 
+                    COUNT(DISTINCT s.STUDENT_ID) as registered_students,
+                    COUNT(CASE WHEN r.END_TIME IS NULL THEN 1 END) as active_sessions,
+                    COUNT(*) as total_sessions,
+                    l.LAB_NAME,
+                    COUNT(r.RECORD_ID) as lab_sessions,
+                    p.PURPOSE_NAME,
+                    COUNT(r.RECORD_ID) as purpose_sessions
+                FROM USERS s
+                LEFT JOIN SIT_IN_RECORDS r ON s.IDNO = r.STUDENT_ID
+                LEFT JOIN LABORATORIES l ON r.LAB_ID = l.LAB_ID
+                LEFT JOIN PURPOSES p ON r.PURPOSE_ID = p.PURPOSE_ID
+                WHERE s.USER_TYPE = 'Student'
+                GROUP BY l.LAB_NAME, p.PURPOSE_NAME
+            """)
+            
+            data = cursor.fetchall()
+            
+            if format_type == 'pdf':
+                # Create PDF
+                buffer = BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=letter)
+                elements = []
+                
+                # Title
+                styles = getSampleStyleSheet()
+                title_style = ParagraphStyle(
+                    'CustomTitle',
+                    parent=styles['Heading1'],
+                    fontSize=16,
+                    spaceAfter=30
+                )
+                elements.append(Paragraph("System Statistics Report", title_style))
+                elements.append(Spacer(1, 12))
+                
+                # Summary Table
+                summary_data = [['Metric', 'Value']]
+                summary_data.extend([
+                    ['Registered Students', str(data[0][0])],
+                    ['Active Sessions', str(data[0][1])],
+                    ['Total Sessions', str(data[0][2])]
+                ])
+                
+                # Create summary table
+                summary_table = Table(summary_data, colWidths=[300, 200])
+                summary_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                elements.append(summary_table)
+                elements.append(Spacer(1, 20))
+                
+                # Lab Statistics
+                elements.append(Paragraph("Laboratory Usage Statistics", styles['Heading2']))
+                elements.append(Spacer(1, 12))
+                
+                lab_data = [['Laboratory', 'Number of Sessions']]
+                lab_stats = {}
+                for row in data:
+                    if row[3]:  # LAB_NAME
+                        lab_stats[row[3]] = row[4]  # lab_sessions
+                
+                lab_data.extend([[lab, str(sessions)] for lab, sessions in lab_stats.items()])
+                
+                lab_table = Table(lab_data, colWidths=[300, 200])
+                lab_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                elements.append(lab_table)
+                elements.append(Spacer(1, 20))
+                
+                # Purpose Statistics
+                elements.append(Paragraph("Purpose Statistics", styles['Heading2']))
+                elements.append(Spacer(1, 12))
+                
+                purpose_data = [['Purpose', 'Number of Sessions']]
+                purpose_stats = {}
+                for row in data:
+                    if row[5]:  # PURPOSE_NAME
+                        purpose_stats[row[5]] = row[6]  # purpose_sessions
+                
+                purpose_data.extend([[purpose, str(sessions)] for purpose, sessions in purpose_stats.items()])
+                
+                purpose_table = Table(purpose_data, colWidths=[300, 200])
+                purpose_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                    ('FONTSIZE', (0, 0), (-1, 0), 12),
+                    ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+                    ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+                    ('FONTSIZE', (0, 1), (-1, -1), 10),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                elements.append(purpose_table)
+                
+                # Build PDF
+                doc.build(elements)
+                buffer.seek(0)
+                
+                # Send PDF file
+                return send_file(
+                    buffer,
+                    download_name=f'statistics_report_{timestamp}.pdf',
+                    as_attachment=True,
+                    mimetype='application/pdf'
+                )
+                
+            elif format_type == 'csv':
+                # Create CSV
+                output = StringIO()
+                writer = csv.writer(output)
+                
+                # Write summary
+                writer.writerow(['System Statistics Report'])
+                writer.writerow(['Generated on:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+                writer.writerow([])
+                writer.writerow(['Summary'])
+                writer.writerow(['Registered Students', data[0][0]])
+                writer.writerow(['Active Sessions', data[0][1]])
+                writer.writerow(['Total Sessions', data[0][2]])
+                writer.writerow([])
+                
+                # Write lab statistics
+                writer.writerow(['Laboratory Statistics'])
+                writer.writerow(['Laboratory', 'Number of Sessions'])
+                lab_stats = {}
+                for row in data:
+                    if row[3]:
+                        lab_stats[row[3]] = row[4]
+                for lab, sessions in lab_stats.items():
+                    writer.writerow([lab, sessions])
+                writer.writerow([])
+                
+                # Write purpose statistics
+                writer.writerow(['Purpose Statistics'])
+                writer.writerow(['Purpose', 'Number of Sessions'])
+                purpose_stats = {}
+                for row in data:
+                    if row[5]:
+                        purpose_stats[row[5]] = row[6]
+                for purpose, sessions in purpose_stats.items():
+                    writer.writerow([purpose, sessions])
+                
+                output.seek(0)
+                return send_file(
+                    BytesIO(output.getvalue().encode('utf-8')),
+                    download_name=f'statistics_report_{timestamp}.csv',
+                    as_attachment=True,
+                    mimetype='text/csv'
+                )
+                
+            else:  # Excel format
+                wb = Workbook()
+                
+                # Summary sheet
+                ws = wb.active
+                ws.title = "Summary"
+                
+                # Title
+                ws['A1'] = "System Statistics Report"
+                ws['A1'].font = Font(size=14, bold=True)
+                ws.merge_cells('A1:B1')
+                
+                # Summary data
+                ws['A3'] = "Metric"
+                ws['B3'] = "Value"
+                ws['A4'] = "Registered Students"
+                ws['B4'] = data[0][0]
+                ws['A5'] = "Active Sessions"
+                ws['B5'] = data[0][1]
+                ws['A6'] = "Total Sessions"
+                ws['B6'] = data[0][2]
+                
+                # Style summary header
+                for cell in ws['A3:B3'][0]:
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+                
+                # Laboratory Statistics sheet
+                ws_lab = wb.create_sheet("Laboratory Statistics")
+                ws_lab['A1'] = "Laboratory"
+                ws_lab['B1'] = "Number of Sessions"
+                
+                row = 2
+                lab_stats = {}
+                for d in data:
+                    if d[3]:
+                        lab_stats[d[3]] = d[4]
+                for lab, sessions in lab_stats.items():
+                    ws_lab[f'A{row}'] = lab
+                    ws_lab[f'B{row}'] = sessions
+                    row += 1
+                
+                # Style lab header
+                for cell in ws_lab['A1:B1'][0]:
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+                
+                # Purpose Statistics sheet
+                ws_purpose = wb.create_sheet("Purpose Statistics")
+                ws_purpose['A1'] = "Purpose"
+                ws_purpose['B1'] = "Number of Sessions"
+                
+                row = 2
+                purpose_stats = {}
+                for d in data:
+                    if d[5]:
+                        purpose_stats[d[5]] = d[6]
+                for purpose, sessions in purpose_stats.items():
+                    ws_purpose[f'A{row}'] = purpose
+                    ws_purpose[f'B{row}'] = sessions
+                    row += 1
+                
+                # Style purpose header
+                for cell in ws_purpose['A1:B1'][0]:
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+                
+                # Auto-adjust column widths
+                for worksheet in [ws, ws_lab, ws_purpose]:
+                    for column in worksheet.columns:
+                        max_length = 0
+                        column = [cell for cell in column]
+                        for cell in column:
+                            try:
+                                if len(str(cell.value)) > max_length:
+                                    max_length = len(str(cell.value))
+                            except:
+                                pass
+                        adjusted_width = (max_length + 2)
+                        worksheet.column_dimensions[column[0].column_letter].width = adjusted_width
+                
+                # Save to buffer
+                excel_buffer = BytesIO()
+                wb.save(excel_buffer)
+                excel_buffer.seek(0)
+                
+                return send_file(
+                    excel_buffer,
+                    download_name=f'statistics_report_{timestamp}.xlsx',
+                    as_attachment=True,
+                    mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                )
+        
+        conn.close()
+        return jsonify({'error': 'Invalid report type'})
+        
+    except Exception as e:
+        print(f"Error generating report: {str(e)}")
+        return jsonify({'error': str(e)}), 500 

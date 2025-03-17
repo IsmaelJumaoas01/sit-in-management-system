@@ -1545,59 +1545,66 @@
         const container = document.querySelector('.feedbacks-container');
         if (!container) return;
 
-        container.innerHTML = '<div class="loading">Loading feedbacks...</div>';
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading feedbacks...</div>';
 
         fetch('/admin/feedbacks')
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to fetch feedbacks');
+            }
+            return response.json();
+          })
           .then(feedbacks => {
-            container.innerHTML = '';
-            
-            if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+            if (!feedbacks || feedbacks.length === 0) {
               container.innerHTML = `
-                <div class="no-feedbacks">
-                  <i class="fas fa-comments"></i>
-                  <p>No feedbacks found</p>
+                <div class="no-data">
+                  <i class="fas fa-comments-slash"></i>
+                  <p>No feedback records found</p>
                 </div>
               `;
               return;
             }
 
+            container.innerHTML = '';
             feedbacks.forEach(feedback => {
               const card = document.createElement('div');
               card.className = 'feedback-card';
               card.innerHTML = `
                 <div class="feedback-header">
                   <div class="student-info">
-                    <img src="/get_profile_picture/${feedback.USER_IDNO}" 
-                         alt="Student" 
-                         class="student-profile-pic"
-                         onerror="this.src='/static/default_profile.png'">
-                    <div>
-                      <h3>${feedback.STUDENT_NAME}</h3>
-                      <p>${feedback.USER_IDNO}</p>
+                    <img src="/user/get_profile_picture/${feedback.user_idno}" 
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2NjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMjF2LTJhNCA0IDAgMCAwLTQtNEg4YTQgNCAwIDAgMC00IDR2MiI+PC9wYXRoPjxjaXJjbGUgY3g9IjEyIiBjeT0iNyIgcj0iNCIgLz48L3N2Zz4='"
+                         alt="Student Profile"
+                         class="student-profile-pic">
+                    <div class="student-details">
+                      <h3>${feedback.student_name || 'Unknown Student'}</h3>
+                      <p>ID: ${feedback.user_idno || 'N/A'}</p>
                     </div>
                   </div>
                   <div class="session-info">
-                    <p><i class="fas fa-desktop"></i> ${feedback.LAB_NAME}</p>
-                    <p><i class="fas fa-calendar"></i> ${formatDate(new Date(feedback.DATE))}</p>
+                    <p><i class="fas fa-desktop"></i> Lab: ${feedback.lab_name || 'N/A'}</p>
+                    <p><i class="fas fa-tasks"></i> Purpose: ${feedback.purpose_name || 'N/A'}</p>
+                    <p><i class="fas fa-calendar"></i> Session: ${formatDateTime(feedback.session_date)}</p>
                   </div>
                 </div>
                 <div class="feedback-content">
-                  <p>${feedback.FEEDBACK_TEXT}</p>
+                  <p>${feedback.feedback_text || 'No feedback provided'}</p>
+                  <small class="feedback-date">
+                    <i class="fas fa-clock"></i> Submitted: ${formatDateTime(feedback.date_submitted)}
+                  </small>
                 </div>
               `;
               container.appendChild(card);
             });
           })
           .catch(error => {
-            console.error('Error loading feedbacks:', error);
+            console.error('Error:', error);
             container.innerHTML = `
               <div class="error-message">
                 <i class="fas fa-exclamation-circle"></i>
                 <p>Error loading feedbacks: ${error.message}</p>
               </div>
             `;
-            showToast('Error loading feedbacks: ' + error.message, 'error');
           });
       }
 
@@ -1608,6 +1615,49 @@
           colors.push(`hsla(${hue}, 70%, 60%, 0.8)`);
         }
         return colors;
+      }
+
+      function formatDateTime(date) {
+        return new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(date);
+      }
+
+      function generateReport() {
+        const section = document.querySelector('.content-section[style*="display: block"]');
+        if (!section) return;
+
+        const sectionId = section.id;
+        let reportType, filters = {};
+
+        // Get filters based on current section
+        if (sectionId === 'feedbacks') {
+          reportType = 'feedback';
+        } else if (sectionId === 'statistics') {
+          reportType = 'statistics';
+        } else if (sectionId === 'sitInRecords') {
+          reportType = 'sit_ins';
+          // Get filter values
+          filters = {
+            lab_id: document.getElementById('recordFilterLab')?.value,
+            purpose_id: document.getElementById('recordFilterPurpose')?.value,
+            status: document.getElementById('recordFilterStatus')?.value,
+            session: document.getElementById('recordFilterSession')?.value
+          };
+        }
+
+        const format = document.getElementById('reportFormat').value;
+        const queryParams = new URLSearchParams({
+          type: reportType,
+          format: format,
+          ...filters
+        });
+
+        window.location.href = `/admin/generate_reports?${queryParams}`;
       }
     </script>
   </body>

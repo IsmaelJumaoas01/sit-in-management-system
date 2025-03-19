@@ -3280,7 +3280,7 @@
                     card.innerHTML = `
                         <div class="session-header">
                             <div class="student-info">
-                                <img src="/user/get_profile_picture/${session.STUDENT_ID}" 
+                                <img src="${session.PROFILE_PICTURE_URL}" 
                                      alt="Student Profile"
                                      class="student-profile"
                                      onerror="this.onerror=null; this.src='/static/images/default-profile.png';">
@@ -3376,14 +3376,22 @@
 
       // Add function to load today's ended sessions
       function loadEndedSessions() {
+          console.log('Loading ended sessions...');
           const today = new Date().toISOString().split('T')[0];
-          fetch(`/staff/ended_sessions?date=${today}`)
-              .then(response => response.json())
+          console.log('Today\'s date:', today);
+          
+          fetch('/staff/today_ended_sessions')
+              .then(response => {
+                  console.log('Got response:', response.status);
+                  return response.json();
+              })
               .then(sessions => {
+                  console.log('Received sessions:', sessions);
                   const container = document.querySelector('.ended-sessions-grid');
                   container.innerHTML = '';
                   
-                  if (sessions.length === 0) {
+                  if (!sessions || sessions.length === 0) {
+                      console.log('No ended sessions found');
                       container.innerHTML = `
                           <div class="no-records">
                               <i class="fas fa-history"></i>
@@ -3393,38 +3401,38 @@
                       return;
                   }
 
+                  console.log(`Processing ${sessions.length} ended sessions`);
                   sessions.forEach(session => {
-                      const startTime = new Date(session.DATE);
-                      const endTime = new Date(session.END_TIME);
-                      const duration = Math.floor((endTime - startTime) / (1000 * 60)); // Duration in minutes
-
+                      console.log('Processing session:', session);
                       const card = document.createElement('div');
                       card.className = 'session-card ended';
                       card.innerHTML = `
                           <div class="session-header">
                               <div class="student-info">
-                                  <img src="/user/get_profile_picture/${session.STUDENT_ID}" 
+                                  <img src="${session.PROFILE_PICTURE_URL}" 
                                        alt="Student Profile"
                                        class="student-profile"
-                                       onerror="this.src='/static/images/default-profile.png'">
+                                       onerror="this.onerror=null; this.src='/static/images/default-profile.png';">
                                   <div>
-                                      <h3>${session.STUDENT_NAME}</h3>
-                                      <p class="student-id">${session.STUDENT_ID}</p>
+                                      <h3>${session.student_name}</h3>
+                                      <p class="student-id">${session.user_idno}</p>
                                   </div>
                               </div>
                               <span class="session-badge ended">Ended</span>
                           </div>
                           <div class="session-details">
-                              <p><i class="fas fa-desktop"></i> ${session.LAB_NAME}</p>
-                              <p><i class="fas fa-tasks"></i> ${session.PURPOSE_NAME}</p>
-                              <p><i class="fas fa-clock"></i> ${formatTime(startTime)} - ${formatTime(endTime)}</p>
-                              <p><i class="fas fa-hourglass-end"></i> Duration: ${duration} minutes</p>
+                              <p><i class="fas fa-desktop"></i> ${session.lab_name}</p>
+                              <p><i class="fas fa-tasks"></i> ${session.purpose_name}</p>
+                              <p><i class="fas fa-clock"></i> Started: ${formatDateTime(session.date)}</p>
+                              <p><i class="fas fa-clock"></i> Ended: ${formatDateTime(session.end_time)}</p>
                           </div>
                       `;
                       container.appendChild(card);
                   });
               })
               .catch(error => {
+                  console.error('Error loading ended sessions:', error);
+                  const container = document.querySelector('.ended-sessions-grid');
                   container.innerHTML = `
                       <div class="error">
                           <i class="fas fa-exclamation-circle"></i>
@@ -3432,6 +3440,39 @@
                       </div>
                   `;
               });
+      }
+
+      // Make sure loadEndedSessions is called when needed
+      document.addEventListener('DOMContentLoaded', function() {
+          console.log('Page loaded, checking if we should load ended sessions');
+          if (document.getElementById('activeSitins')) {
+              console.log('Active sitins section found, loading ended sessions');
+              loadEndedSessions();
+          }
+      });
+
+      // Also call loadEndedSessions after ending a session
+      function endSession(recordId) {
+          if (!confirm('Are you sure you want to end this session?')) {
+              return;
+          }
+
+          fetch(`/staff/end_session/${recordId}`, {
+              method: 'POST'
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  showToast('Session ended successfully', 'success');
+                  loadActiveSessions();
+                  loadEndedSessions();  // Reload ended sessions after ending one
+              } else {
+                  showToast(data.error || 'Failed to end session', 'error');
+              }
+          })
+          .catch(error => {
+              showToast('Error ending session: ' + error.message, 'error');
+          });
       }
 
       // Call both functions when loading active sessions section
@@ -3849,13 +3890,10 @@
               card.innerHTML = `
                 <div class="feedback-header">
                   <div class="student-info">
-                    <img src="/user/get_profile_picture/${feedback.user_idno}" 
-                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2NjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMjF2LTJhNCA0IDAgMCAwLTQtNEg4YTQgNCAwIDAgMC00IDR2MiI+PC9wYXRoPjxjaXJjbGUgY3g9IjEyIiBjeT0iNyIgcj0iNCIgLz48L3N2Zz4='"
-                         alt="Student Profile"
-                         class="student-profile-pic">
+                    <img class="profile-picture" src="${feedback.PROFILE_PICTURE_URL}" onerror="this.src='/static/images/default-profile.png'" alt="Student Profile">
                     <div class="student-details">
-                      <h3>${feedback.student_name || 'Unknown Student'}</h3>
-                      <p>ID: ${feedback.user_idno || 'N/A'}</p>
+                      <h3>${feedback.student_name}</h3>
+                      <p>Student ID: ${feedback.user_idno}</p>
                     </div>
                   </div>
                   <div class="session-info">
@@ -3941,13 +3979,10 @@
               card.innerHTML = `
                 <div class="feedback-header">
                   <div class="student-info">
-                    <img src="/user/get_profile_picture/${feedback.user_idno}" 
-                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjY2NjY2MiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgMjF2LTJhNCA0IDAgMCAwLTQtNEg4YTQgNCAwIDAgMC00IDR2MiI+PC9wYXRoPjxjaXJjbGUgY3g9IjEyIiBjeT0iNyIgcj0iNCIgLz48L3N2Zz4='"
-                         alt="Student Profile"
-                         class="student-profile-pic">
+                    <img class="profile-picture" src="${feedback.PROFILE_PICTURE_URL}" onerror="this.src='/static/images/default-profile.png'" alt="Student Profile">
                     <div class="student-details">
-                      <h3>${feedback.student_name || 'Unknown Student'}</h3>
-                      <p>ID: ${feedback.user_idno || 'N/A'}</p>
+                      <h3>${feedback.student_name}</h3>
+                      <p>Student ID: ${feedback.user_idno}</p>
                     </div>
                   </div>
                   <div class="session-info">
@@ -4138,29 +4173,6 @@
           } else {
               durationElement.textContent = `${minutes}m`;
           }
-      }
-
-      function endSession(recordId) {
-          if (!confirm('Are you sure you want to end this session?')) {
-              return;
-          }
-
-          fetch(`/staff/end_session/${recordId}`, {
-              method: 'POST'
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  showToast('Session ended successfully', 'success');
-                  loadActiveSessions();
-                  loadEndedSessions();
-              } else {
-                  showToast(data.error || 'Failed to end session', 'error');
-              }
-          })
-          .catch(error => {
-              showToast('Error ending session: ' + error.message, 'error');
-          });
       }
     </script>
   </body>

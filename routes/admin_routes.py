@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, flash, redirect, url_for, send_file
 from db import get_db_connection
 import os
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from io import BytesIO
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -491,6 +492,11 @@ def get_feedbacks():
         
         feedbacks = []
         for row in cursor.fetchall():
+            # Get profile picture for each student
+            cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (row[4],))
+            profile_result = cursor.fetchone()
+            profile_pic = f"/user/get_profile_picture/{row[4]}"
+                
             feedbacks.append({
                 'FEEDBACK_ID': row[0],
                 'RECORD_ID': row[1],
@@ -498,7 +504,8 @@ def get_feedbacks():
                 'DATE': row[3],
                 'USER_IDNO': row[4],
                 'STUDENT_NAME': row[5],
-                'LAB_NAME': row[6]
+                'LAB_NAME': row[6],
+                'PROFILE_PICTURE_URL': profile_pic
             })
 
         cursor.close()
@@ -507,5 +514,129 @@ def get_feedbacks():
         return jsonify(feedbacks)
 
     except Exception as e:
+        print(f"Error in admin get_feedbacks: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@admin_bp.route('/today_ended_sessions')
+def get_today_ended_sessions():
+    if 'IDNO' not in session or session['USER_TYPE'] != 'ADMIN':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get today's date in the correct format
+        today = datetime.now().strftime('%Y-%m-%d')
+        print(f"Admin - Looking for ended sessions on date: {today}")
+
+        query = """
+            SELECT s.RECORD_ID, s.USER_IDNO, s.LAB_ID, s.DATE, s.END_TIME,
+                   u.FIRSTNAME, u.LASTNAME,
+                   l.LAB_NAME,
+                   p.PURPOSE_NAME
+            FROM SIT_IN_RECORDS s
+            JOIN USERS u ON s.USER_IDNO = u.IDNO
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE DATE(s.END_TIME) = %s
+            AND s.SESSION = 'ENDED'
+            ORDER BY s.END_TIME DESC
+        """
+        
+        cursor.execute(query, (today,))
+        records = cursor.fetchall()
+        print(f"Admin - Found {len(records)} ended sessions for today")
+
+        result = []
+        for r in records:
+            # Get profile picture for each student
+            cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (r[1],))
+            profile_result = cursor.fetchone()
+            profile_pic = f"/user/get_profile_picture/{r[1]}"
+            
+            result.append({
+                'RECORD_ID': r[0],
+                'STUDENT_ID': r[1],
+                'LAB_ID': r[2],
+                'DATE': r[3].isoformat(),
+                'END_TIME': r[4].isoformat() if r[4] else None,
+                'STUDENT_NAME': f"{r[5]} {r[6]}",
+                'PROFILE_PICTURE_URL': profile_pic,
+                'LAB_NAME': r[7],
+                'PURPOSE_NAME': r[8]
+            })
+
+        # If no records found with the first query, try an alternative query
+        if len(result) == 0:
+            print("Admin - No records found with first query, trying alternative query...")
+            alternative_query = """
+                SELECT s.RECORD_ID, s.USER_IDNO, s.LAB_ID, s.DATE, s.END_TIME,
+                       u.FIRSTNAME, u.LASTNAME,
+                       l.LAB_NAME,
+                       p.PURPOSE_NAME
+                FROM SIT_IN_RECORDS s
+                JOIN USERS u ON s.USER_IDNO = u.IDNO
+                JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+                JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+                WHERE s.END_TIME >= %s
+                AND s.END_TIME < %s + INTERVAL 1 DAY
+                AND s.SESSION = 'ENDED'
+                ORDER BY s.END_TIME DESC
+            """
+            cursor.execute(alternative_query, (today, today))
+            records = cursor.fetchall()
+            print(f"Admin - Alternative query found {len(records)} ended sessions for today")
+
+            for r in records:
+                # Get profile picture for each student
+                cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (r[1],))
+                profile_result = cursor.fetchone()
+                profile_pic = f"/user/get_profile_picture/{r[1]}"
+                
+                result.append({
+                    'RECORD_ID': r[0],
+                    'STUDENT_ID': r[1],
+                    'LAB_ID': r[2],
+                    'DATE': r[3].isoformat(),
+                    'END_TIME': r[4].isoformat() if r[4] else None,
+                    'STUDENT_NAME': f"{r[5]} {r[6]}",
+                    'PROFILE_PICTURE_URL': profile_pic,
+                    'LAB_NAME': r[7],
+                    'PURPOSE_NAME': r[8]
+                })
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Admin - Error in today_ended_sessions: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@admin_bp.route('/get_profile_picture/<string:student_id>')
+def get_student_profile_picture(student_id):
+    if 'IDNO' not in session or session['USER_TYPE'] != 'ADMIN':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (student_id,))
+        result = cursor.fetchone()
+        if result and result[0]:
+            return send_file(
+                BytesIO(result[0]),
+                mimetype='image/jpeg'
+            )
+        else:
+            # Return a default profile picture from static folder
+            return redirect(url_for('static', filename='images/default-profile.png'))
+    except Exception as e:
+        print(f"Error fetching profile picture: {str(e)}")
+        # Return a default profile picture from static folder
+        return redirect(url_for('static', filename='images/default-profile.png'))
+    finally:
+        cursor.close()
+        conn.close()
 

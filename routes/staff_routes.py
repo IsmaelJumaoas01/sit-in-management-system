@@ -267,69 +267,118 @@ def get_active_sessions():
             query += " AND s.PURPOSE_ID = %s"
             params.append(purpose_id)
 
+        print("Executing active sessions query:", query)
+        print("With parameters:", params)
+        
         cursor.execute(query, params)
         sessions = cursor.fetchall()
+        print(f"Found {len(sessions)} active sessions")
 
-        return jsonify([{
-            'RECORD_ID': s[0],
-            'STUDENT_ID': s[1],
-            'LAB_ID': s[2],
-            'DATE': s[3].isoformat(),
-            'END_TIME': s[4].isoformat() if s[4] else None,
-            'STUDENT_NAME': f"{s[5]} {s[6]}",
-            'LAB_NAME': s[7],
-            'PURPOSE_NAME': s[8]
-        } for s in sessions])
+        result = []
+        for s in sessions:
+            profile_url = url_for('user.get_profile_picture', idno=s[1], _external=True)
+            print(f"Generated profile URL for student {s[1]}: {profile_url}")
+            
+            session_data = {
+                'RECORD_ID': s[0],
+                'STUDENT_ID': s[1],
+                'LAB_ID': s[2],
+                'DATE': s[3].isoformat() if s[3] else None,
+                'END_TIME': s[4].isoformat() if s[4] else None,
+                'STUDENT_NAME': f"{s[5]} {s[6]}",
+                'LAB_NAME': s[7],
+                'PURPOSE_NAME': s[8],
+                'PROFILE_PICTURE_URL': profile_url
+            }
+            print(f"Processing session for student {s[1]}: {session_data}")
+            result.append(session_data)
+        
+        print("Returning active sessions data:", result)
+        return jsonify(result)
     except Exception as e:
+        print(f"Error in active_sessions: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
 
-@staff_bp.route('/ended_sessions')
-def get_ended_sessions():
-    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+@staff_bp.route('/today_ended_sessions')
+def today_ended_sessions():
+    print("\n!!!! ROUTE /today_ended_sessions WAS CALLED !!!!")  # Initial debug message
+    
+    if 'IDNO' not in session or session.get('USER_TYPE') != 'STAFF':
+        print("Unauthorized access attempt")
         return jsonify({'error': 'Unauthorized'}), 401
 
-    date = request.args.get('date')
-    if not date:
-        return jsonify({'error': 'Date parameter is required'}), 400
-
+    print("Staff authorized, proceeding with database query")
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
+        today = datetime.now().strftime('%Y-%m-%d')
+        print(f"Checking ended sessions for date: {today}")
+
+        # Simple query to check database connection
+        test_query = "SELECT COUNT(*) FROM SIT_IN_RECORDS"
+        cursor.execute(test_query)
+        total_records = cursor.fetchone()[0]
+        print(f"Total records in SIT_IN_RECORDS: {total_records}")
+
+        # Main query
         query = """
-            SELECT s.RECORD_ID, s.USER_IDNO, s.LAB_ID, s.DATE, s.END_TIME,
-                   u.FIRSTNAME, u.LASTNAME,
-                   l.LAB_NAME,
-                   p.PURPOSE_NAME
+            SELECT 
+                s.RECORD_ID,
+                s.USER_IDNO,
+                CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
+                l.LAB_NAME,
+                s.DATE,
+                s.END_TIME,
+                p.PURPOSE_NAME,
+                s.SESSION
             FROM SIT_IN_RECORDS s
             JOIN USERS u ON s.USER_IDNO = u.IDNO
             JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
             JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
-            WHERE DATE(s.DATE) = %s
+            WHERE DATE(s.END_TIME) = %s
             AND s.SESSION = 'ENDED'
             ORDER BY s.END_TIME DESC
         """
-        cursor.execute(query, (date,))
-        records = cursor.fetchall()
+        
+        print("About to execute main query")
+        cursor.execute(query, (today,))
+        rows = cursor.fetchall()
+        print(f"Query returned {len(rows)} rows")
 
-        return jsonify([{
-            'RECORD_ID': r[0],
-            'STUDENT_ID': r[1],
-            'LAB_ID': r[2],
-            'DATE': r[3].isoformat(),
-            'END_TIME': r[4].isoformat() if r[4] else None,
-            'STUDENT_NAME': f"{r[5]} {r[6]}",
-            'LAB_NAME': r[7],
-            'PURPOSE_NAME': r[8]
-        } for r in records])
+        ended_sessions = []
+        for row in rows:
+            try:
+                profile_url = url_for('user.get_profile_picture', idno=row[1], _external=True)
+                session_data = {
+                    'record_id': row[0],
+                    'user_idno': row[1],
+                    'student_name': row[2],
+                    'lab_name': row[3],
+                    'date': row[4].strftime("%Y-%m-%d %H:%M:%S") if row[4] else None,
+                    'end_time': row[5].strftime("%Y-%m-%d %H:%M:%S") if row[5] else None,
+                    'purpose_name': row[6],
+                    'status': row[7],
+                    'PROFILE_PICTURE_URL': profile_url
+                }
+                ended_sessions.append(session_data)
+                print(f"Processed session ID: {row[0]}")
+            except Exception as e:
+                print(f"Error processing row: {str(e)}")
+
+        print(f"Returning {len(ended_sessions)} sessions")
+        return jsonify(ended_sessions)
+
     except Exception as e:
+        print(f"ERROR: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
         conn.close()
+        print("Database connection closed")
 
 @staff_bp.route('/end_session/<int:record_id>', methods=['POST'])
 def end_session(record_id):
@@ -626,7 +675,7 @@ def get_feedbacks():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        query = """
             SELECT 
                 f.FEEDBACK_ID,
                 f.RECORD_ID,
@@ -643,11 +692,16 @@ def get_feedbacks():
             JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
             JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
             ORDER BY f.DATE_SUBMITTED DESC
-        """)
+        """
+        
+        print("Executing feedbacks query:", query)
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        print(f"Found {len(rows)} feedbacks")
         
         feedbacks = []
-        for row in cursor.fetchall():
-            feedbacks.append({
+        for row in rows:
+            feedback_data = {
                 'feedback_id': row[0],
                 'record_id': row[1],
                 'feedback_text': row[2],
@@ -656,11 +710,16 @@ def get_feedbacks():
                 'student_name': row[5],
                 'lab_name': row[6],
                 'session_date': row[7].strftime("%Y-%m-%d %H:%M:%S") if row[7] else None,
-                'purpose_name': row[8]
-            })
+                'purpose_name': row[8],
+                'PROFILE_PICTURE_URL': url_for('user.get_profile_picture', idno=row[4], _external=True)
+            }
+            print(f"Processing feedback for student {row[4]}: {feedback_data}")
+            feedbacks.append(feedback_data)
         
+        print("Returning feedbacks data:", feedbacks)
         return jsonify(feedbacks)
     except Exception as e:
+        print(f"Error in get_feedbacks: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()

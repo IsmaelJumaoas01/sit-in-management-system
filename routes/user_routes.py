@@ -58,22 +58,32 @@ def update_profile_picture():
 
 @user_bp.route('/get_profile_picture/<string:idno>')
 def get_profile_picture(idno):
+    print(f"Fetching profile picture for ID: {idno}")
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (idno,))
         result = cursor.fetchone()
         if result and result[0]:
+            print(f"Found profile picture for ID {idno}")
+            # Return the binary image data directly
             return send_file(
                 BytesIO(result[0]),
-                mimetype='image/jpeg'
+                mimetype='image/jpeg'  # Assuming JPEG format, adjust if needed
             )
         else:
-            # Return a default profile picture from static folder
-            return redirect(url_for('static', filename='images/default-profile.png'))
+            print(f"No profile picture found for ID {idno}, returning default")
+            # If no profile picture is found, return a default image
+            default_image_path = os.path.join('static', 'images', 'default-profile.png')
+            if os.path.exists(default_image_path):
+                return send_file(default_image_path, mimetype='image/png')
+            else:
+                print(f"Default profile picture not found at {default_image_path}")
+                # If even the default image doesn't exist, return a simple response
+                return 'No profile picture available', 404
     except Exception as e:
-        # Return a default profile picture from static folder
-        return redirect(url_for('static', filename='images/default-profile.png'))
+        print(f"Error fetching profile picture for ID {idno}: {str(e)}")
+        return 'Error fetching profile picture', 500
     finally:
         cursor.close()
         conn.close()

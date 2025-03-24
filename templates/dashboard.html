@@ -360,7 +360,7 @@
         padding: 30px;
         border-radius: 15px;
         width: 90%;
-        max-width: 600px;
+        max-width: 1000px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         animation: slideDown 0.3s ease-out;
       }
@@ -1467,15 +1467,21 @@
       // Add date/time formatting functions
       function formatDateTime(dateStr) {
         if (!dateStr) return 'N/A';
-        const date = new Date(dateStr);
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-        });
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return 'Invalid Date';
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        } catch (e) {
+            console.error('Date formatting error:', e);
+            return 'Invalid Date';
+        }
       }
 
       function formatTime(date) {
@@ -1491,11 +1497,28 @@
 
       function loadFeedbackHistory() {
         const container = document.querySelector('#feedbackHistory .feedbacks-container');
+        if (!container) {
+            console.error('Feedback container not found');
+            return;
+        }
+
         container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading feedback history...</div>';
 
-        fetch('/user/feedback_history')
-            .then(response => response.json())
+        // Use the correct route for feedback history
+        fetch('/feedback_history')
+            .then(response => {
+                console.log('Feedback response status:', response.status);
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        throw new Error('Session expired. Please login again.');
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(feedbacks => {
+                console.log('Received feedbacks:', feedbacks);
                 container.innerHTML = '';
                 
                 if (!feedbacks || feedbacks.length === 0) {
@@ -1530,11 +1553,12 @@
                 });
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Error loading feedbacks:', error);
                 container.innerHTML = `
                     <div class="error-message">
                         <i class="fas fa-exclamation-circle"></i>
-                        <p>Error loading feedback history: ${error.message}</p>
+                        <p>Error loading feedback history. Please try refreshing the page.</p>
+                        <small>${error.message}</small>
                     </div>
                 `;
             });

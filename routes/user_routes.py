@@ -412,7 +412,7 @@ def get_feedback_history():
     cursor = conn.cursor()
 
     try:
-        cursor.execute("""
+        query = """
             SELECT 
                 f.FEEDBACK_ID,
                 f.RECORD_ID,
@@ -427,11 +427,14 @@ def get_feedback_history():
             JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
             WHERE f.USER_IDNO = %s
             ORDER BY f.DATE_SUBMITTED DESC
-        """, (session['IDNO'],))
+        """
+        
+        print(f"Fetching feedback history for user: {session['IDNO']}")
+        cursor.execute(query, (session['IDNO'],))
         
         feedbacks = []
         for row in cursor.fetchall():
-            feedbacks.append({
+            feedback = {
                 'feedback_id': row[0],
                 'record_id': row[1],
                 'feedback_text': row[2],
@@ -439,10 +442,13 @@ def get_feedback_history():
                 'lab_name': row[4],
                 'purpose_name': row[5],
                 'session_date': row[6].strftime("%Y-%m-%d %H:%M:%S") if row[6] else None
-            })
+            }
+            feedbacks.append(feedback)
         
+        print(f"Found {len(feedbacks)} feedbacks")
         return jsonify(feedbacks)
     except Exception as e:
+        print(f"Error in get_feedback_history: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()

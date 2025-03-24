@@ -20,4 +20,5 @@ app.register_blueprint(staff_bp, url_prefix='/staff')
 app.register_blueprint(announcement_bp)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Make the app accessible on LAN
+    app.run(debug=True, host='172.19.131.151', port='5000')  # Use a port of your choice

@@ -151,6 +151,12 @@
           >
             <i class="fas fa-comments"></i> Student Feedbacks
           </button>
+          <button
+            class="button ripple"
+            onclick="showSection('students', this)"
+          >
+            <i class="fas fa-users"></i> All Students
+          </button>
         </div>
       </div>
 
@@ -506,6 +512,54 @@
           </div>
         </div>
 
+
+        
+        <!-- Students Section -->
+        <div id="students" class="content-section animate-section" style="display: none">
+          <h2><i class="fas fa-users"></i> All Students</h2>
+          <div class="card-container">
+            <div class="card">
+              <div class="filters-container">
+                <div class="filter-group">
+                  <label for="studentReportFormat">Report Format:</label>
+                  <select id="studentReportFormat" class="custom-select">
+                    <option value="excel">Excel (.xlsx)</option>
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                  </select>
+                  <button onclick="generateStudentReport()" class="generate-report-btn">
+                    <i class="fas fa-download"></i> Generate Report
+                  </button>
+                </div>
+              </div>
+              <div class="students-container custom-scrollbar">
+                <table class="student-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Course</th>
+                      <th>Year</th>
+                      <th>Email</th>
+                      <th>Remaining Sessions</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="studentsList">
+                    <!-- Students will be populated here -->
+                  </tbody>
+                </table>
+                <div id="noStudents" class="no-results" style="display: none">
+                  <i class="fas fa-user-slash"></i>
+                  <p>No students found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+        </div>
+
         <div id="sitInHistory" class="content-section animate-section" style="display: none">
           <h2><i class="fas fa-history"></i> Sit-in History</h2>
           <div class="card-container">
@@ -619,8 +673,7 @@
           </form>
           </div>
         </div>
-      </div>
-        </div>
+
 
         <!-- Edit Announcement Modal -->
         <div id="editAnnouncementModal" class="modal">
@@ -4099,6 +4152,7 @@
         loadSitInHistory();
         loadFeedbacks();
         fetchStatistics();
+        loadAllStudents();
       });
 
       function loadStatistics() {
@@ -4173,6 +4227,186 @@
           } else {
               durationElement.textContent = `${minutes}m`;
           }
+      }
+
+      function loadAllStudents() {
+        const container = document.querySelector('.students-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+
+        fetch('/staff/all_students')
+          .then(response => {
+            if (!response.ok) throw new Error('Failed to fetch students');
+            return response.json();
+          })
+          .then(students => {
+            if (!students || students.length === 0) {
+              container.innerHTML = `
+                <div class="no-data">
+                  <i class="fas fa-user-slash"></i>
+                  <p>No students found</p>
+                </div>
+              `;
+              return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'student-table';
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Course</th>
+                  <th>Year</th>
+                  <th>Email</th>
+                  <th>Remaining Sessions</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${students.map(student => `
+                  <tr>
+                    <td>${student.IDNO}</td>
+                    <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
+                    <td>${student.COURSE || 'N/A'}</td>
+                    <td>${student.YEAR || 'N/A'}</td>
+                    <td>${student.EMAIL}</td>
+                    <td>${student.REMAINING_SESSIONS}</td>
+                    <td>
+                      <button onclick="viewStudentDetails('${student.IDNO}')" class="action-btn view-btn">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button onclick="startSitInForStudent('${student.IDNO}', '${student.FIRSTNAME} ${student.LASTNAME}')" class="action-btn start-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                      </button>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            `;
+            container.innerHTML = '';
+            container.appendChild(table);
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            container.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading students: ${error.message}</p>
+              </div>
+            `;
+          });
+      }
+
+      function generateStudentReport() {
+        const format = document.getElementById('studentReportFormat').value;
+        const url = `/staff/generate_reports?${new URLSearchParams({
+          format: format,
+          type: 'students'
+        })}`;
+
+        window.location.href = url;
+      }
+
+      // Function to load all students
+      function loadStudents() {
+        fetch('/staff/all_students')
+          .then(response => response.json())
+          .then(data => {
+            const studentsList = document.getElementById('studentsList');
+            const noStudents = document.getElementById('noStudents');
+            
+            if (data.error) {
+              console.error('Error loading students:', data.error);
+              studentsList.innerHTML = '';
+              noStudents.style.display = 'flex';
+              return;
+            }
+
+            if (!data || data.length === 0) {
+              studentsList.innerHTML = '';
+              noStudents.style.display = 'flex';
+              return;
+            }
+
+            studentsList.innerHTML = data.map(student => `
+              <tr>
+                <td>
+                  <div class="student-info">
+                    <img src="/get_profile_picture/${student.IDNO}" alt="Profile" class="student-profile-pic">
+                    <span>${student.IDNO}</span>
+                  </div>
+                </td>
+                <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
+                <td>${student.COURSE}</td>
+                <td>${student.YEAR}</td>
+                <td>${student.EMAIL}</td>
+                <td>
+                  <span class="remaining-sessions">Loading...</span>
+                </td>
+                <td>
+                  <button class="start-sit-in-btn" onclick="startSitIn('${student.IDNO}')">
+                    <i class="fas fa-play"></i> Start Sit-in
+                  </button>
+                </td>
+              </tr>
+            `).join('');
+
+            noStudents.style.display = 'none';
+
+            // Load remaining sessions for each student
+            data.forEach(student => {
+              fetch(`/staff/check_remaining_sessions/${student.IDNO}`)
+                .then(response => response.json())
+                .then(sessionData => {
+                  const remainingSessionsSpan = document.querySelector(`tr:has(td:contains('${student.IDNO}')) .remaining-sessions`);
+                  if (remainingSessionsSpan) {
+                    remainingSessionsSpan.textContent = sessionData.remaining_sessions;
+                  }
+                })
+                .catch(error => {
+                  console.error('Error loading remaining sessions:', error);
+                  const remainingSessionsSpan = document.querySelector(`tr:has(td:contains('${student.IDNO}')) .remaining-sessions`);
+                  if (remainingSessionsSpan) {
+                    remainingSessionsSpan.textContent = 'Error';
+                  }
+                });
+            });
+          })
+          .catch(error => {
+            console.error('Error loading students:', error);
+            const studentsList = document.getElementById('studentsList');
+            const noStudents = document.getElementById('noStudents');
+            studentsList.innerHTML = '';
+            noStudents.style.display = 'flex';
+          });
+      }
+
+      // Update the showSection function to load students when the students section is shown
+      function showSection(sectionId, button) {
+        document.querySelectorAll('.content-section').forEach(section => {
+          section.style.display = 'none';
+          section.classList.remove('show');
+        });
+        const section = document.getElementById(sectionId);
+        section.style.display = 'block';
+        setTimeout(() => section.classList.add('show'), 10);
+
+        document.querySelectorAll('.button').forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+
+        // Load data based on section
+        if (sectionId === 'sitInRecords') {
+          filterRecords();
+        } else if (sectionId === 'statistics') {
+          fetchStatistics();
+        } else if (sectionId === 'feedbacks') {
+          fetchFeedbacks();
+        } else if (sectionId === 'students') {
+          loadStudents();
+        }
       }
     </script>
   </body>

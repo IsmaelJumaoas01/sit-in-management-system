@@ -1377,4 +1377,35 @@ def generate_report():
         
     except Exception as e:
         print(f"Error generating report: {str(e)}")
-        return jsonify({'error': str(e)}), 500 
+        return jsonify({'error': str(e)}), 500
+
+@staff_bp.route('/all_students')
+def get_all_students():
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT IDNO, FIRSTNAME, LASTNAME, COURSE, YEAR, EMAIL 
+            FROM USERS 
+            WHERE USER_TYPE = 'STUDENT'
+            ORDER BY LASTNAME, FIRSTNAME
+        """)
+        
+        students = cursor.fetchall()
+        return jsonify([{
+            'IDNO': student[0],
+            'FIRSTNAME': student[1],
+            'LASTNAME': student[2],
+            'COURSE': student[3],
+            'YEAR': student[4],
+            'EMAIL': student[5]
+        } for student in students])
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close() 

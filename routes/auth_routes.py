@@ -110,6 +110,13 @@ def login():
         user = cursor.fetchone()
 
         if user and user[7] == PASSWORD:
+            # Clear any existing session
+            session.clear()
+            
+            # Make session permanent with 30 minutes lifetime
+            session.permanent = True
+            
+            # Set all session variables
             session['USER_TYPE'] = user[8]
             session['IDNO'] = user[0]
             session['FIRSTNAME'] = user[2]
@@ -118,6 +125,8 @@ def login():
             session['COURSE'] = user[4]
             session['YEAR'] = user[5]
             session['EMAIL'] = user[6]
+            
+            print(f"Session variables set: {dict(session)}")  # Debug log
 
             # Redirect based on user type
             if user[8] == 'ADMIN':
@@ -128,6 +137,8 @@ def login():
                 return redirect(url_for('user.dashboard'))
 
         flash('Invalid credentials, please try again.', 'error')
+        cursor.close()
+        conn.close()
 
     return render_template('login.html')
 

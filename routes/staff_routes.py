@@ -1388,22 +1388,34 @@ def get_all_students():
     cursor = conn.cursor()
 
     try:
+        # Get all students with their basic information
         cursor.execute("""
-            SELECT IDNO, FIRSTNAME, LASTNAME, COURSE, YEAR, EMAIL 
-            FROM USERS 
-            WHERE USER_TYPE = 'STUDENT'
-            ORDER BY LASTNAME, FIRSTNAME
+            SELECT u.IDNO, u.FIRSTNAME, u.LASTNAME, u.COURSE, u.YEAR, u.EMAIL,
+                   COALESCE(s.SIT_IN_COUNT, 0) as REMAINING_SESSIONS
+            FROM USERS u
+            LEFT JOIN SIT_IN_LIMITS s ON u.IDNO = s.USER_IDNO
+            WHERE u.USER_TYPE = 'STUDENT'
+            ORDER BY u.LASTNAME, u.FIRSTNAME
         """)
         
         students = cursor.fetchall()
-        return jsonify([{
-            'IDNO': student[0],
-            'FIRSTNAME': student[1],
-            'LASTNAME': student[2],
-            'COURSE': student[3],
-            'YEAR': student[4],
-            'EMAIL': student[5]
-        } for student in students])
+        result = []
+        for student in students:
+            # Get profile picture URL
+            profile_url = url_for('user.get_profile_picture', idno=student[0], _external=True)
+            
+            result.append({
+                'IDNO': student[0],
+                'FIRSTNAME': student[1],
+                'LASTNAME': student[2],
+                'COURSE': student[3],
+                'YEAR': student[4],
+                'EMAIL': student[5],
+                'REMAINING_SESSIONS': student[6],
+                'PROFILE_PICTURE_URL': profile_url
+            })
+        
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     finally:

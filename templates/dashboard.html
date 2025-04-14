@@ -341,229 +341,464 @@
 }
 
 /* Modal Styles */
-      .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-        z-index: 1000;
-      }
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 40px 20px;
+}
 
-      .modal-content {
-        position: relative;
-        background: linear-gradient(135deg, #2c3038 0%, #1a1d23 100%);
-        margin: 5% auto;
-        padding: 30px;
-        border-radius: 15px;
-        width: 90%;
-        max-width: 1000px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        animation: slideDown 0.3s ease-out;
-      }
+.modal-content {
+  position: relative;
+  background: linear-gradient(135deg, #2c3038 0%, #1a1d23 100%);
+  margin: 5vh auto;
+  padding: 40px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 1200px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  animation: slideDown 0.4s ease-out;
+}
 
-      .modal-content h2 {
-        color: #fff;
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
+.modal-content h2 {
+  color: #fff;
+  font-size: 28px;
+  margin-bottom: 30px;
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
 
-      .modal-content .form-group {
-        margin-bottom: 20px;
-      }
+.form-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 30px;
+}
 
-      .modal-content label {
-        display: block;
-        margin-bottom: 8px;
-        color: #fff;
-        font-weight: 500;
-      }
+.form-section {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 25px;
+  border-radius: 15px;
+  transition: transform 0.3s ease;
+}
 
-      .modal-content textarea {
-        width: 100%;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: #fff;
-        font-size: 16px;
-        resize: vertical;
-        min-height: 120px;
-      }
+.form-section:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+}
 
-      .modal-content textarea:focus {
-        outline: none;
-        border-color: #45a049;
-        box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
-      }
+.form-section h3 {
+  color: #45a049;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
 
-      .modal-content .submit-btn {
-        background: #45a049;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 20px;
-      }
+.form-group {
+  margin-bottom: 25px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
 
-      .modal-content .submit-btn:hover {
-        background: #33833b;
-        transform: translateY(-2px);
-      }
+.form-group.show {
+  opacity: 1;
+  transform: translateY(0);
+}
 
-      .modal-content .close {
-        position: absolute;
-        right: 20px;
-        top: 20px;
-        font-size: 24px;
-        color: #fff;
-        cursor: pointer;
-        transition: color 0.3s ease;
-      }
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  color: #fff;
+  font-weight: 500;
+  font-size: 16px;
+}
 
-      .modal-content .close:hover {
-        color: #ff4444;
-      }
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
 
-      @keyframes slideDown {
-        from {
-          transform: translateY(-100px);
-          opacity: 0;
-        }
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #45a049;
+  box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+}
 
-      /* Feedback History Styles */
-      .feedbacks-container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        padding: 20px;
-      }
+.modal-profile-picture {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
+}
 
-      .feedback-card {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 20px;
-        backdrop-filter: blur(10px);
-        transition: transform 0.3s ease;
-      }
+.preview-profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #45a049;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
 
-      .feedback-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-      }
+.upload-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(69, 160, 73, 0.9);
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
 
-      .feedback-header {
-        margin-bottom: 15px;
-      }
+.upload-overlay:hover {
+  background: #45a049;
+  transform: translateX(-50%) translateY(-2px);
+}
 
-      .session-info p {
-        margin: 5px 0;
-        color: #ccc;
-      }
+.upload-btn {
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
 
-      .session-info i {
-        width: 20px;
-        color: #45a049;
-      }
+.form-actions {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid rgba(255, 255, 255, 0.1);
+}
 
-      .feedback-content {
-        background: rgba(0, 0, 0, 0.2);
-        padding: 15px;
-        border-radius: 8px;
-        color: #fff;
-      }
+.save-changes-btn {
+  background: #45a049;
+  color: white;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 30px;
+  font-size: 18px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(69, 160, 73, 0.3);
+}
 
-      .feedback-content p {
-        margin: 0 0 10px 0;
-        line-height: 1.5;
-        color: #fff;
-      }
+.save-changes-btn:hover {
+  background: #33833b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(69, 160, 73, 0.4);
+}
 
-      .feedback-date {
-        display: block;
-        color: #ccc;
-        font-size: 0.9em;
-      }
+.modal-content .close {
+  position: absolute;
+  right: 25px;
+  top: 25px;
+  font-size: 28px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
 
-      .no-feedbacks {
-        text-align: center;
-        padding: 40px;
-        color: #ccc;
-      }
+.modal-content .close:hover {
+  background: rgba(255, 0, 0, 0.2);
+  color: #ff4444;
+  transform: rotate(90deg);
+}
 
-      .no-feedbacks i {
-        font-size: 3em;
-        margin-bottom: 15px;
-        color: #45a049;
-      }
+@keyframes slideDown {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
-      /* Feedback Modal Styles */
-      .modal-content {
-        background: rgba(40, 44, 52, 0.95);
-      }
+/* Feedback History Styles */
+.feedbacks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
 
-      .modal-content textarea {
-        background: rgba(255, 255, 255, 0.2) !important;
-        color: #fff !important;
-        font-size: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        padding: 15px;
-        border-radius: 8px;
-        resize: vertical;
-      }
+.feedback-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease;
+}
 
-      .modal-content textarea:focus {
-        outline: none;
-        border-color: #45a049;
-        box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
-      }
+.feedback-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
 
-      .modal-content label {
-        color: #fff;
-        font-size: 16px;
-        margin-bottom: 10px;
-        display: block;
-      }
+.feedback-header {
+  margin-bottom: 15px;
+}
 
-      .submit-btn {
-        background: #45a049;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
+.session-info p {
+  margin: 5px 0;
+  color: #ccc;
+}
 
-      .submit-btn:hover {
-        background: #33833b;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(69, 160, 73, 0.4);
-      }
+.session-info i {
+  width: 20px;
+  color: #45a049;
+}
 
-      .modal {
-        backdrop-filter: blur(10px);
-      }
+.feedback-content {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.feedback-content p {
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+  color: #fff;
+}
+
+.feedback-date {
+  display: block;
+  color: #ccc;
+  font-size: 0.9em;
+}
+
+.no-feedbacks {
+  text-align: center;
+  padding: 40px;
+  color: #ccc;
+}
+
+.no-feedbacks i {
+  font-size: 3em;
+  margin-bottom: 15px;
+  color: #45a049;
+}
+
+/* Feedback Modal Styles */
+.modal-content {
+  background: rgba(40, 44, 52, 0.95);
+}
+
+.modal-content textarea {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+  font-size: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 15px;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.modal-content textarea:focus {
+  outline: none;
+  border-color: #45a049;
+  box-shadow: 0 0 0 2px rgba(69, 160, 73, 0.2);
+}
+
+.modal-content label {
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.submit-btn {
+  background: #45a049;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submit-btn:hover {
+  background: #33833b;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(69, 160, 73, 0.4);
+}
+
+.modal {
+  backdrop-filter: blur(10px);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+}
+
+.animate-modal {
+  animation: slideDown 0.4s ease-out;
+}
+
+.modal-content {
+  transform-origin: top;
+}
+
+.resources-container {
+  margin-top: 20px;
+}
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.resource-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.resource-header {
+  margin-bottom: 15px;
+}
+
+.resource-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.resource-body {
+  margin-bottom: 15px;
+}
+
+.resource-body p {
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+}
+
+.resource-meta {
+  display: flex;
+  gap: 15px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.resource-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.resource-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.action-btn.download {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.action-btn.link {
+  background: var(--accent-green);
+  color: white;
+}
+
+.action-btn.view {
+  background: var(--accent-light-blue);
+  color: white;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.no-resources {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  grid-column: 1 / -1;
+}
+
+.no-resources i {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.content-viewer {
+  background: var(--form-bg);
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  white-space: pre-wrap;
+  max-height: 500px;
+  overflow-y: auto;
+  color: var(--text-primary);
+}
 
     </style>
   </head>
@@ -644,6 +879,9 @@
           <button class="button ripple" onclick="showSection('feedbackHistory', this)">
             <i class="fas fa-comments"></i> Feedback History
           </button>
+          <button class="button ripple" onclick="showSection('resources', this)">
+            <i class="fas fa-book"></i> Lab Resources
+          </button>
         </div>
       </div>
       
@@ -653,7 +891,11 @@
         <div id="editModal" class="modal">
           <div class="modal-content animate-modal">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2>Edit Profile Information</h2>
+            
+            <div class="modal-header">
+              <h2><i class="fas fa-user-edit"></i> Edit Profile Information</h2>
+            </div>
+
             <form action="{{ url_for('user.edit_info') }}" method="post" id="editForm" enctype="multipart/form-data">
               <div class="modal-profile-picture">
                 <img src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}" 
@@ -668,26 +910,26 @@
               
               <div class="form-sections">
                 <div class="form-section">
-                  <h3>Personal Information</h3>
-                  <div class="form-group animate-up">
+                  <h3><i class="fas fa-user"></i> Personal Information</h3>
+                  <div class="form-group">
                     <label for="firstname">First Name</label>
                     <input type="text" id="firstname" name="firstname" value="{{ firstname }}" required>
                   </div>
-                  <div class="form-group animate-up">
+                  <div class="form-group">
                     <label for="middlename">Middle Initial</label>
                     <input type="text" id="middlename" name="middlename" value="{{ middlename }}" maxlength="1">
                   </div>
-                  <div class="form-group animate-up">
+                  <div class="form-group">
                     <label for="lastname">Last Name</label>
                     <input type="text" id="lastname" name="lastname" value="{{ lastname }}" required>
                   </div>
                 </div>
 
                 <div class="form-section">
-                  <h3>Academic Information</h3>
-                  <div class="form-group animate-up">
+                  <h3><i class="fas fa-graduation-cap"></i> Academic Information</h3>
+                  <div class="form-group">
                     <label for="course">Course</label>
-                    <select id="course" name="course" required class="custom-select">
+                    <select id="course" name="course" required>
                       <option value="BSIT" {% if course == 'BSIT' %}selected{% endif %}>Bachelor of Science in Information Technology</option>
                       <option value="BSCS" {% if course == 'BSCS' %}selected{% endif %}>Bachelor of Science in Computer Science</option>
                       <option value="BSHM" {% if course == 'BSHM' %}selected{% endif %}>Bachelor of Science in Hospitality Management</option>
@@ -698,9 +940,9 @@
                       <option value="BSTM" {% if course == 'BSTM' %}selected{% endif %}>Bachelor of Science in Tourism Management</option>
                     </select>
                   </div>
-                  <div class="form-group animate-up">
+                  <div class="form-group">
                     <label for="year">Year Level</label>
-                    <select id="year" name="year" required class="custom-select">
+                    <select id="year" name="year" required>
                       <option value="1" {% if year == '1' %}selected{% endif %}>1st Year</option>
                       <option value="2" {% if year == '2' %}selected{% endif %}>2nd Year</option>
                       <option value="3" {% if year == '3' %}selected{% endif %}>3rd Year</option>
@@ -710,8 +952,8 @@
                 </div>
 
                 <div class="form-section">
-                  <h3>Contact Information</h3>
-                  <div class="form-group animate-up">
+                  <h3><i class="fas fa-envelope"></i> Contact Information</h3>
+                  <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" value="{{ email }}" required>
                   </div>
@@ -856,6 +1098,16 @@
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+
+        <!-- Resources Section -->
+        <div id="resources" class="content-section">
+          <h2><i class="fas fa-book"></i> Lab Resources</h2>
+          <div class="resources-container">
+            <div class="resources-grid" id="resourcesList">
+              <!-- Resources will be populated here -->
+            </div>
           </div>
         </div>
       </div>
@@ -1067,22 +1319,42 @@
       const formGroups = document.querySelectorAll('.form-group');
       
       function openModal() {
+        const modal = document.getElementById("editModal");
+        const formGroups = document.querySelectorAll('.form-group');
+        
+        // Reset form group animations
+        formGroups.forEach(group => {
+          group.classList.remove('show');
+        });
+        
+        // Show modal
         modal.style.display = "block";
         document.body.style.overflow = 'hidden';
-        animateFormGroups();
-      }
-      
-      function closeModal() {
-        modal.style.display = "none";
-        document.body.style.overflow = 'auto';
-      }
-      
-      function animateFormGroups() {
+        
+        // Animate form groups sequentially
         formGroups.forEach((group, index) => {
           setTimeout(() => {
             group.classList.add('show');
-          }, 100 * index);
+          }, 100 * (index + 1));
         });
+        
+        // Add animation class to modal content
+        const modalContent = modal.querySelector('.modal-content');
+        modalContent.classList.add('animate-modal');
+      }
+      
+      function closeModal() {
+        const modal = document.getElementById("editModal");
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // Add closing animation
+        modalContent.style.animation = 'slideUp 0.3s ease-out forwards';
+        
+        setTimeout(() => {
+          modal.style.display = "none";
+          document.body.style.overflow = 'auto';
+          modalContent.style.animation = '';
+        }, 300);
       }
 
       // Profile dropdown
@@ -1094,18 +1366,59 @@
 
       // Close dropdown when clicking outside
       window.onclick = function(event) {
-        if (!event.target.matches('.profile-icon')) {
-          const dropdowns = document.getElementsByClassName('profile-dropdown-content');
-          for (let dropdown of dropdowns) {
-            if (dropdown.classList.contains('show')) {
-              dropdown.classList.remove('show');
-            }
-          }
-        }
+        const modal = document.getElementById("editModal");
         if (event.target == modal) {
           closeModal();
         }
       }
+
+      // Close modal on escape key
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // Prevent form submission if there are validation errors
+      document.getElementById('editForm').addEventListener('submit', function(event) {
+        const form = event.target;
+        if (!form.checkValidity()) {
+          event.preventDefault();
+          
+          // Show validation messages
+          const invalidInputs = form.querySelectorAll(':invalid');
+          invalidInputs.forEach(input => {
+            input.classList.add('error');
+            
+            // Remove error class when input becomes valid
+            input.addEventListener('input', function() {
+              if (this.checkValidity()) {
+                this.classList.remove('error');
+              }
+            });
+          });
+          
+          // Scroll to first invalid input
+          invalidInputs[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+
+      // Add error styles
+      const errorStyles = document.createElement('style');
+      errorStyles.textContent = `
+        .form-group input.error,
+        .form-group select.error {
+          border-color: #ff4444;
+          box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+        }
+        
+        .form-group input.error:focus,
+        .form-group select.error:focus {
+          border-color: #ff4444;
+          box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+        }
+      `;
+      document.head.appendChild(errorStyles);
 
       function getTimeAgo(date) {
         const now = new Date();
@@ -1383,66 +1696,6 @@
         }, 3000);
       }
 
-      // Add toast styles
-      const style = document.createElement('style');
-      style.textContent = `
-        .toast-container {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 9999;
-        }
-
-        .toast {
-          background: rgba(0, 0, 0, 0.8);
-          color: white;
-          padding: 12px 20px;
-          border-radius: 8px;
-          margin-bottom: 10px;
-          min-width: 250px;
-          backdrop-filter: blur(10px);
-          animation: slide-in 0.3s ease-out;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .toast.error {
-          background: rgba(220, 53, 69, 0.9);
-        }
-
-        .toast-content {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .toast.fade-out {
-          animation: fade-out 0.3s ease-out forwards;
-        }
-
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes fade-out {
-          from {
-            transform: translateX(0);
-            opacity: 1;
-          }
-          to {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-
       // To make the content appear with animation when scrolled into view
       document.addEventListener('DOMContentLoaded', function () {
         const sections = document.querySelectorAll('.animate-section');
@@ -1563,6 +1816,97 @@
                 `;
             });
       }
+
+      function loadResources() {
+        fetch('/api/resources')
+          .then(response => response.json())
+          .then(resources => {
+            const container = document.getElementById('resourcesList');
+            container.innerHTML = '';
+            
+            if (resources.length === 0) {
+              container.innerHTML = `
+                <div class="no-resources">
+                  <i class="fas fa-info-circle"></i>
+                  <p>No resources available for your course</p>
+                </div>
+              `;
+              return;
+            }
+            
+            resources.forEach(resource => {
+              const card = document.createElement('div');
+              card.className = 'resource-card';
+              card.innerHTML = `
+                <div class="resource-header">
+                  <h3>${resource.title}</h3>
+                </div>
+                <div class="resource-body">
+                  <p>${resource.description}</p>
+                  <div class="resource-meta">
+                    <span><i class="fas fa-layer-group"></i> Type: ${resource.resource_type}</span>
+                  </div>
+                </div>
+                <div class="resource-actions">
+                  ${resource.resource_type === 'FILE' ? `
+                    <button onclick="downloadResource(${resource.resource_id})" class="action-btn download">
+                      <i class="fas fa-download"></i> Download
+                    </button>
+                  ` : resource.resource_type === 'LINK' ? `
+                    <a href="${resource.content_url}" target="_blank" class="action-btn link">
+                      <i class="fas fa-external-link-alt"></i> Open Link
+                    </a>
+                  ` : `
+                    <button onclick="viewContent(${resource.resource_id})" class="action-btn view">
+                      <i class="fas fa-eye"></i> View Content
+                    </button>
+                  `}
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading resources:', error);
+            showToast('Error loading resources', 'error');
+          });
+      }
+
+      function downloadResource(resourceId) {
+        window.location.href = `/api/resources/download/${resourceId}`;
+      }
+
+      function viewContent(resourceId) {
+        fetch(`/api/resources/${resourceId}`)
+          .then(response => response.json())
+          .then(resource => {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+              <div class="modal-content">
+                <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+                <h2>${resource.title}</h2>
+                <div class="content-viewer">
+                  ${resource.content_text}
+                </div>
+              </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+          })
+          .catch(error => {
+            console.error('Error loading content:', error);
+            showToast('Error loading content', 'error');
+          });
+      }
+
+      // Load resources when the section is shown
+      document.addEventListener('DOMContentLoaded', function() {
+        const resourcesButton = document.querySelector('button[onclick="showSection(\'resources\', this)"]');
+        if (resourcesButton) {
+          resourcesButton.addEventListener('click', loadResources);
+        }
+      });
 
     </script>
   </body>

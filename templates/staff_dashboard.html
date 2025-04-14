@@ -157,6 +157,10 @@
           >
             <i class="fas fa-users"></i> All Students
           </button>
+          <!-- Add this to the button container section -->
+          <button class="button ripple" onclick="showSection('resources', this)">
+            <i class="fas fa-book"></i> Lab Resources
+          </button>
         </div>
       </div>
 
@@ -445,6 +449,31 @@
           </div>
         </div>
 
+        <div id="feedbacks" class="content-section animate-section" style="display: none">
+          <h2><i class="fas fa-comments"></i> Student Feedbacks</h2>
+          <div class="card-container">
+            <div class="card">
+              <div class="filters-container">
+                <div class="filter-group">
+                  <label for="feedbackReportFormat">Report Format:</label>
+                  <select id="feedbackReportFormat" class="custom-select">
+                    <option value="excel">Excel (.xlsx)</option>
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                  </select>
+                  <button onclick="generateFeedbackReport()" class="generate-report-btn">
+                    <i class="fas fa-download"></i> Generate Report
+                  </button>
+                </div>
+              </div>
+              <div class="feedbacks-container custom-scrollbar">
+                <!-- Feedbacks will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+
         <!-- Statistics Section -->
         <div
           id="statistics"
@@ -557,6 +586,82 @@
             </div>
           </div>
         </div>
+
+        <!-- Add this new section -->
+        <div id="resources" class="content-section">
+          <div class="header-with-button">
+            <h2><i class="fas fa-book"></i> Lab Resources</h2>
+            <button class="add-btn" onclick="openAddResourceModal()">
+              <i class="fas fa-plus"></i> Add Resource
+            </button>
+          </div>
+
+          <div class="resources-container">
+            <div class="resources-grid" id="resourcesList">
+              <!-- Resources will be populated here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Resource Modal -->
+        <div id="addResourceModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeAddResourceModal()">&times;</span>
+            <h2><i class="fas fa-plus"></i> Add New Resource</h2>
+            
+            <form id="resourceForm" onsubmit="submitResource(event)">
+              <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" required></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="resourceType">Resource Type</label>
+                <select id="resourceType" name="resource_type" onchange="toggleResourceInputs()" required>
+                  <option value="">Select Type</option>
+                  <option value="FILE">File Upload</option>
+                  <option value="LINK">External Link</option>
+                  <option value="TEXT">Plain Text</option>
+                </select>
+              </div>
+              
+              <div id="fileInput" class="form-group" style="display: none;">
+                <label for="file">Upload File</label>
+                <input type="file" id="file" name="file">
+                <small>Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR</small>
+              </div>
+              
+              <div id="linkInput" class="form-group" style="display: none;">
+                <label for="contentUrl">External Link</label>
+                <input type="url" id="contentUrl" name="content_url">
+              </div>
+              
+              <div id="textInput" class="form-group" style="display: none;">
+                <label for="contentText">Content</label>
+                <textarea id="contentText" name="content_text"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="courses">Target Courses</label>
+                <select id="courses" name="courses[]" multiple required>
+                  <!-- Courses will be populated dynamically -->
+                </select>
+                <small>Hold Ctrl/Cmd to select multiple courses</small>
+              </div>
+              
+              <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                  <i class="fas fa-save"></i> Save Resource
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
         </div>
 
@@ -613,30 +718,7 @@
           </div>
         </div>
 
-        <div id="feedbacks" class="content-section animate-section" style="display: none">
-          <h2><i class="fas fa-comments"></i> Student Feedbacks</h2>
-          <div class="card-container">
-            <div class="card">
-              <div class="filters-container">
-                <div class="filter-group">
-                  <label for="feedbackReportFormat">Report Format:</label>
-                  <select id="feedbackReportFormat" class="custom-select">
-                    <option value="excel">Excel (.xlsx)</option>
-                    <option value="csv">CSV</option>
-                    <option value="pdf">PDF</option>
-                  </select>
-                  <button onclick="generateFeedbackReport()" class="generate-report-btn">
-                    <i class="fas fa-download"></i> Generate Report
-                  </button>
-                </div>
-              </div>
-              <div class="feedbacks-container custom-scrollbar">
-                <!-- Feedbacks will be populated here -->
-              </div>
-            </div>
-          </div>
-        </div>
-
+     
         <!-- Add Announcement Modal -->
         <div id="addAnnouncementModal" class="modal">
           <div class="modal-content animate-modal">
@@ -2507,6 +2589,257 @@
       .section-subtitle i {
         color: #45a049;
       }
+
+      .session-count {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+      }
+
+      .session-count.positive {
+        background-color: #45a049;
+        color: white;
+      }
+
+      .session-count.zero {
+        background-color: #dd0c0c;
+        color: white;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .action-buttons button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .action-buttons .edit-btn {
+        background-color: #4a90e2;
+        color: white;
+      }
+
+      .action-buttons .delete-btn {
+        background-color: #dd0c0c;
+        color: white;
+      }
+
+      .action-buttons button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      .student-table td {
+        vertical-align: middle;
+      }
+
+      /* Add these styles */
+      .student-profile {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .student-profile-pic {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #45a049;
+        transition: all 0.3s ease;
+      }
+
+      .student-profile-pic:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 10px rgba(69, 160, 73, 0.5);
+      }
+
+      .student-table td {
+        padding: 12px;
+        vertical-align: middle;
+      }
+
+      .student-table th {
+        padding: 12px;
+        text-align: center;
+      }
+
+      .student-table tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .student-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .resources-container {
+        margin-top: 20px;
+      }
+
+      .resources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .resource-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+      }
+
+      .resource-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .resource-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .resource-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+        color: var(--text-primary);
+      }
+
+      .resource-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .resource-status.enabled {
+        background: var(--accent-green);
+        color: white;
+      }
+
+      .resource-status.disabled {
+        background: var(--text-muted);
+        color: white;
+      }
+
+      .resource-body {
+        margin-bottom: 15px;
+      }
+
+      .resource-body p {
+        color: var(--text-secondary);
+        margin: 0 0 10px 0;
+      }
+
+      .resource-meta {
+        display: flex;
+        gap: 15px;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .resource-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .resource-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .action-btn.download {
+        background: var(--accent-blue);
+        color: white;
+      }
+
+      .action-btn.edit {
+        background: var(--accent-green);
+        color: white;
+      }
+
+      .action-btn.toggle {
+        background: var(--text-muted);
+        color: white;
+      }
+
+      .action-btn.delete {
+        background: var(--accent-red);
+        color: white;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+      }
+
+      .no-resources {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-muted);
+        grid-column: 1 / -1;
+      }
+
+      .no-resources i {
+        font-size: 48px;
+        margin-bottom: 15px;
+      }
+
+      /* Form Styles */
+      #resourceForm .form-group {
+        margin-bottom: 20px;
+      }
+
+      #resourceForm label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-secondary);
+      }
+
+      #resourceForm input[type="text"],
+      #resourceForm input[type="url"],
+      #resourceForm textarea,
+      #resourceForm select {
+        width: 100%;
+        padding: 10px;
+        background: var(--form-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        color: var(--text-primary);
+      }
+
+      #resourceForm select[multiple] {
+        height: 120px;
+      }
+
+      #resourceForm small {
+        display: block;
+        margin-top: 5px;
+        color: var(--text-muted);
+      }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
@@ -2517,6 +2850,7 @@
       let cropper = null;
       let logoutForm = null;
       let currentSessionToEnd = null;
+      let currentResourceId = null;
 
       // Update the confirmation dialog handling
       function showConfirmDialog(
@@ -4231,7 +4565,10 @@
 
       function loadAllStudents() {
         const container = document.querySelector('.students-container');
-        if (!container) return;
+        if (!container) {
+          console.error('Students container not found');
+          return;
+        }
 
         container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
 
@@ -4256,6 +4593,7 @@
             table.innerHTML = `
               <thead>
                 <tr>
+                  <th>Profile</th>
                   <th>ID</th>
                   <th>Name</th>
                   <th>Course</th>
@@ -4268,18 +4606,29 @@
               <tbody>
                 ${students.map(student => `
                   <tr>
+                    <td>
+                      <div class="student-profile">
+                        <img src="${student.PROFILE_PICTURE_URL}" 
+                             alt="Profile" 
+                             class="student-profile-pic">
+                      </div>
+                    </td>
                     <td>${student.IDNO}</td>
                     <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
                     <td>${student.COURSE || 'N/A'}</td>
                     <td>${student.YEAR || 'N/A'}</td>
                     <td>${student.EMAIL}</td>
-                    <td>${student.REMAINING_SESSIONS}</td>
                     <td>
-                      <button onclick="viewStudentDetails('${student.IDNO}')" class="action-btn view-btn">
-                        <i class="fas fa-eye"></i>
+                      <span class="session-count ${student.REMAINING_SESSIONS > 0 ? 'positive' : 'zero'}">
+                        ${student.REMAINING_SESSIONS}
+                      </span>
+                    </td>
+                    <td class="action-buttons">
+                      <button onclick="editStudent('${student.IDNO}')" class="edit-btn" title="Edit Student">
+                        <i class="fas fa-edit"></i>
                       </button>
-                      <button onclick="startSitInForStudent('${student.IDNO}', '${student.FIRSTNAME} ${student.LASTNAME}')" class="action-btn start-btn">
-                        <i class="fas fa-sign-in-alt"></i>
+                      <button onclick="deleteStudent('${student.IDNO}')" class="delete-btn" title="Delete Student">
+                        <i class="fas fa-trash"></i>
                       </button>
                     </td>
                   </tr>
@@ -4405,9 +4754,338 @@
         } else if (sectionId === 'feedbacks') {
           fetchFeedbacks();
         } else if (sectionId === 'students') {
-          loadStudents();
+          loadAllStudents();  // Call loadAllStudents instead of loadStudents
         }
       }
+
+      // Add these new functions for editing and deleting students
+      function editStudent(studentId) {
+        // TODO: Implement edit student functionality
+        console.log('Edit student:', studentId);
+        alert('Edit student functionality coming soon!');
+      }
+
+      function deleteStudent(studentId) {
+        if (!confirm(`Are you sure you want to delete student ${studentId}?`)) {
+          return;
+        }
+        
+        // TODO: Implement delete student functionality
+        console.log('Delete student:', studentId);
+        alert('Delete student functionality coming soon!');
+      }
+
+      function loadResources() {
+        fetch('/api/resources')
+          .then(response => response.json())
+          .then(resources => {
+            const container = document.getElementById('resourcesList');
+            container.innerHTML = '';
+            
+            if (resources.length === 0) {
+              container.innerHTML = `
+                <div class="no-resources">
+                  <i class="fas fa-info-circle"></i>
+                  <p>No resources available</p>
+                </div>
+              `;
+              return;
+            }
+            
+            resources.forEach(resource => {
+              const card = document.createElement('div');
+              card.className = 'resource-card';
+              card.innerHTML = `
+                <div class="resource-header">
+                  <h3>${resource.title}</h3>
+                  <div class="resource-status ${resource.is_enabled ? 'enabled' : 'disabled'}">
+                    ${resource.is_enabled ? 'Enabled' : 'Disabled'}
+                  </div>
+                </div>
+                <div class="resource-body">
+                  <p>${resource.description}</p>
+                  <div class="resource-meta">
+                    <span><i class="fas fa-layer-group"></i> Type: ${resource.resource_type}</span>
+                    <span><i class="fas fa-graduation-cap"></i> Courses: ${resource.courses || 'All Courses'}</span>
+                  </div>
+                </div>
+                <div class="resource-actions">
+                  ${resource.resource_type === 'FILE' ? `
+                    <button onclick="downloadResource(${resource.resource_id})" class="action-btn download">
+                      <i class="fas fa-download"></i> Download
+                    </button>
+                  ` : resource.resource_type === 'LINK' ? `
+                    <a href="${resource.content_url}" target="_blank" class="action-btn link">
+                      <i class="fas fa-external-link-alt"></i> Open Link
+                    </a>
+                  ` : `
+                    <button onclick="viewContent(${resource.resource_id})" class="action-btn view">
+                      <i class="fas fa-eye"></i> View Content
+                    </button>
+                  `}
+                  <button onclick="editResource(${resource.resource_id})" class="action-btn edit">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                  <button onclick="toggleResource(${resource.resource_id}, ${!resource.is_enabled})" 
+                          class="action-btn toggle">
+                    <i class="fas ${resource.is_enabled ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                    ${resource.is_enabled ? 'Disable' : 'Enable'}
+                  </button>
+                  <button onclick="deleteResource(${resource.resource_id})" class="action-btn delete">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading resources:', error);
+            showToast('Error loading resources', 'error');
+          });
+      }
+
+      function openAddResourceModal() {
+        document.getElementById('addResourceModal').style.display = 'block';
+        loadCourses();
+      }
+
+      function closeAddResourceModal() {
+        document.getElementById('addResourceModal').style.display = 'none';
+        document.getElementById('resourceForm').reset();
+        currentResourceId = null;
+      }
+
+      function toggleResourceInputs() {
+        const type = document.getElementById('resourceType').value;
+        document.getElementById('fileInput').style.display = type === 'FILE' ? 'block' : 'none';
+        document.getElementById('linkInput').style.display = type === 'LINK' ? 'block' : 'none';
+        document.getElementById('textInput').style.display = type === 'TEXT' ? 'block' : 'none';
+      }
+
+      async function loadCourses() {
+        console.log('Starting to load courses...');
+        try {
+            const response = await fetch('/api/courses');
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const contentType = response.headers.get("content-type");
+            console.log('Content type:', contentType);
+            
+            const courses = await response.json();
+            console.log('Received courses:', courses);
+
+            const courseSelect = document.getElementById('courses');
+            if (!courseSelect) {
+                console.error('Course select element not found! Looking for element with id "courses"');
+                return;
+            }
+
+            // Clear existing options
+            courseSelect.innerHTML = '';
+            
+            if (!Array.isArray(courses)) {
+                console.error('Courses is not an array:', courses);
+                return;
+            }
+
+            // Add course options
+            courses.forEach(course => {
+                console.log('Adding course:', course);
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                courseSelect.appendChild(option);
+            });
+            
+            console.log('Finished loading courses');
+        } catch (error) {
+            console.error('Error loading courses:', error);
+            // Display error to user
+            const errorDiv = document.getElementById('error-message') || document.createElement('div');
+            errorDiv.id = 'error-message';
+            errorDiv.style.color = 'red';
+            errorDiv.textContent = 'Failed to load courses. Please try again later.';
+            const courseSelect = document.getElementById('courses');
+            if (courseSelect) {
+                courseSelect.parentNode.insertBefore(errorDiv, courseSelect);
+            }
+        }
+    }
+
+      function submitResource(event) {
+        event.preventDefault();
+        console.log('Starting resource submission...');
+        
+        const form = event.target;
+        const formData = new FormData(form);
+        
+        // Log form data for debugging
+        for (let [key, value] of formData.entries()) {
+            console.log(`Form data - ${key}:`, value);
+        }
+        
+        // Get selected courses
+        const coursesSelect = document.getElementById('courses');
+        const selectedCourses = Array.from(coursesSelect.selectedOptions).map(option => option.value);
+        console.log('Selected courses:', selectedCourses);
+        
+        if (selectedCourses.length === 0) {
+            showToast('Please select at least one course', 'error');
+            return;
+        }
+        
+        // Remove existing courses array and add selected courses
+        formData.delete('courses[]');
+        selectedCourses.forEach(course => {
+            formData.append('courses[]', course);
+        });
+        
+        // Validate required fields
+        const title = formData.get('title');
+        const description = formData.get('description');
+        const resourceType = formData.get('resource_type');
+        
+        if (!title || !description || !resourceType) {
+            showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Validate resource type specific fields
+        if (resourceType === 'FILE' && !formData.get('file')) {
+            showToast('Please select a file to upload', 'error');
+            return;
+        } else if (resourceType === 'LINK' && !formData.get('content_url')) {
+            showToast('Please enter a valid URL', 'error');
+            return;
+        } else if (resourceType === 'TEXT' && !formData.get('content_text')) {
+            showToast('Please enter the content text', 'error');
+            return;
+        }
+        
+        const url = currentResourceId ? 
+            `/api/resources/${currentResourceId}` : 
+            '/api/resources';
+        
+        console.log('Submitting to URL:', url);
+        
+        fetch(url, {
+            method: currentResourceId ? 'PUT' : 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to save resource');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Success response:', data);
+            showToast('Resource saved successfully', 'success');
+            closeAddResourceModal();
+            loadResources();
+        })
+        .catch(error => {
+            console.error('Error saving resource:', error);
+            showToast(error.message || 'Error saving resource', 'error');
+        });
+    }
+
+      function editResource(resourceId) {
+        currentResourceId = resourceId;
+        fetch(`/api/resources/${resourceId}`)
+          .then(response => response.json())
+          .then(resource => {
+            document.getElementById('title').value = resource.title;
+            document.getElementById('description').value = resource.description;
+            document.getElementById('resourceType').value = resource.resource_type;
+            toggleResourceInputs();
+            
+            if (resource.resource_type === 'LINK') {
+              document.getElementById('contentUrl').value = resource.content_url;
+            } else if (resource.resource_type === 'TEXT') {
+              document.getElementById('contentText').value = resource.content_text;
+            }
+            
+            const coursesSelect = document.getElementById('courses');
+            const courses = resource.courses.split(',');
+            Array.from(coursesSelect.options).forEach(option => {
+              option.selected = courses.includes(option.value);
+            });
+            
+            openAddResourceModal();
+          })
+          .catch(error => {
+            console.error('Error loading resource:', error);
+            showToast('Error loading resource', 'error');
+          });
+      }
+
+      function toggleResource(resourceId, enable) {
+        fetch(`/api/resources/${resourceId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ is_enabled: enable })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          showToast(`Resource ${enable ? 'enabled' : 'disabled'} successfully`, 'success');
+          loadResources();
+        })
+        .catch(error => {
+          console.error('Error toggling resource:', error);
+          showToast(error.message || 'Error toggling resource', 'error');
+        });
+      }
+
+      function deleteResource(resourceId) {
+        if (!confirm('Are you sure you want to delete this resource?')) {
+          return;
+        }
+        
+        fetch(`/api/resources/${resourceId}`, {
+          method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          showToast('Resource deleted successfully', 'success');
+          loadResources();
+        })
+        .catch(error => {
+          console.error('Error deleting resource:', error);
+          showToast(error.message || 'Error deleting resource', 'error');
+        });
+      }
+
+      function downloadResource(resourceId) {
+        window.location.href = `/api/resources/download/${resourceId}`;
+      }
+
+      // Load resources when the section is shown
+      document.addEventListener('DOMContentLoaded', function() {
+        const resourcesButton = document.querySelector('button[onclick="showSection(\'resources\', this)"]');
+        if (resourcesButton) {
+          resourcesButton.addEventListener('click', loadResources);
+        }
+      });
     </script>
   </body>
 </html>

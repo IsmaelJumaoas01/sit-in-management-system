@@ -461,7 +461,7 @@
                     <option value="csv">CSV</option>
                     <option value="pdf">PDF</option>
                   </select>
-                  <button onclick="generateFeedbackReport()" class="generate-report-btn">
+                  <button onclick="generateReport()" class="generate-report-btn">
                     <i class="fas fa-download"></i> Generate Report
                   </button>
                 </div>
@@ -475,79 +475,81 @@
 
 
         <!-- Statistics Section -->
-        <div
-          id="statistics"
-          class="content-section animate-section"
-          style="display: none"
-        >
-          <h2><i class="fas fa-chart-pie"></i> System Statistics</h2>
-          <div class="card-container">
-            <div class="card">
-              <div class="statistics-container">
-                <div class="report-controls">
-                  <div class="filter-group">
-                    <label for="reportFormat">Report Format:</label>
-                    <select id="reportFormat" class="custom-select">
-                      <option value="excel">Excel (.xlsx)</option>
-                      <option value="csv">CSV</option>
-                      <option value="pdf">PDF</option>
-                    </select>
-                  </div>
-                  <button onclick="generateReport()" class="generate-report-btn">
-                    <i class="fas fa-download"></i> Generate Report
-                  </button>
+        <div id="statistics" class="content-section animate-section" style="display: none">
+            <h2><i class="fas fa-chart-pie"></i> System Statistics</h2>
+            <div class="card-container">
+                <div class="card">
+                    <div class="statistics-container">
+                        <div class="report-controls">
+                            <div class="filter-group">
+                                <label for="statisticsReportFormat">Report Format:</label>
+                                <select id="statisticsReportFormat" class="custom-select">
+                                    <option value="excel">Excel (.xlsx)</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="pdf">PDF</option>
+                                </select>
+                            </div>
+                            <button onclick="generateReport()" class="generate-report-btn">
+                                <i class="fas fa-download"></i> Generate Report
+                            </button>
+                        </div>
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Registered Students</h3>
+                                    <p id="registeredStudents">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-desktop"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Current Sit-ins</h3>
+                                    <p id="currentSitins">0</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <h3>Total Sit-ins</h3>
+                                    <p id="totalSitins">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="charts-container">
+                            <div class="chart-card">
+                                <h3>Sit-ins by Purpose</h3>
+                                <canvas id="purposeChart"></canvas>
+                            </div>
+                            <div class="chart-card">
+                                <h3>Sit-ins by Laboratory</h3>
+                                <canvas id="labChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="stats-cards">
-                  <div class="stat-card">
-                    <div class="stat-icon">
-                      <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-info">
-                      <h3>Registered Students</h3>
-                      <p id="registeredStudents">0</p>
-                    </div>
-                  </div>
-                  <div class="stat-card">
-                    <div class="stat-icon">
-                      <i class="fas fa-desktop"></i>
-                    </div>
-                    <div class="stat-info">
-                      <h3>Current Sit-ins</h3>
-                      <p id="currentSitins">0</p>
-                    </div>
-                  </div>
-                  <div class="stat-card">
-                    <div class="stat-icon">
-                      <i class="fas fa-history"></i>
-                    </div>
-                    <div class="stat-info">
-                      <h3>Total Sit-ins</h3>
-                      <p id="totalSitins">0</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="charts-container">
-                  <div class="chart-card">
-                    <h3>Sit-ins by Purpose</h3>
-                    <canvas id="purposeChart"></canvas>
-                  </div>
-                  <div class="chart-card">
-                    <h3>Sit-ins by Laboratory</h3>
-                    <canvas id="labChart"></canvas>
-                  </div>
-                </div>
-              </div>
             </div>
-          </div>
         </div>
 
 
         
-        <!-- Students Section -->
+        <!-- All Students Section -->
         <div id="students" class="content-section animate-section" style="display: none">
           <h2><i class="fas fa-users"></i> All Students</h2>
           <div class="card-container">
             <div class="card">
+              <div class="header-with-button">
+                <h3>Student Management</h3>
+                <button onclick="confirmResetAllSessions()" class="reset-all-btn">
+                  <i class="fas fa-redo"></i> Reset All Sessions
+                </button>
+              </div>
               <div class="filters-container">
                 <div class="filter-group">
                   <label for="studentReportFormat">Report Format:</label>
@@ -586,6 +588,94 @@
             </div>
           </div>
         </div>
+
+        <!-- Add this to your existing style section -->
+        <style>
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .student-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .student-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .student-info {
+            display: flex;
+            gap: 15px;
+        }
+
+        .student-profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .student-details {
+            flex: 1;
+        }
+
+        .student-details h3 {
+            margin: 0 0 10px 0;
+            color: #fff;
+        }
+
+        .student-details p {
+            margin: 5px 0;
+            color: #ccc;
+        }
+
+        .student-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+
+        .header-with-button {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-container {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #ccc;
+        }
+
+        .no-data i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #45a049;
+        }
+        </style>
 
         <!-- Add this new section -->
         <div id="resources" class="content-section">
@@ -2840,6 +2930,96 @@
         margin-top: 5px;
         color: var(--text-muted);
       }
+
+      /* Add these styles for purpose management */
+      .purpose-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .edit-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .edit-btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .purpose-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .purpose-item:hover {
+        transform: translateX(5px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .purpose-info {
+        flex: 1;
+      }
+
+      .purpose-info h4 {
+        margin: 0;
+        color: #fff;
+        font-size: 1.1em;
+      }
+
+      /* Add these styles */
+      .reset-all-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .reset-all-btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .reset-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+      }
+
+      .reset-btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .student-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+      }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
@@ -2897,6 +3077,12 @@
               break;
             case "delete_lab":
               if (actionData) handleLabDelete(actionData);
+              break;
+            case "reset_all_sessions":
+              handleResetAllSessions();
+              break;
+            case "reset_student_session":
+              handleResetStudentSession(actionData.student_id);
               break;
           }
         }
@@ -4419,33 +4605,35 @@
         if (!section) return;
 
         const sectionId = section.id;
-        let reportType, filters = {};
+        let reportType, format, filters = {};
 
         // Get filters based on current section
-        if (sectionId === 'feedbacks') {
-          reportType = 'feedback';
-        } else if (sectionId === 'statistics') {
-          reportType = 'statistics';
+        if (sectionId === 'statistics') {
+            reportType = 'statistics';
+            format = document.getElementById('statisticsReportFormat').value;
+        } else if (sectionId === 'feedbacks') {
+            reportType = 'feedback';
+            format = document.getElementById('feedbackReportFormat').value;
         } else if (sectionId === 'sitInRecords') {
-          reportType = 'sit_ins';
-          // Get filter values
-          filters = {
-            lab_id: document.getElementById('recordFilterLab')?.value,
-            purpose_id: document.getElementById('recordFilterPurpose')?.value,
-            status: document.getElementById('recordFilterStatus')?.value,
-            session: document.getElementById('recordFilterSession')?.value
-          };
+            reportType = 'sit_ins';
+            format = document.getElementById('sitInReportFormat').value;
+            // Get filter values
+            filters = {
+                lab_id: document.getElementById('recordFilterLab')?.value,
+                purpose_id: document.getElementById('recordFilterPurpose')?.value,
+                status: document.getElementById('recordFilterStatus')?.value,
+                session: document.getElementById('recordFilterSession')?.value
+            };
         }
 
-        const format = document.getElementById('reportFormat').value;
         const queryParams = new URLSearchParams({
-          type: reportType,
-          format: format,
-          ...filters
+            type: reportType,
+            format: format,
+            ...filters
         });
 
         window.location.href = `/staff/generate_reports?${queryParams}`;
-      }
+    }
 
       function generateHistoryReport() {
         const format = document.getElementById('historyReportFormat').value;
@@ -5086,6 +5274,253 @@
           resourcesButton.addEventListener('click', loadResources);
         }
       });
+
+      // Add these new functions for purpose management
+      function openEditPurposeModal(purposeId, purposeName) {
+        document.getElementById('editPurposeId').value = purposeId;
+        document.getElementById('editPurposeName').value = purposeName;
+        document.getElementById('editPurposeModal').style.display = 'block';
+      }
+
+      function closeEditPurposeModal() {
+        document.getElementById('editPurposeModal').style.display = 'none';
+        document.getElementById('editPurposeForm').reset();
+      }
+
+      // Update the fetchPurposes function to include edit button
+      function fetchPurposes() {
+        fetch('/admin/purposes')
+          .then(response => response.json())
+          .then(purposes => {
+            const purposeList = document.getElementById('purposeList');
+            if (!purposeList) return;
+            
+            purposeList.innerHTML = '';
+            purposes.forEach(purpose => {
+              const div = document.createElement('div');
+              div.className = 'purpose-item';
+              div.innerHTML = `
+                <div class="purpose-info">
+                  <h4>${purpose.PURPOSE_NAME}</h4>
+                </div>
+                <div class="purpose-actions">
+                  <button onclick="openEditPurposeModal(${purpose.PURPOSE_ID}, '${purpose.PURPOSE_NAME.replace(/'/g, "\\'")}')" class="edit-btn">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="deletePurpose(${purpose.PURPOSE_ID})" class="delete-btn">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+              purposeList.appendChild(div);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching purposes:', error);
+            showToast('Failed to load purposes', 'error');
+          });
+      }
+
+      // Add event listener for edit form submission
+      document.getElementById('editPurposeForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const purposeId = document.getElementById('editPurposeId').value;
+        const purposeName = document.getElementById('editPurposeName').value;
+
+        fetch(`/admin/purposes/${purposeId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ purposeName: purposeName })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            showToast(data.error, 'error');
+          } else {
+            showToast('Purpose updated successfully', 'success');
+            closeEditPurposeModal();
+            fetchPurposes();
+          }
+        })
+        .catch(error => {
+          console.error('Error updating purpose:', error);
+          showToast('Failed to update purpose', 'error');
+        });
+      });
+
+      // Add these new functions for session management
+      function confirmResetAllSessions() {
+        showConfirmDialog(
+          'reset_all',
+          'Reset All Student Sessions',
+          'Are you sure you want to reset sessions for all students? This will set BSIT/BSCS students to 30 sessions and others to 15 sessions.',
+          'Yes, Reset All',
+          'Cancel'
+        );
+      }
+
+      function confirmResetStudentSession(studentId, studentName, course) {
+        showConfirmDialog(
+          'reset_student',
+          'Reset Student Sessions',
+          `Are you sure you want to reset the sessions for ${studentName}? This will set their sessions to ${course === 'BSIT' || course === 'BSCS' ? '30' : '15'}.`,
+          'Yes, Reset',
+          'Cancel',
+          studentId
+        );
+    }
+
+      function handleResetAllSessions() {
+        fetch('/staff/reset_all_sessions', {
+          method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('All sessions have been reset successfully', 'success');
+            loadStudents();
+          } else {
+            showToast(data.error || 'Failed to reset sessions', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Failed to reset sessions', 'error');
+        });
+      }
+
+      function handleResetStudentSession(studentId) {
+        fetch(`/staff/reset_student_session/${studentId}`, {
+          method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast(data.message, 'success');
+            loadStudents();
+          } else {
+            showToast(data.error || 'Failed to reset student sessions', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('Failed to reset student sessions', 'error');
+        });
+      }
+
+      // Update the handleConfirmedDelete function to include reset actions
+      function handleConfirmedDelete(action, itemId) {
+        switch(action) {
+          case 'delete_lab':
+            handleLabDelete(itemId);
+            break;
+          case 'delete_announcement':
+            handleAnnouncementDelete(itemId);
+            break;
+          case 'delete_purpose':
+            handlePurposeDelete(itemId);
+            break;
+          case 'reset_student':
+          case 'reset_all':
+            handleConfirmedReset(action, itemId);
+            break;
+        }
+        closeConfirmDialog();
+      }
+
+      // Update the loadStudents function to include reset button
+      function loadStudents() {
+        fetch('/staff/all_students')
+          .then(response => response.json())
+          .then(data => {
+            const studentsList = document.getElementById('studentsList');
+            if (!studentsList) return;
+            
+            studentsList.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+              studentsList.innerHTML = `
+                  <div class="no-data">
+                      <i class="fas fa-users-slash"></i>
+                      <p>No students found</p>
+                  </div>
+              `;
+              return;
+            }
+
+            data.forEach(student => {
+              const card = document.createElement('div');
+              card.className = 'student-card';
+              card.innerHTML = `
+                  <div class="student-info">
+                      <img src="${student.PROFILE_PICTURE_URL}" alt="Profile" class="student-profile-pic">
+                      <div class="student-details">
+                          <h3>${student.FIRSTNAME} ${student.LASTNAME}</h3>
+                          <p><strong>ID:</strong> ${student.IDNO}</p>
+                          <p><strong>Course:</strong> ${student.COURSE}</p>
+                          <p><strong>Year:</strong> ${student.YEAR}</p>
+                          <p><strong>Email:</strong> ${student.EMAIL}</p>
+                          <p><strong>Remaining Sessions:</strong> ${student.REMAINING_SESSIONS}</p>
+                      </div>
+                  </div>
+                  <div class="student-actions">
+                      <button onclick="confirmResetStudentSession('${student.IDNO}', '${student.FIRSTNAME} ${student.LASTNAME}', '${student.COURSE}')" class="reset-btn">
+                          <i class="fas fa-redo"></i> Reset Sessions
+                      </button>
+                  </div>
+              `;
+              studentsList.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading students:', error);
+            showToast('Failed to load students', 'error');
+          });
+      }
+
+      function handleConfirmedReset(action, studentId) {
+        if (action === 'reset_student') {
+          fetch(`/staff/reset_student_session/${studentId}`, {
+            method: 'POST'
+          })
+          .then(response => response.json())
+          .then(data => {
+            closeConfirmDialog();
+            if (data.error) {
+              showToast(data.error, 'error');
+            } else {
+              showToast(data.message, 'success');
+              // Refresh the student list to show updated session counts
+              fetchAllStudents();
+            }
+          })
+          .catch(error => {
+            closeConfirmDialog();
+            showToast('Failed to reset student sessions', 'error');
+          });
+        } else if (action === 'reset_all') {
+          fetch('/staff/reset_all_sessions', {
+            method: 'POST'
+          })
+          .then(response => response.json())
+          .then(data => {
+            closeConfirmDialog();
+            if (data.error) {
+              showToast(data.error, 'error');
+            } else {
+              showToast(data.message, 'success');
+              // Refresh the student list to show updated session counts
+              fetchAllStudents();
+            }
+          })
+          .catch(error => {
+            closeConfirmDialog();
+            showToast('Failed to reset all sessions', 'error');
+          });
+        }
+      }
     </script>
   </body>
 </html>

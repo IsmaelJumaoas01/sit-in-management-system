@@ -15,6 +15,7 @@ import csv
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+from utils.report_generator import ReportGenerator
 
 staff_bp = Blueprint('staff', __name__)
 
@@ -462,6 +463,45 @@ def get_purposes():
         cursor.close()
         conn.close()
 
+@staff_bp.route('/purposes/<int:purpose_id>', methods=['PUT'])
+def update_purpose(purpose_id):
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    purpose_name = data.get('purposeName')
+
+    if not purpose_name:
+        return jsonify({'error': 'Purpose name is required'}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Check if purpose exists
+        cursor.execute("SELECT PURPOSE_ID FROM PURPOSES WHERE PURPOSE_ID = %s", (purpose_id,))
+        if not cursor.fetchone():
+            return jsonify({'error': 'Purpose not found'}), 404
+
+        # Check if new name already exists (excluding current purpose)
+        cursor.execute("SELECT PURPOSE_ID FROM PURPOSES WHERE PURPOSE_NAME = %s AND PURPOSE_ID != %s", 
+                      (purpose_name, purpose_id))
+        if cursor.fetchone():
+            return jsonify({'error': 'A purpose with this name already exists'}), 400
+
+        # Update purpose
+        cursor.execute("UPDATE PURPOSES SET PURPOSE_NAME = %s WHERE PURPOSE_ID = %s",
+                      (purpose_name, purpose_id))
+        conn.commit()
+        
+        return jsonify({'success': True, 'message': 'Purpose updated successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 @staff_bp.route('/check_remaining_sessions/<string:student_id>')
 def check_remaining_sessions(student_id):
     if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
@@ -725,327 +765,310 @@ def get_feedbacks():
         cursor.close()
         conn.close()
 
-@staff_bp.route('/generate_reports')
+@staff_bp.route('/generate_reports', methods=['GET'])
 def generate_reports():
-    if 'IDNO' not in session or session.get('USER_TYPE') != 'STAFF':
-        return jsonify({'error': 'Unauthorized'}), 401
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return redirect(url_for('auth.login'))
 
+    # Get parameters from request
     report_type = request.args.get('type')
-    report_format = request.args.get('format', 'excel')
+    report_format = request.args.get('format', 'pdf').lower()
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    lab_id = request.args.get('lab_id')
+    purpose_id = request.args.get('purpose_id')
+    status = request.args.get('status')  # Add status filter
+    session_status = request.args.get('session')  # Add session status filter
     
-    try:
+    # Validate required parameters
+    if not report_type:
+        return jsonify({'error': 'Report type is required'}), 400
+
+    # Get lab name if lab_id is provided
+    lab_name = None
+    if lab_id:
         conn = get_db_connection()
         cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT LAB_NAME FROM LABORATORIES WHERE LAB_ID = %s", (lab_id,))
+            result = cursor.fetchone()
+            if result:
+                lab_name = result[0]
+        finally:
+            cursor.close()
+            conn.close()
 
+    filters = {
+        'Start Date': start_date,
+        'End Date': end_date,
+        'Laboratory': lab_name if lab_name else 'All Labs',
+        'Status': status if status else 'All Statuses',
+        'Session Status': session_status if session_status else 'All Sessions'
+    }
+
+    # Initialize report generator
+    report_gen = ReportGenerator()
+
+    try:
+        # Prepare data based on report type
         if report_type == 'statistics':
-            # Get statistics data
-            cursor.execute("SELECT COUNT(IDNO) FROM USERS WHERE USER_TYPE = 'STUDENT'")
-            registered_students = cursor.fetchone()[0] or 0
-
-            cursor.execute("SELECT COUNT(RECORD_ID) FROM SIT_IN_RECORDS WHERE SESSION = 'ON_GOING'")
-            current_sitins = cursor.fetchone()[0] or 0
-
-            cursor.execute("SELECT COUNT(RECORD_ID) FROM SIT_IN_RECORDS")
-            total_sitins = cursor.fetchone()[0] or 0
-
-            # Get sit-ins by purpose
-            cursor.execute("""
-                SELECT p.PURPOSE_NAME, COUNT(s.RECORD_ID)
-                FROM PURPOSES p
-                LEFT JOIN SIT_IN_RECORDS s ON p.PURPOSE_ID = s.PURPOSE_ID
-                GROUP BY p.PURPOSE_NAME
-                ORDER BY COUNT(s.RECORD_ID) DESC
-            """)
-            purpose_stats = cursor.fetchall()
-
-            # Get sit-ins by lab
-            cursor.execute("""
-                SELECT l.LAB_NAME, COUNT(s.RECORD_ID)
-                FROM LABORATORIES l
-                LEFT JOIN SIT_IN_RECORDS s ON l.LAB_ID = s.LAB_ID
-                GROUP BY l.LAB_NAME
-                ORDER BY COUNT(s.RECORD_ID) DESC
-            """)
-            lab_stats = cursor.fetchall()
-
-            # Prepare data for report
-            data = [
-                ['Metric', 'Value'],
-                ['Registered Students', registered_students],
-                ['Current Sit-ins', current_sitins],
-                ['Total Sit-ins', total_sitins],
-                ['', ''],  # Empty row for spacing
-                ['Sit-ins by Purpose', ''],
-                *[(row[0], row[1]) for row in purpose_stats],
-                ['', ''],  # Empty row for spacing
-                ['Sit-ins by Laboratory', ''],
-                *[(row[0], row[1]) for row in lab_stats]
-            ]
-            title = 'System Statistics Report'
-            filename = f'statistics_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-
+            title = "Laboratory Usage Statistics Report"
+            data = get_statistics_data(start_date, end_date, lab_id)
         elif report_type == 'feedback':
-            # Get feedback data
-            cursor.execute("""
-                SELECT 
-                    f.FEEDBACK_ID,
-                    f.FEEDBACK_TEXT,
-                    f.DATE_SUBMITTED,
-                    u.IDNO as USER_IDNO,
-                    CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
-                    l.LAB_NAME,
-                    s.DATE as SESSION_DATE,
-                    p.PURPOSE_NAME
-                FROM FEEDBACKS f
-                JOIN SIT_IN_RECORDS s ON f.RECORD_ID = s.RECORD_ID
-                JOIN USERS u ON f.USER_IDNO = u.IDNO
-                JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
-                JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
-                ORDER BY f.DATE_SUBMITTED DESC
-            """)
-            feedbacks = cursor.fetchall()
-
-            # Prepare data for report
-            data = [
-                ['Student ID', 'Student Name', 'Lab', 'Purpose', 'Session Date', 'Feedback', 'Submitted Date']
-            ]
-            for feedback in feedbacks:
-                data.append([
-                    feedback[3],  # Student ID
-                    feedback[4],  # Student Name
-                    feedback[5],  # Lab Name
-                    feedback[7],  # Purpose Name
-                    feedback[6].strftime("%Y-%m-%d %H:%M:%S") if feedback[6] else 'N/A',  # Session Date
-                    feedback[1],  # Feedback Text
-                    feedback[2].strftime("%Y-%m-%d %H:%M:%S") if feedback[2] else 'N/A'  # Date Submitted
-                ])
-            title = 'Student Feedback Report'
-            filename = f'feedback_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
-
-        elif report_type == 'sit_ins':
-            # Get filters
-            lab_id = request.args.get('lab_id')
-            purpose_id = request.args.get('purpose_id')
-            status = request.args.get('status')
-            session_status = request.args.get('session')
-
-            # Build query
-            query = """
-                SELECT 
-                    s.RECORD_ID,
-                    u.IDNO,
-                    CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
-                    l.LAB_NAME,
-                    p.PURPOSE_NAME,
-                    s.DATE,
-                    s.END_TIME,
-                    s.STATUS,
-                    s.SESSION
-                FROM SIT_IN_RECORDS s
-                JOIN USERS u ON s.USER_IDNO = u.IDNO
-                JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
-                JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
-                WHERE 1=1
-            """
-            params = []
-
-            if lab_id:
-                query += " AND s.LAB_ID = %s"
-                params.append(lab_id)
-            if purpose_id:
-                query += " AND s.PURPOSE_ID = %s"
-                params.append(purpose_id)
-            if status:
-                query += " AND s.STATUS = %s"
-                params.append(status)
-            if session_status:
-                query += " AND s.SESSION = %s"
-                params.append(session_status)
-
-            query += " ORDER BY s.DATE DESC"
-            cursor.execute(query, params)
-            records = cursor.fetchall()
-
-            # Prepare data for report
-            data = [
-                ['Record ID', 'Student ID', 'Student Name', 'Lab', 'Purpose', 'Start Time', 'End Time', 'Status', 'Session']
-            ]
-            for record in records:
-                data.append([
-                    record[0],  # Record ID
-                    record[1],  # Student ID
-                    record[2],  # Student Name
-                    record[3],  # Lab Name
-                    record[4],  # Purpose Name
-                    record[5].strftime("%Y-%m-%d %H:%M:%S") if record[5] else 'N/A',  # Start Time
-                    record[6].strftime("%Y-%m-%d %H:%M:%S") if record[6] else 'N/A',  # End Time
-                    record[7],  # Status
-                    record[8]   # Session
-                ])
-            title = 'Sit-in Records Report'
-            filename = f'sitin_records_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}'
+            title = "Student Feedback Report"
+            data = get_feedback_data(start_date, end_date, lab_id)
+        elif report_type in ['sit_in', 'sit_ins']:
+            title = "Sit-in Records Report"
+            data = get_sit_in_data(start_date, end_date, lab_id, purpose_id, status, session_status)
         else:
-            return jsonify({'error': 'Invalid report type'}), 400
+            return jsonify({'error': f'Invalid report type: {report_type}'}), 400
 
-        if report_format == 'excel':
-            output = BytesIO()
-            workbook = Workbook()
-            sheet = workbook.active
-            
-            # Set title
-            sheet['A1'] = title
-            sheet['A1'].font = Font(size=14, bold=True)
-            sheet.merge_cells(f'A1:{get_column_letter(len(data[0]))}1')
-            
-            # Add generation timestamp
-            sheet['A2'] = f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'
-            sheet['A2'].font = Font(italic=True)
-            sheet.merge_cells(f'A2:{get_column_letter(len(data[0]))}2')
-            
-            # Add empty row
-            current_row = 4
-            
-            # Add data with formatting
-            for row_idx, row in enumerate(data):
-                for col_idx, value in enumerate(row, 1):
-                    cell = sheet.cell(row=current_row, column=col_idx)
-                    cell.value = str(value)  # Convert all values to string
-                    if current_row == 4:  # Headers
-                        cell.font = Font(bold=True)
-                        cell.fill = PatternFill(start_color="4CAF50", end_color="4CAF50", fill_type="solid")
-                        cell.alignment = Alignment(horizontal='center')
-                    else:
-                        cell.alignment = Alignment(wrap_text=True)
-                current_row += 1
-            
-            # Set column widths
-            for col in sheet.columns:
-                max_length = 0
-                for cell in col:
-                    try:
-                        max_length = max(max_length, len(str(cell.value)))
-                    except:
-                        pass
-                adjusted_width = min(max_length + 2, 50)  # Cap width at 50 characters
-                sheet.column_dimensions[get_column_letter(col[0].column)].width = adjusted_width
-            
-            workbook.save(output)
-            output.seek(0)
-            
-            response = send_file(
-                output,
-                mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                as_attachment=True,
-                download_name=f'{filename}.xlsx'
-            )
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-            return response
-            
+        # Generate report in requested format
+        if report_format == 'pdf':
+            buffer = report_gen.generate_pdf(title, data, filters)
+            mimetype = 'application/pdf'
+            file_ext = 'pdf'
+        elif report_format == 'excel':
+            buffer = report_gen.generate_excel(title, data, filters)
+            mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            file_ext = 'xlsx'
         elif report_format == 'csv':
-            output = StringIO()
-            writer = csv.writer(output)
-            writer.writerow([title])
-            writer.writerow([f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}'])
-            writer.writerow([])  # Empty row
-            writer.writerows(data)
-            
-            response = Response(
-                output.getvalue(),
-                mimetype='text/csv',
-                headers={
-                    'Content-Disposition': f'attachment; filename={filename}.csv',
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            )
-            return response
-            
-        elif report_format == 'pdf':
-            buffer = BytesIO()
-            doc = SimpleDocTemplate(
-                buffer,
-                pagesize=landscape(letter),
-                rightMargin=30,
-                leftMargin=30,
-                topMargin=30,
-                bottomMargin=30
-            )
-            
-            elements = []
-            styles = getSampleStyleSheet()
-            
-            # Add title
-            title_style = ParagraphStyle(
-                'CustomTitle',
-                parent=styles['Heading1'],
-                fontSize=16,
-                alignment=1,
-                spaceAfter=20
-            )
-            elements.append(Paragraph(title, title_style))
-            
-            # Add timestamp
-            elements.append(Paragraph(
-                f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}',
-                ParagraphStyle('Timestamp', fontSize=10, alignment=1, spaceAfter=20)
-            ))
-            
-            # Convert all data to strings
-            table_data = [[str(cell) for cell in row] for row in data]
-            
-            # Create table
-            table_style = TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.green),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-                ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
-                ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 1), (-1, -1), 10),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 6),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-                ('TOPPADDING', (0, 0), (-1, -1), 3),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ])
-            
-            # Calculate column widths based on content
-            col_widths = []
-            for col in zip(*table_data):
-                max_width = max(len(str(cell)) for cell in col) * 6  # Approximate width
-                col_widths.append(min(max_width, 120))  # Cap width at 120 points
-            
-            table = Table(table_data, colWidths=col_widths, repeatRows=1)
-            table.setStyle(table_style)
-            elements.append(table)
-            
-            doc.build(elements)
-            buffer.seek(0)
-            
-            response = send_file(
-                buffer,
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f'{filename}.pdf'
-            )
-            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
-            return response
+            buffer = report_gen.generate_csv(title, data, filters)
+            mimetype = 'text/csv'
+            file_ext = 'csv'
+        else:
+            return jsonify({'error': f'Invalid format type: {report_format}'}), 400
 
-        return jsonify({'error': 'Invalid report format'}), 400
+        if not buffer:
+            return jsonify({'error': 'Failed to generate report'}), 500
+
+        # Send the file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{report_type}_report_{timestamp}.{file_ext}"
+        
+        return send_file(
+            buffer,
+            mimetype=mimetype,
+            as_attachment=True,
+            download_name=filename
+        )
 
     except Exception as e:
         print(f"Error generating report: {str(e)}")
-        return jsonify({'error': 'Failed to generate report'}), 500
+        return jsonify({'error': str(e)}), 500
+
+def get_statistics_data(start_date, end_date, lab_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Base query conditions
+        conditions = []
+        params = []
+        
+        if start_date:
+            conditions.append("DATE >= %s")
+            params.append(start_date)
+        if end_date:
+            conditions.append("DATE <= %s")
+            params.append(end_date)
+        if lab_id:
+            conditions.append("LAB_ID = %s")
+            params.append(lab_id)
+            
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+        # Get summary statistics
+        cursor.execute("""
+            SELECT 
+                COUNT(DISTINCT USER_IDNO) as total_students,
+                COUNT(*) as total_sessions
+            FROM SIT_IN_RECORDS
+            WHERE """ + where_clause, params)
+        
+        summary = cursor.fetchone()
+        
+        # Get lab usage statistics
+        cursor.execute("""
+            SELECT l.LAB_NAME, COUNT(*) as count
+            FROM SIT_IN_RECORDS s
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            WHERE """ + where_clause + """
+            GROUP BY l.LAB_NAME
+            ORDER BY count DESC""", params)
+        
+        lab_stats = cursor.fetchall()
+        
+        # Get purpose statistics
+        cursor.execute("""
+            SELECT p.PURPOSE_NAME, COUNT(*) as count
+            FROM SIT_IN_RECORDS s
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE """ + where_clause + """
+            GROUP BY p.PURPOSE_NAME
+            ORDER BY count DESC""", params)
+        
+        purpose_stats = cursor.fetchall()
+        
+        # Prepare data for report
+        headers = ['Metric', 'Value']
+        rows = [
+            ['Total Students', str(summary[0])],
+            ['Total Sessions', str(summary[1])],
+            ['', ''],  # Empty row for spacing
+            ['Laboratory Usage', '']
+        ]
+        
+        # Add lab statistics
+        for lab in lab_stats:
+            rows.append([lab[0], str(lab[1])])
+        
+        rows.append(['', ''])  # Empty row for spacing
+        rows.append(['Purpose Distribution', ''])
+        
+        # Add purpose statistics
+        for purpose in purpose_stats:
+            rows.append([purpose[0], str(purpose[1])])
+            
+        return [headers] + rows
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_feedback_data(start_date, end_date, lab_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Base query conditions
+        conditions = ["f.DATE_SUBMITTED IS NOT NULL"]
+        params = []
+        
+        if start_date:
+            conditions.append("f.DATE_SUBMITTED >= %s")
+            params.append(start_date)
+        if end_date:
+            conditions.append("f.DATE_SUBMITTED <= %s")
+            params.append(end_date)
+        if lab_id:
+            conditions.append("s.LAB_ID = %s")
+            params.append(lab_id)
+            
+        where_clause = " AND ".join(conditions)
+
+        query = f"""
+            SELECT 
+                DATE(f.DATE_SUBMITTED) as date,
+                l.LAB_NAME,
+                u.IDNO,
+                f.FEEDBACK_TEXT
+            FROM FEEDBACKS f
+            JOIN SIT_IN_RECORDS s ON f.RECORD_ID = s.RECORD_ID
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN USERS u ON f.USER_IDNO = u.IDNO
+            WHERE {where_clause}
+            ORDER BY f.DATE_SUBMITTED DESC
+        """
+        
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        
+        # Prepare data for report
+        headers = ['Date', 'Laboratory', 'Student ID', 'Comments']
+        rows = []
+        
+        for row in results:
+            rows.append([
+                row[0].strftime('%Y-%m-%d'),  # Date
+                row[1],                        # Laboratory
+                row[2],                        # Student ID
+                row[3]                         # Comments
+            ])
+            
+        return [headers] + rows
+        
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_sit_in_data(start_date, end_date, lab_id, purpose_id=None, status=None, session_status=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Base query conditions
+        conditions = []
+        params = []
+        
+        if start_date:
+            conditions.append("s.DATE >= %s")
+            params.append(start_date)
+        if end_date:
+            conditions.append("s.DATE <= %s")
+            params.append(end_date)
+        if lab_id:
+            conditions.append("s.LAB_ID = %s")
+            params.append(lab_id)
+        if purpose_id:
+            conditions.append("s.PURPOSE_ID = %s")
+            params.append(purpose_id)
+        if status and status != "All Statuses":
+            conditions.append("s.STATUS = %s")
+            params.append(status)
+        if session_status and session_status != "All Sessions":
+            conditions.append("s.SESSION = %s")
+            params.append(session_status)
+            
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+
+        query = f"""
+            SELECT 
+                DATE(s.DATE) as date,
+                l.LAB_NAME,
+                u.IDNO,
+                CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as student_name,
+                s.DATE as time_in,
+                s.END_TIME as time_out,
+                TIMESTAMPDIFF(
+                    MINUTE, 
+                    s.DATE, 
+                    CASE 
+                        WHEN s.END_TIME IS NULL THEN NOW()
+                        ELSE s.END_TIME
+                    END
+                ) as duration,
+                p.PURPOSE_NAME,
+                s.STATUS,
+                s.SESSION
+            FROM SIT_IN_RECORDS s
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            JOIN USERS u ON s.USER_IDNO = u.IDNO
+            JOIN PURPOSES p ON s.PURPOSE_ID = p.PURPOSE_ID
+            WHERE {where_clause}
+            ORDER BY s.DATE DESC
+        """
+        
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        
+        # Prepare data for report
+        headers = ['Date', 'Laboratory', 'Student ID', 'Student Name', 'Time In', 'Time Out', 'Duration (mins)', 'Purpose', 'Status', 'Session']
+        rows = []
+        
+        for row in results:
+            rows.append([
+                row[0].strftime('%Y-%m-%d'),                          # Date
+                row[1],                                               # Laboratory
+                row[2],                                               # Student ID
+                row[3],                                               # Student Name
+                row[4].strftime('%Y-%m-%d %H:%M:%S'),                # Time In
+                row[5].strftime('%Y-%m-%d %H:%M:%S') if row[5] else 'Ongoing',  # Time Out
+                row[6],                                               # Duration
+                row[7],                                               # Purpose
+                row[8],                                               # Status
+                row[9]                                                # Session
+            ])
+            
+        return [headers] + rows
+        
     finally:
         cursor.close()
         conn.close()
@@ -1417,6 +1440,75 @@ def get_all_students():
         
         return jsonify(result)
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route('/reset_student_session/<string:student_id>', methods=['POST'])
+def reset_student_session(student_id):
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Get student's course
+        cursor.execute("SELECT COURSE FROM USERS WHERE IDNO = %s", (student_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({'error': 'Student not found'}), 404
+
+        course = result[0]
+        # Set session limit based on course
+        session_limit = 30 if course in ['BSIT', 'BSCS'] else 15
+
+        # Update student's session count
+        cursor.execute("""
+            UPDATE SIT_IN_LIMITS 
+            SET SIT_IN_COUNT = %s 
+            WHERE USER_IDNO = %s
+        """, (session_limit, student_id))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f'Sessions reset to {session_limit}'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@staff_bp.route('/reset_all_sessions', methods=['POST'])
+def reset_all_sessions():
+    if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Update BSIT/BSCS students to 30 sessions
+        cursor.execute("""
+            UPDATE SIT_IN_LIMITS sl
+            JOIN USERS u ON sl.USER_IDNO = u.IDNO
+            SET sl.SIT_IN_COUNT = 30
+            WHERE u.COURSE IN ('BSIT', 'BSCS')
+        """)
+
+        # Update other course students to 15 sessions
+        cursor.execute("""
+            UPDATE SIT_IN_LIMITS sl
+            JOIN USERS u ON sl.USER_IDNO = u.IDNO
+            SET sl.SIT_IN_COUNT = 15
+            WHERE u.COURSE NOT IN ('BSIT', 'BSCS')
+        """)
+
+        conn.commit()
+        return jsonify({'success': True, 'message': 'All sessions have been reset'})
+    except Exception as e:
+        conn.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()

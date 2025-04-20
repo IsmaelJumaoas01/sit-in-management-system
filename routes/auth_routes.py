@@ -75,10 +75,11 @@ def register():
                  form_data['course'], form_data['year'], form_data['email'], form_data['password'], user_type, default_profile_picture)
             )
             
-            # Set initial sit-in limit to 30
+            # Set initial sit-in limit based on course
+            initial_limit = 30 if form_data['course'] in ['BSIT', 'BSCS'] else 15
             cursor.execute(
-                "INSERT INTO SIT_IN_LIMITS (USER_IDNO, SIT_IN_COUNT) VALUES (%s, 30)",
-                (form_data['idno'],)
+                "INSERT INTO SIT_IN_LIMITS (USER_IDNO, SIT_IN_COUNT) VALUES (%s, %s)",
+                (form_data['idno'], initial_limit)
             )
             
             conn.commit()

@@ -1450,31 +1450,57 @@ def reset_student_session(student_id):
     if 'IDNO' not in session or session['USER_TYPE'] != 'STAFF':
         return jsonify({'error': 'Unauthorized'}), 401
 
+    if not student_id or student_id == 'undefined':
+        return jsonify({'error': 'Invalid student ID'}), 400
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
         # Get student's course
-        cursor.execute("SELECT COURSE FROM USERS WHERE IDNO = %s", (student_id,))
+        cursor.execute("""
+            SELECT IDNO, COURSE 
+            FROM USERS 
+            WHERE IDNO = %s AND USER_TYPE = 'STUDENT'
+        """, (student_id,))
         result = cursor.fetchone()
+        
         if not result:
             return jsonify({'error': 'Student not found'}), 404
 
-        course = result[0]
+        student_id = result[0]  # Use the verified student ID
+        course = result[1]
+        
         # Set session limit based on course
         session_limit = 30 if course in ['BSIT', 'BSCS'] else 15
 
-        # Update student's session count
-        cursor.execute("""
-            UPDATE SIT_IN_LIMITS 
-            SET SIT_IN_COUNT = %s 
-            WHERE USER_IDNO = %s
-        """, (session_limit, student_id))
+        # First check if record exists
+        cursor.execute("SELECT USER_IDNO FROM SIT_IN_LIMITS WHERE USER_IDNO = %s", (student_id,))
+        exists = cursor.fetchone()
+
+        if exists:
+            # Update existing record
+            cursor.execute("""
+                UPDATE SIT_IN_LIMITS 
+                SET SIT_IN_COUNT = %s 
+                WHERE USER_IDNO = %s
+            """, (session_limit, student_id))
+        else:
+            # Insert new record
+            cursor.execute("""
+                INSERT INTO SIT_IN_LIMITS (USER_IDNO, SIT_IN_COUNT)
+                VALUES (%s, %s)
+            """, (student_id, session_limit))
 
         conn.commit()
-        return jsonify({'success': True, 'message': f'Sessions reset to {session_limit}'})
+        return jsonify({
+            'success': True, 
+            'message': f'Sessions reset to {session_limit}',
+            'remaining_sessions': session_limit
+        })
     except Exception as e:
         conn.rollback()
+        print(f"Error in reset_student_session: {str(e)}")  # Add logging
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
@@ -1489,26 +1515,63 @@ def reset_all_sessions():
     cursor = conn.cursor()
 
     try:
-        # Update BSIT/BSCS students to 30 sessions
+        # First, get all students and their courses
         cursor.execute("""
-            UPDATE SIT_IN_LIMITS sl
-            JOIN USERS u ON sl.USER_IDNO = u.IDNO
-            SET sl.SIT_IN_COUNT = 30
-            WHERE u.COURSE IN ('BSIT', 'BSCS')
+            SELECT IDNO, COURSE 
+            FROM USERS 
+            WHERE USER_TYPE = 'STUDENT'
         """)
+        students = cursor.fetchall()
+        
+        if not students:
+            return jsonify({'error': 'No students found'}), 404
 
-        # Update other course students to 15 sessions
-        cursor.execute("""
-            UPDATE SIT_IN_LIMITS sl
-            JOIN USERS u ON sl.USER_IDNO = u.IDNO
-            SET sl.SIT_IN_COUNT = 15
-            WHERE u.COURSE NOT IN ('BSIT', 'BSCS')
-        """)
+        success_count = 0
+        error_count = 0
+
+        # Process each student
+        for student_id, course in students:
+            try:
+                session_limit = 30 if course in ['BSIT', 'BSCS'] else 15
+                
+                # Check if record exists
+                cursor.execute("SELECT USER_IDNO FROM SIT_IN_LIMITS WHERE USER_IDNO = %s", (student_id,))
+                exists = cursor.fetchone()
+                
+                if exists:
+                    # Update existing record
+                    cursor.execute("""
+                        UPDATE SIT_IN_LIMITS 
+                        SET SIT_IN_COUNT = %s 
+                        WHERE USER_IDNO = %s
+                    """, (session_limit, student_id))
+                else:
+                    # Insert new record
+                    cursor.execute("""
+                        INSERT INTO SIT_IN_LIMITS (USER_IDNO, SIT_IN_COUNT)
+                        VALUES (%s, %s)
+                    """, (student_id, session_limit))
+                
+                success_count += 1
+                
+            except Exception as e:
+                print(f"Error processing student {student_id}: {str(e)}")  # Add logging
+                error_count += 1
+                continue  # Continue with next student even if one fails
 
         conn.commit()
-        return jsonify({'success': True, 'message': 'All sessions have been reset'})
+        return jsonify({
+            'success': True,
+            'message': f'Reset completed. Success: {success_count}, Errors: {error_count}',
+            'details': {
+                'success_count': success_count,
+                'error_count': error_count,
+                'total_processed': len(students)
+            }
+        })
     except Exception as e:
         conn.rollback()
+        print(f"Error in reset_all_sessions: {str(e)}")  # Add logging
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()

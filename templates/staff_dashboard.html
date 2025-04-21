@@ -3020,6 +3020,41 @@
         gap: 10px;
         margin-top: 10px;
       }
+
+      .reset-all-btn {
+        background: #4a90e2;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .reset-all-btn:hover {
+        background: #357abd;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+      }
+
+      .reset-btn {
+        background: #4a90e2;
+        color: white;
+        border: none;
+        padding: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .reset-btn:hover {
+        background: #357abd;
+        transform: translateY(-2px);
+      }
     </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
@@ -3068,6 +3103,8 @@
           const actionData = dialog.dataset.actionData
             ? JSON.parse(dialog.dataset.actionData)
             : null;
+          console.log('Dialog action:', type, 'Action data:', actionData);
+          
           switch (type) {
             case "logout":
               if (logoutForm) logoutForm.submit();
@@ -3082,7 +3119,13 @@
               handleResetAllSessions();
               break;
             case "reset_student_session":
-              handleResetStudentSession(actionData.student_id);
+              const studentId = actionData && typeof actionData === 'object' ? actionData.student_id : actionData;
+              if (studentId) {
+                handleResetStudentSession(studentId);
+              } else {
+                console.error('Invalid action data for reset:', actionData);
+                showToast('Invalid student ID', 'error');
+              }
               break;
           }
         }
@@ -4767,17 +4810,48 @@
           })
           .then(students => {
             if (!students || students.length === 0) {
-              container.innerHTML = `
-                <div class="no-data">
-                  <i class="fas fa-user-slash"></i>
-                  <p>No students found</p>
-                </div>
-              `;
+              container.innerHTML = '<div class="no-data"><i class="fas fa-users-slash"></i><p>No students found</p></div>';
               return;
             }
 
             const table = document.createElement('table');
             table.className = 'student-table';
+            
+            const rows = students.map(student => {
+              const idno = student.IDNO;
+              return `
+                <tr data-idno="${idno}">
+                  <td>
+                    <div class="student-profile">
+                      <img src="${student.PROFILE_PICTURE_URL}" 
+                           alt="Profile" 
+                           class="student-profile-pic"
+                           onerror="this.src='/static/default_profile.png'">
+                    </div>
+                  </td>
+                  <td>${idno}</td>
+                  <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
+                  <td>${student.COURSE || 'N/A'}</td>
+                  <td>${student.YEAR || 'N/A'}</td>
+                  <td>${student.EMAIL || 'N/A'}</td>
+                  <td>
+                    <span class="session-count ${parseInt(student.REMAINING_SESSIONS) > 0 ? 'positive' : 'zero'}">
+                      ${student.REMAINING_SESSIONS || '0'}
+                    </span>
+                  </td>
+                  <td class="action-buttons">
+                    <button type="button"
+                            onclick="confirmResetStudentSession('${idno}', '${student.FIRSTNAME} ${student.LASTNAME}', '${student.COURSE}')"
+                            class="reset-btn"
+                            title="Reset Sessions"
+                            data-idno="${idno}">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                  </td>
+                </tr>
+              `;
+            });
+
             table.innerHTML = `
               <thead>
                 <tr>
@@ -4792,42 +4866,15 @@
                 </tr>
               </thead>
               <tbody>
-                ${students.map(student => `
-                  <tr>
-                    <td>
-                      <div class="student-profile">
-                        <img src="${student.PROFILE_PICTURE_URL}" 
-                             alt="Profile" 
-                             class="student-profile-pic">
-                      </div>
-                    </td>
-                    <td>${student.IDNO}</td>
-                    <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
-                    <td>${student.COURSE || 'N/A'}</td>
-                    <td>${student.YEAR || 'N/A'}</td>
-                    <td>${student.EMAIL}</td>
-                    <td>
-                      <span class="session-count ${student.REMAINING_SESSIONS > 0 ? 'positive' : 'zero'}">
-                        ${student.REMAINING_SESSIONS}
-                      </span>
-                    </td>
-                    <td class="action-buttons">
-                      <button onclick="editStudent('${student.IDNO}')" class="edit-btn" title="Edit Student">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button onclick="deleteStudent('${student.IDNO}')" class="delete-btn" title="Delete Student">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                `).join('')}
+                ${rows.join('')}
               </tbody>
             `;
+
             container.innerHTML = '';
             container.appendChild(table);
           })
           .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading students:', error);
             container.innerHTML = `
               <div class="error-message">
                 <i class="fas fa-exclamation-circle"></i>
@@ -4849,75 +4896,86 @@
 
       // Function to load all students
       function loadStudents() {
+        const container = document.querySelector('.students-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+
         fetch('/staff/all_students')
           .then(response => response.json())
-          .then(data => {
-            const studentsList = document.getElementById('studentsList');
-            const noStudents = document.getElementById('noStudents');
+          .then(students => {
+            if (!students || students.length === 0) {
+              container.innerHTML = '<div class="no-data"><i class="fas fa-users-slash"></i><p>No students found</p></div>';
+              return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'student-table';
             
-            if (data.error) {
-              console.error('Error loading students:', data.error);
-              studentsList.innerHTML = '';
-              noStudents.style.display = 'flex';
-              return;
-            }
-
-            if (!data || data.length === 0) {
-              studentsList.innerHTML = '';
-              noStudents.style.display = 'flex';
-              return;
-            }
-
-            studentsList.innerHTML = data.map(student => `
-              <tr>
-                <td>
-                  <div class="student-info">
-                    <img src="/get_profile_picture/${student.IDNO}" alt="Profile" class="student-profile-pic">
-                    <span>${student.IDNO}</span>
-                  </div>
-                </td>
-                <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
-                <td>${student.COURSE}</td>
-                <td>${student.YEAR}</td>
-                <td>${student.EMAIL}</td>
-                <td>
-                  <span class="remaining-sessions">Loading...</span>
-                </td>
-                <td>
-                  <button class="start-sit-in-btn" onclick="startSitIn('${student.IDNO}')">
-                    <i class="fas fa-play"></i> Start Sit-in
-                  </button>
-                </td>
-              </tr>
-            `).join('');
-
-            noStudents.style.display = 'none';
-
-            // Load remaining sessions for each student
-            data.forEach(student => {
-              fetch(`/staff/check_remaining_sessions/${student.IDNO}`)
-                .then(response => response.json())
-                .then(sessionData => {
-                  const remainingSessionsSpan = document.querySelector(`tr:has(td:contains('${student.IDNO}')) .remaining-sessions`);
-                  if (remainingSessionsSpan) {
-                    remainingSessionsSpan.textContent = sessionData.remaining_sessions;
-                  }
-                })
-                .catch(error => {
-                  console.error('Error loading remaining sessions:', error);
-                  const remainingSessionsSpan = document.querySelector(`tr:has(td:contains('${student.IDNO}')) .remaining-sessions`);
-                  if (remainingSessionsSpan) {
-                    remainingSessionsSpan.textContent = 'Error';
-                  }
-                });
+            const rows = students.map(student => {
+              const idno = student.IDNO;
+              return `
+                <tr data-idno="${idno}">
+                  <td>
+                    <div class="student-profile">
+                      <img src="${student.PROFILE_PICTURE_URL}" 
+                           alt="Profile" 
+                           class="student-profile-pic"
+                           onerror="this.src='/static/default_profile.png'">
+                    </div>
+                  </td>
+                  <td>${idno}</td>
+                  <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
+                  <td>${student.COURSE || 'N/A'}</td>
+                  <td>${student.YEAR || 'N/A'}</td>
+                  <td>${student.EMAIL || 'N/A'}</td>
+                  <td>
+                    <span class="session-count ${parseInt(student.REMAINING_SESSIONS) > 0 ? 'positive' : 'zero'}">
+                      ${student.REMAINING_SESSIONS || '0'}
+                    </span>
+                  </td>
+                  <td class="action-buttons">
+                    <button type="button"
+                            onclick="confirmResetStudentSession('${idno}', '${student.FIRSTNAME} ${student.LASTNAME}', '${student.COURSE}')"
+                            class="reset-btn"
+                            title="Reset Sessions"
+                            data-idno="${idno}">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                  </td>
+                </tr>
+              `;
             });
+
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Profile</th>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Course</th>
+                  <th>Year</th>
+                  <th>Email</th>
+                  <th>Remaining Sessions</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.join('')}
+              </tbody>
+            `;
+
+            container.innerHTML = '';
+            container.appendChild(table);
           })
           .catch(error => {
             console.error('Error loading students:', error);
-            const studentsList = document.getElementById('studentsList');
-            const noStudents = document.getElementById('noStudents');
-            studentsList.innerHTML = '';
-            noStudents.style.display = 'flex';
+            container.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading students: ${error.message}</p>
+              </div>
+            `;
           });
       }
 
@@ -5361,16 +5419,25 @@
         );
       }
 
-      function confirmResetStudentSession(studentId, studentName, course) {
+      function confirmResetStudentSession(idno, studentName, course) {
+        console.log('Confirming reset for student:', { idno, studentName, course });
+        
+        if (!idno || idno === 'undefined') {
+          showToast('Invalid student ID', 'error');
+          return;
+        }
+
+        const sessionLimit = (course === 'BSIT' || course === 'BSCS') ? 30 : 15;
+        
         showConfirmDialog(
-          'reset_student',
+          'reset_student_session',
           'Reset Student Sessions',
-          `Are you sure you want to reset the sessions for ${studentName}? This will set their sessions to ${course === 'BSIT' || course === 'BSCS' ? '30' : '15'}.`,
+          `Are you sure you want to reset sessions for ${studentName} to ${sessionLimit}?`,
           'Yes, Reset',
           'Cancel',
-          studentId
+          { student_id: idno }  // Pass as an object
         );
-    }
+      }
 
       function handleResetAllSessions() {
         fetch('/staff/reset_all_sessions', {
@@ -5391,22 +5458,42 @@
         });
       }
 
-      function handleResetStudentSession(studentId) {
-        fetch(`/staff/reset_student_session/${studentId}`, {
-          method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            showToast(data.message, 'success');
-            loadStudents();
-          } else {
-            showToast(data.error || 'Failed to reset student sessions', 'error');
+      function handleResetStudentSession(idno) {
+        console.log('Starting reset for IDNO:', idno);
+        
+        if (!idno || idno === 'undefined') {
+          showToast('Invalid student ID', 'error');
+          return;
+        }
+
+        const url = `/staff/reset_student_session/${encodeURIComponent(idno.trim())}`;
+        console.log('Making reset request to:', url);
+
+        fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           }
         })
+        .then(response => {
+          console.log('Reset response status:', response.status);
+          return response.json().then(data => ({
+              ok: response.ok,
+              data: data
+          }));
+        })
+        .then(({ ok, data }) => {
+            console.log('Reset response data:', data);
+            if (ok && data.success) {
+                showToast(data.message || 'Sessions reset successfully', 'success');
+                loadStudents(); // Reload the student list
+            } else {
+                throw new Error(data.error || 'Failed to reset sessions');
+            }
+        })
         .catch(error => {
-          console.error('Error:', error);
-          showToast('Failed to reset student sessions', 'error');
+            console.error('Reset request failed:', error);
+            showToast(error.message || 'Failed to reset student sessions', 'error');
         });
       }
 
@@ -5432,51 +5519,86 @@
 
       // Update the loadStudents function to include reset button
       function loadStudents() {
+        const container = document.querySelector('.students-container');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading students...</div>';
+
         fetch('/staff/all_students')
           .then(response => response.json())
-          .then(data => {
-            const studentsList = document.getElementById('studentsList');
-            if (!studentsList) return;
-            
-            studentsList.innerHTML = '';
-            
-            if (!data || data.length === 0) {
-              studentsList.innerHTML = `
-                  <div class="no-data">
-                      <i class="fas fa-users-slash"></i>
-                      <p>No students found</p>
-                  </div>
-              `;
+          .then(students => {
+            if (!students || students.length === 0) {
+              container.innerHTML = '<div class="no-data"><i class="fas fa-users-slash"></i><p>No students found</p></div>';
               return;
             }
 
-            data.forEach(student => {
-              const card = document.createElement('div');
-              card.className = 'student-card';
-              card.innerHTML = `
-                  <div class="student-info">
-                      <img src="${student.PROFILE_PICTURE_URL}" alt="Profile" class="student-profile-pic">
-                      <div class="student-details">
-                          <h3>${student.FIRSTNAME} ${student.LASTNAME}</h3>
-                          <p><strong>ID:</strong> ${student.IDNO}</p>
-                          <p><strong>Course:</strong> ${student.COURSE}</p>
-                          <p><strong>Year:</strong> ${student.YEAR}</p>
-                          <p><strong>Email:</strong> ${student.EMAIL}</p>
-                          <p><strong>Remaining Sessions:</strong> ${student.REMAINING_SESSIONS}</p>
-                      </div>
-                  </div>
-                  <div class="student-actions">
-                      <button onclick="confirmResetStudentSession('${student.IDNO}', '${student.FIRSTNAME} ${student.LASTNAME}', '${student.COURSE}')" class="reset-btn">
-                          <i class="fas fa-redo"></i> Reset Sessions
-                      </button>
-                  </div>
+            const table = document.createElement('table');
+            table.className = 'student-table';
+            
+            const rows = students.map(student => {
+              const idno = student.IDNO;
+              return `
+                <tr data-idno="${idno}">
+                  <td>
+                    <div class="student-profile">
+                      <img src="${student.PROFILE_PICTURE_URL}" 
+                           alt="Profile" 
+                           class="student-profile-pic"
+                           onerror="this.src='/static/default_profile.png'">
+                    </div>
+                  </td>
+                  <td>${idno}</td>
+                  <td>${student.FIRSTNAME} ${student.LASTNAME}</td>
+                  <td>${student.COURSE || 'N/A'}</td>
+                  <td>${student.YEAR || 'N/A'}</td>
+                  <td>${student.EMAIL || 'N/A'}</td>
+                  <td>
+                    <span class="session-count ${parseInt(student.REMAINING_SESSIONS) > 0 ? 'positive' : 'zero'}">
+                      ${student.REMAINING_SESSIONS || '0'}
+                    </span>
+                  </td>
+                  <td class="action-buttons">
+                    <button type="button"
+                            onclick="confirmResetStudentSession('${idno}', '${student.FIRSTNAME} ${student.LASTNAME}', '${student.COURSE}')"
+                            class="reset-btn"
+                            title="Reset Sessions"
+                            data-idno="${idno}">
+                      <i class="fas fa-redo"></i>
+                    </button>
+                  </td>
+                </tr>
               `;
-              studentsList.appendChild(card);
             });
+
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Profile</th>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Course</th>
+                  <th>Year</th>
+                  <th>Email</th>
+                  <th>Remaining Sessions</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows.join('')}
+              </tbody>
+            `;
+
+            container.innerHTML = '';
+            container.appendChild(table);
           })
           .catch(error => {
             console.error('Error loading students:', error);
-            showToast('Failed to load students', 'error');
+            container.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>Error loading students: ${error.message}</p>
+              </div>
+            `;
           });
       }
 
@@ -5520,6 +5642,97 @@
             showToast('Failed to reset all sessions', 'error');
           });
         }
+      }
+
+      // Function to confirm and reset all student sessions
+      function confirmResetAllSessions() {
+        showConfirmDialog(
+          'reset_all_sessions',
+          'Reset All Sessions',
+          'Are you sure you want to reset sessions for all students? This will set BSIT and BSCS students to 30 sessions and other courses to 15 sessions.',
+          'Yes, Reset All',
+          'Cancel'
+        );
+      }
+
+      // Function to confirm and reset individual student session
+      function confirmResetStudentSession(studentId, studentName, course) {
+        console.log('Confirming reset for:', { studentId, studentName, course });
+        
+        if (!studentId || studentId === 'undefined') {
+          console.error('Invalid student ID in confirmation');
+          showToast('Invalid student ID', 'error');
+          return;
+        }
+
+        showConfirmDialog(
+          'reset_student_session',
+          'Reset Student Sessions',
+          `Are you sure you want to reset the sessions for ${studentName}? This will set their sessions to ${course === 'BSIT' || course === 'BSCS' ? '30' : '15'}.`,
+          'Yes, Reset',
+          'Cancel',
+          studentId
+        );
+      }
+
+      // Update the handleConfirmAction function to include reset actions
+      function handleConfirmAction(action, id) {
+        switch (action) {
+          case 'reset_all_sessions':
+            resetAllSessions();
+            break;
+          case 'reset_student_session':
+            resetStudentSession(id);
+            break;
+          // ... existing cases ...
+        }
+        closeConfirmDialog();
+      }
+
+      // Function to reset all student sessions
+      function resetAllSessions() {
+        fetch('/staff/reset_all_sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('All student sessions have been reset successfully', 'success');
+            loadStudents(); // Reload the student list
+          } else {
+            showToast(data.error || 'Failed to reset sessions', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred while resetting sessions', 'error');
+        });
+      }
+
+      // Function to reset individual student session
+      function resetStudentSession(studentId) {
+        fetch(`/staff/reset_student_session/${studentId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showToast('Student sessions have been reset successfully', 'success');
+            loadStudents(); // Reload the student list
+          } else {
+            showToast(data.error || 'Failed to reset sessions', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showToast('An error occurred while resetting sessions', 'error');
+        });
       }
     </script>
   </body>

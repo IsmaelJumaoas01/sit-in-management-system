@@ -1575,4 +1575,64 @@ def reset_all_sessions():
         return jsonify({'error': str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
+
+@staff_bp.route('/top_students')
+def get_top_students():
+    print("\n=== Starting get_top_students endpoint ===")
+    if 'IDNO' not in session or session['USER_TYPE'] not in ['STAFF', 'ADMIN']:
+        print("Unauthorized access attempt")
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        print("Executing SQL query for top students...")
+        cursor.execute("""
+            SELECT 
+                u.IDNO,
+                CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as STUDENT_NAME,
+                u.COURSE,
+                COUNT(s.RECORD_ID) as TOTAL_SITINS
+            FROM USERS u
+            JOIN SIT_IN_RECORDS s ON u.IDNO = s.USER_IDNO
+            WHERE u.USER_TYPE = 'STUDENT'
+            GROUP BY u.IDNO, u.FIRSTNAME, u.LASTNAME, u.COURSE
+            ORDER BY TOTAL_SITINS DESC
+            LIMIT 5
+        """)
+        
+        print("Fetching results...")
+        results = cursor.fetchall()
+        print(f"Found {len(results)} students")
+        
+        top_students = []
+        for row in results:
+            print(f"Processing student: {row[0]} - {row[1]}")
+            # Get profile picture for each student
+            cursor.execute("SELECT PROFILE_PICTURE FROM USERS WHERE IDNO = %s", (row[0],))
+            profile_result = cursor.fetchone()
+            profile_pic = f"/user/get_profile_picture/{row[0]}"
+            
+            student_data = {
+                'student_id': row[0],
+                'student_name': row[1],
+                'course': row[2],
+                'total_sitins': row[3],
+                'profile_picture_url': profile_pic
+            }
+            print(f"Student data: {student_data}")
+            top_students.append(student_data)
+        
+        print(f"Returning {len(top_students)} students")
+        print("=== Finished get_top_students endpoint ===\n")
+        return jsonify(top_students)
+    except Exception as e:
+        print(f"Error in get_top_students: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
         conn.close() 

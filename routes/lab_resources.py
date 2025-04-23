@@ -99,23 +99,14 @@ def get_courses():
         print("=== Finished get_courses endpoint ===\n")
 
 @lab_resources.route('/api/resources', methods=['POST'])
-@login_required
+@staff_required
 def create_resource():
     print("\n=== Starting create_resource endpoint ===")
-    print("Session data:", dict(session))  # Log all session data
+    print("Session data:", dict(session))
     
     db = None
     cursor = None
     try:
-        # Check if user is staff
-        user_type = session.get('USER_TYPE')  # Changed from ROLE to USER_TYPE
-        print(f"User type from session: {user_type}")
-        
-        if user_type != 'STAFF':
-            print(f"Error: User is not staff. User type: {user_type}")
-            return jsonify({'error': 'Staff access required'}), 403
-
-        print("Staff authentication successful")
         db = get_db_connection()
         if not db:
             print("Error: Could not establish database connection")
@@ -129,11 +120,17 @@ def create_resource():
         resource_type = request.form.get('resource_type')
         courses = request.form.getlist('courses[]')
         
-        print(f"Received data - Title: {title}, Type: {resource_type}, Courses: {courses}")
+        print(f"Received data - Title: {title}, Description: {description}, Type: {resource_type}, Courses: {courses}")
         
-        if not all([title, description, resource_type, courses]):
-            print("Error: Missing required fields")
-            return jsonify({'error': 'Missing required fields'}), 400
+        # Validate required fields
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
+        if not resource_type:
+            return jsonify({'error': 'Resource type is required'}), 400
+        if not courses:
+            return jsonify({'error': 'At least one course must be selected'}), 400
             
         content_url = None
         content_text = None
@@ -157,6 +154,9 @@ def create_resource():
                 file.save(file_path)
                 content_url = filename
                 print(f"File saved as: {filename}")
+            else:
+                print("Error: Invalid file type")
+                return jsonify({'error': 'Invalid file type'}), 400
                 
         elif resource_type == 'LINK':
             print("Processing LINK type resource")
@@ -206,7 +206,7 @@ def create_resource():
         resource_id = cursor.lastrowid
         print(f"Resource created with ID: {resource_id}")
         
-        # Insert course mappings using the actual course names
+        # Insert course mappings
         print("Creating course mappings")
         for course in courses:
             cursor.execute("""
@@ -249,36 +249,41 @@ def get_resources():
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         
-        is_staff = hasattr(request, 'staff_id')
-        print(f"User is staff: {is_staff}")
-        print(f"User course: {request.user_course}")
+        # Check if user is staff/admin
+        is_staff = session.get('USER_TYPE') in ['STAFF', 'ADMIN']
+        print(f"User is staff/admin: {is_staff}")
+        print(f"User type: {session.get('USER_TYPE')}")
         
         if is_staff:
-            print("Fetching all resources for staff")
-            # Staff can see all resources
+            print("Fetching all resources for staff/admin")
+            # Staff/admin can see all resources
             cursor.execute("""
-                SELECT r.*, GROUP_CONCAT(rcm.course_id) as courses
+                SELECT r.*, GROUP_CONCAT(rcm.course_id) as courses,
+                       CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as creator_name
                 FROM lab_resources r
                 LEFT JOIN resource_course_mapping rcm ON r.resource_id = rcm.resource_id
+                LEFT JOIN USERS u ON r.created_by = u.IDNO
                 GROUP BY r.resource_id, r.title, r.description, r.resource_type, 
                          r.content_url, r.content_text, r.created_by, r.created_at, 
-                         r.is_enabled
+                         r.is_enabled, u.FIRSTNAME, u.LASTNAME
                 ORDER BY r.created_at DESC
             """)
         else:
             print("Fetching resources for student")
             # Students can only see enabled resources for their course
             cursor.execute("""
-                SELECT DISTINCT r.*, GROUP_CONCAT(rcm.course_id) as courses
+                SELECT DISTINCT r.*, GROUP_CONCAT(rcm.course_id) as courses,
+                       CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as creator_name
                 FROM lab_resources r
                 JOIN resource_course_mapping rcm ON r.resource_id = rcm.resource_id
+                LEFT JOIN USERS u ON r.created_by = u.IDNO
                 WHERE (r.is_enabled IS NULL OR r.is_enabled = TRUE)
                 AND rcm.course_id = %s
                 GROUP BY r.resource_id, r.title, r.description, r.resource_type, 
                          r.content_url, r.content_text, r.created_by, r.created_at, 
-                         r.is_enabled
+                         r.is_enabled, u.FIRSTNAME, u.LASTNAME
                 ORDER BY r.created_at DESC
-            """, (request.user_course,))
+            """, (session.get('COURSE'),))
             
         resources = cursor.fetchall()
         print(f"Found {len(resources)} resources")
@@ -304,52 +309,122 @@ def get_resources():
         if db:
             db.close()
 
-@lab_resources.route('/api/resources/<int:resource_id>', methods=['PUT'])
+@lab_resources.route('/api/resources/<int:resource_id>', methods=['GET', 'PUT'])
 @staff_required
-def update_resource(resource_id):
+def manage_resource(resource_id):
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         
-        title = request.form.get('title')
-        description = request.form.get('description')
-        is_enabled = request.form.get('is_enabled')
-        courses = request.form.getlist('courses[]')
-        
-        update_query = "UPDATE lab_resources SET "
-        update_params = []
-        
-        if title:
-            update_query += "title = %s, "
-            update_params.append(title)
-        if description:
-            update_query += "description = %s, "
-            update_params.append(description)
-        if is_enabled is not None:
-            update_query += "is_enabled = %s, "
-            update_params.append(is_enabled == 'true')
+        if request.method == 'GET':
+            # Get resource with creator's name
+            cursor.execute("""
+                SELECT r.*, GROUP_CONCAT(rcm.course_id) as courses,
+                       CONCAT(u.FIRSTNAME, ' ', u.LASTNAME) as creator_name
+                FROM lab_resources r
+                LEFT JOIN resource_course_mapping rcm ON r.resource_id = rcm.resource_id
+                LEFT JOIN USERS u ON r.created_by = u.IDNO
+                WHERE r.resource_id = %s
+                GROUP BY r.resource_id, r.title, r.description, r.resource_type, 
+                         r.content_url, r.content_text, r.created_by, r.created_at, 
+                         r.is_enabled, u.FIRSTNAME, u.LASTNAME
+            """, (resource_id,))
             
-        update_query = update_query.rstrip(', ')
-        update_query += " WHERE resource_id = %s"
-        update_params.append(resource_id)
-        
-        cursor.execute(update_query, tuple(update_params))
-        
-        if courses:
+            resource = cursor.fetchone()
+            if not resource:
+                return jsonify({'error': 'Resource not found'}), 404
+                
+            # Format the resource data
+            resource_dict = dict(resource)
+            resource_dict['courses'] = resource_dict.get('courses', '').split(',') if resource_dict.get('courses') else []
+            resource_dict['is_enabled'] = True if resource_dict.get('is_enabled') is None else resource_dict['is_enabled']
+            
+            return jsonify(resource_dict), 200
+            
+        elif request.method == 'PUT':
+            # Get form data
+            title = request.form.get('title')
+            description = request.form.get('description')
+            resource_type = request.form.get('resource_type')
+            courses = request.form.getlist('courses[]')
+            
+            # Validate required fields
+            if not title:
+                return jsonify({'error': 'Title is required'}), 400
+            if not description:
+                return jsonify({'error': 'Description is required'}), 400
+            if not resource_type:
+                return jsonify({'error': 'Resource type is required'}), 400
+            if not courses:
+                return jsonify({'error': 'At least one course must be selected'}), 400
+            
+            # Get current resource data
+            cursor.execute("SELECT * FROM lab_resources WHERE resource_id = %s", (resource_id,))
+            current_resource = cursor.fetchone()
+            if not current_resource:
+                return jsonify({'error': 'Resource not found'}), 404
+            
+            # Update resource
+            update_query = "UPDATE lab_resources SET "
+            update_params = []
+            
+            update_query += "title = %s, description = %s, resource_type = %s"
+            update_params.extend([title, description, resource_type])
+            
+            # Handle content based on resource type
+            if resource_type == 'FILE':
+                if 'file' in request.files:
+                    file = request.files['file']
+                    if file and file.filename:
+                        if allowed_file(file.filename):
+                            filename = secure_filename(file.filename)
+                            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_')
+                            filename = timestamp + filename
+                            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                            file.save(file_path)
+                            update_query += ", content_url = %s, content_text = NULL"
+                            update_params.append(filename)
+                        else:
+                            return jsonify({'error': 'Invalid file type'}), 400
+            elif resource_type == 'LINK':
+                content_url = request.form.get('content_url')
+                if not content_url:
+                    return jsonify({'error': 'URL is required for link type resources'}), 400
+                update_query += ", content_url = %s, content_text = NULL"
+                update_params.append(content_url)
+            elif resource_type == 'TEXT':
+                content_text = request.form.get('content_text')
+                if not content_text:
+                    return jsonify({'error': 'Text content is required for text type resources'}), 400
+                update_query += ", content_text = %s, content_url = NULL"
+                update_params.append(content_text)
+            
+            update_query += " WHERE resource_id = %s"
+            update_params.append(resource_id)
+            
+            cursor.execute(update_query, tuple(update_params))
+            
             # Update course mappings
             cursor.execute("DELETE FROM resource_course_mapping WHERE resource_id = %s", (resource_id,))
-            for course_id in courses:
+            for course in courses:
                 cursor.execute("""
                     INSERT INTO resource_course_mapping (resource_id, course_id)
                     VALUES (%s, %s)
-                """, (resource_id, course_id))
-                
-        db.commit()
-        return jsonify({'message': 'Resource updated successfully'}), 200
-        
+                """, (resource_id, course))
+            
+            db.commit()
+            return jsonify({'message': 'Resource updated successfully'}), 200
+            
     except Exception as e:
-        db.rollback()
+        if db:
+            db.rollback()
+        print(f"Error in manage_resource: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 @lab_resources.route('/api/resources/<int:resource_id>', methods=['DELETE'])
 @staff_required

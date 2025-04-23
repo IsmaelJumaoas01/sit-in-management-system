@@ -62,111 +62,31 @@
     </header>
 
     <div class="main-container">
-      <!-- Left Panel -->
-      <div class="left-panel">
-        <div class="profile-header">
-          <div class="profile-picture-container">
-            <img
-              src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}"
-              alt="Profile Picture"
-              class="large-profile-image"
-            />
-            <button
-              class="change-photo-btn"
-              onclick="document.getElementById('profile-upload').click()"
-            >
-              <i class="fas fa-camera"></i>
-            </button>
-            <input
-              type="file"
-              id="profile-upload"
-              hidden
-              accept="image/*"
-              onchange="previewImage(this)"
-            />
+
+
+      <div
+      id="confirmDialog"
+      class="confirm-dialog"
+      onclick="if(event.target === this) closeConfirmDialog()"
+    >
+      <div class="confirm-content">
+        <h3>Confirm Logout</h3>
+        <p>Are you sure you want to logout?</p>
+        <div class="confirm-buttons">
+          <button
+            onclick="handleLogout()"
+            class="confirm-btn confirm-yes"
+            style="background: #dd0c0c"
+          >
+            Yes, Logout
+              </button>
+          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">
+            Cancel
+              </button>
+            </div>
           </div>
-          <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}!</h1>
-        </div>
-        <div class="info-box">
-          <p><strong>Role:</strong> Staff</p>
-          <p><strong>Email:</strong> {{ staff_email }}</p>
         </div>
 
-        <!-- Add visible Edit and Logout buttons -->
-        <div class="action-buttons">
-          <button class="action-button edit-button" onclick="openModal()">
-            <i class="fas fa-user-edit"></i> Edit Profile
-          </button>
-          <form
-            action="{{ url_for('auth.logout') }}"
-            method="post"
-            onsubmit="return confirmLogout(event)"
-          >
-            <button type="submit" class="action-button logout-button">
-              <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-          </form>
-        </div>
-
-        <div class="button-container">
-          <button
-            class="button ripple"
-            onclick="showSection('manageLabs', this)"
-          >
-            <i class="fas fa-desktop"></i> Manage Labs
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('searchStudents', this)"
-          >
-            <i class="fas fa-search"></i> Search Students
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('announcements', this)"
-          >
-            <i class="fas fa-bullhorn"></i> Manage Announcements
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('activeSitins', this)"
-          >
-            <i class="fas fa-desktop"></i> Active Sit-ins
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('sitInRecords', this)"
-          >
-            <i class="fas fa-history"></i> Sit-in Records
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('statistics', this)"
-          >
-            <i class="fas fa-chart-pie"></i> Statistics
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('feedbacks', this)"
-          >
-            <i class="fas fa-comments"></i> Student Feedbacks
-          </button>
-          <button
-            class="button ripple"
-            onclick="showSection('students', this)"
-          >
-            <i class="fas fa-users"></i> All Students
-          </button>
-          <!-- Add this to the button container section -->
-          <button class="button ripple" onclick="showSection('resources', this)">
-            <i class="fas fa-book"></i> Lab Resources
-          </button>
-        </div>
-      </div>
-
-      <!-- Right Panel -->
-      <div class="right-panel">
-        <!-- Edit Profile Modal -->
         <div id="editModal" class="modal">
           <div class="modal-content animate-modal">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -241,6 +161,126 @@
           </div>
         </div>
 
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+      <i class="fas"></i>
+      <span class="toast-message"></span>
+    </div>
+
+    
+      <!-- Left Panel -->
+      <div class="left-panel">
+        <div class="profile-header">
+          <div class="profile-picture-container">
+            <img
+              src="{{ url_for('user.get_profile_picture', idno=session['IDNO']) }}"
+              alt="Profile Picture"
+              class="large-profile-image"
+            />
+            <button
+              class="change-photo-btn"
+              onclick="document.getElementById('profile-upload').click()"
+            >
+              <i class="fas fa-camera"></i>
+            </button>
+            <input
+              type="file"
+              id="profile-upload"
+              hidden
+              accept="image/*"
+              onchange="previewImage(this)"
+            />
+          </div>
+          <h1>Welcome, {{ staff_firstname }} {{ staff_lastname }}!</h1>
+        </div>
+        <div class="info-box">
+          <p><strong>Role:</strong> Staff</p>
+          <p><strong>Email:</strong> {{ staff_email }}</p>
+        </div>
+
+        <!-- Add visible Edit and Logout buttons -->
+        <div class="action-buttons">
+          <button class="action-button edit-button" onclick="openModal()">
+            <i class="fas fa-user-edit"></i> Edit Profile
+          </button>
+    
+        </div>
+
+        <div class="button-container">
+          <button
+            class="button ripple"
+            onclick="showSection('manageLabs', this)"
+          >
+            <i class="fas fa-desktop"></i> Manage Labs
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('searchStudents', this)"
+          >
+            <i class="fas fa-search"></i> Search Students
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('announcements', this)"
+          >
+            <i class="fas fa-bullhorn"></i> Manage Announcements
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('activeSitins', this)"
+          >
+            <i class="fas fa-desktop"></i> Active Sit-ins
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('sitInRecords', this)"
+          >
+            <i class="fas fa-history"></i> Sit-in Records
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('statistics', this)"
+          >
+            <i class="fas fa-chart-pie"></i> Statistics
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('feedbacks', this)"
+          >
+            <i class="fas fa-comments"></i> Student Feedbacks
+          </button>
+          <button
+            class="button ripple"
+            onclick="showSection('students', this)"
+          >
+            <i class="fas fa-users"></i> All Students
+          </button>
+          <button class="button ripple" onclick="showSection('resources', this)">
+            <i class="fas fa-book"></i> Lab Resources
+          </button>
+          <button class="button ripple" onclick="showSection('labSchedule', this)">
+            <i class="fas fa-clock"></i> Lab Schedule
+          </button>
+          <button class="button ripple" onclick="showSection('rewards', this)">
+            <i class="fas fa-trophy"></i> Rewards & Points
+          </button>
+          <form
+            action="{{ url_for('auth.logout') }}"
+            method="post"
+            onsubmit="return confirmLogout(event)"
+            class="logout-form"
+          >
+            <button type="submit" class="button ripple logout-button">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="right-panel">
+        <!-- Edit Profile Modal -->
+        
         <!-- Manage Labs Section -->
         <div id="manageLabs" class="content-section animate-section">
           <h2><i class="fas fa-desktop"></i> Manage Labs</h2>
@@ -537,6 +577,151 @@
             </div>
         </div>
 
+        <!-- Add this inside the statistics section -->
+        <div class="stat-card">
+          <h3><i class="fas fa-trophy"></i> Top 5 Students</h3>
+          <div id="topStudentsList" class="top-students-list">
+            <!-- Top students will be loaded here -->
+          </div>
+        </div>
+
+        <style>
+          .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          
+          /* Add more spacing between chart and top students */
+          .chart-container {
+            margin-bottom: 50px; /* Increased spacing */
+          }
+          
+          .top-students-container {
+            margin-top: 40px; /* Added top margin */
+            padding-top: 20px; /* Added padding */
+            border-top: 1px solid rgba(255, 255, 255, 0.1); /* Optional: adds a subtle separator */
+          }
+          
+          .top-students-list {
+            margin-top: 20px;
+          }
+          
+          .top-student-item {
+            display: flex;
+            align-items: center;
+            padding: 15px; /* Increased padding */
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 15px; /* Increased spacing between items */
+            transition: transform 0.2s ease;
+          }
+          
+          .top-student-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.1);
+          }
+          
+          .top-student-rank {
+            font-size: 1.4em; /* Increased font size */
+            font-weight: bold;
+            color: #ffd700;
+            margin-right: 20px; /* Increased margin */
+            min-width: 40px; /* Fixed width for ranks */
+            text-align: center;
+          }
+          
+          .top-student-info {
+            flex-grow: 1;
+            margin-right: 20px; /* Added margin */
+          }
+          
+          .top-student-name {
+            font-weight: bold;
+            color: #fff;
+            font-size: 1.1em; /* Increased font size */
+            margin-bottom: 5px; /* Added margin */
+          }
+          
+          .top-student-course {
+            font-size: 0.9em;
+            color: #ccc;
+          }
+          
+          .top-student-sitins {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 1.1em; /* Increased font size */
+            background: rgba(76, 175, 80, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+          }
+        </style>
+
+        <script>
+          // Add this function to load top students
+          function loadTopStudents() {
+            console.log('Loading top students...'); // Debug log
+            fetch('/staff/top_students')
+              .then(response => {
+                console.log('Response status:', response.status); // Debug log
+                return response.json();
+              })
+              .then(students => {
+                console.log('Received students:', students); // Debug log
+                const topStudentsList = document.getElementById('topStudentsList');
+                if (!topStudentsList) {
+                  console.error('topStudentsList element not found!'); // Debug log
+                  return;
+                }
+                
+                topStudentsList.innerHTML = '';
+                
+                if (students.length === 0) {
+                  topStudentsList.innerHTML = '<div class="no-data">No student data available</div>';
+                  return;
+                }
+                
+                students.forEach((student, index) => {
+                  console.log('Processing student:', student); // Debug log
+                  const studentElement = document.createElement('div');
+                  studentElement.className = 'top-student-item';
+                  studentElement.innerHTML = `
+                    <div class="top-student-rank">#${index + 1}</div>
+                    <div class="top-student-info">
+                      <div class="top-student-name">${student.student_name}</div>
+                      <div class="top-student-course">${student.course}</div>
+                    </div>
+                    <div class="top-student-sitins">
+                      ${student.total_sitins} sit-ins
+                    </div>
+                  `;
+                  topStudentsList.appendChild(studentElement);
+                });
+              })
+              .catch(error => {
+                console.error('Error loading top students:', error);
+                showToast('Error loading top students', 'error');
+              });
+          }
+
+          // Update the loadStatistics function
+          function loadStatistics() {
+            console.log('Loading statistics...'); // Debug log
+            // ... existing statistics loading code ...
+            
+            // Load top students
+            loadTopStudents();
+          }
+
+          // Make sure loadStatistics is called when the page loads
+          document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing statistics...'); // Debug log
+            loadStatistics();
+          });
+        </script>
 
         
         <!-- All Students Section -->
@@ -676,7 +861,115 @@
             color: #45a049;
         }
         </style>
+        
+        <!-- Lab Schedule Section -->
+        <div id="labSchedule" class="content-section">
+          <h2><i class="fas fa-clock"></i> Lab Schedule</h2>
+          <div class="schedule-container">
+            <div class="schedule-actions">
+              <button class="action-button" onclick="showAddScheduleModal()">
+                <i class="fas fa-plus"></i> Add Schedule
+              </button>
+            </div>
+            <div class="schedule-grid" id="scheduleList">
+              <!-- Schedule items will be populated here -->
+            </div>
+          </div>
+        </div>
 
+        <!-- Rewards Section -->
+        <div id="rewards" class="content-section">
+          <h2><i class="fas fa-trophy"></i> Rewards & Points</h2>
+          <div class="rewards-container">
+            <div class="rewards-actions">
+              <button class="action-button" onclick="showAddRewardModal()">
+                <i class="fas fa-plus"></i> Add Reward
+              </button>
+            </div>
+            <div class="top-participants">
+              <h3>Top 5 Participants</h3>
+              <div class="participants-list" id="topParticipantsList">
+                <!-- Top participants will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Schedule Modal -->
+        <div id="addScheduleModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeAddScheduleModal()">&times;</span>
+            <h2>Add Lab Schedule</h2>
+            <form id="addScheduleForm">
+              <div class="form-group">
+                <label for="labSelect">Laboratory:</label>
+                <select id="labSelect" required>
+                  <!-- Labs will be populated here -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="daySelect">Day:</label>
+                <select id="daySelect" required>
+                  <option value="Monday">Monday</option>
+                  <option value="Tuesday">Tuesday</option>
+                  <option value="Wednesday">Wednesday</option>
+                  <option value="Thursday">Thursday</option>
+                  <option value="Friday">Friday</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="startTime">Start Time:</label>
+                <input type="time" id="startTime" required>
+              </div>
+              <div class="form-group">
+                <label for="endTime">End Time:</label>
+                <input type="time" id="endTime" required>
+              </div>
+              <div class="form-group">
+                <label for="subject">Subject:</label>
+                <input type="text" id="subject" required>
+              </div>
+              <div class="form-group">
+                <label for="instructor">Instructor:</label>
+                <input type="text" id="instructor" required>
+              </div>
+              <button type="submit" class="action-button">Add Schedule</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Add Reward Modal -->
+        <div id="addRewardModal" class="modal">
+          <div class="modal-content">
+            <span class="close" onclick="closeAddRewardModal()">&times;</span>
+            <h2>Add Reward</h2>
+            <form id="addRewardForm">
+              <div class="form-group">
+                <label for="studentSelect">Student:</label>
+                <select id="studentSelect" required>
+                  <!-- Students will be populated here -->
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rewardType">Reward Type:</label>
+                <select id="rewardType" required>
+                  <option value="ATTENDANCE">Attendance</option>
+                  <option value="PARTICIPATION">Participation</option>
+                  <option value="ACHIEVEMENT">Achievement</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="points">Points:</label>
+                <input type="number" id="points" min="1" required>
+              </div>
+              <div class="form-group">
+                <label for="description">Description:</label>
+                <textarea id="description" required></textarea>
+              </div>
+              <button type="submit" class="action-button">Add Reward</button>
+            </form>
+          </div>
+        </div>
         <!-- Add this new section -->
         <div id="resources" class="content-section">
           <div class="header-with-button">
@@ -693,67 +986,8 @@
           </div>
         </div>
 
-        <!-- Add Resource Modal -->
-        <div id="addResourceModal" class="modal">
-          <div class="modal-content">
-            <span class="close" onclick="closeAddResourceModal()">&times;</span>
-            <h2><i class="fas fa-plus"></i> Add New Resource</h2>
-            
-            <form id="resourceForm" onsubmit="submitResource(event)">
-              <div class="form-group">
-                <label for="title">Title</label>
-                <input type="text" id="title" name="title" required>
-              </div>
-              
-              <div class="form-group">
-                <label for="description">Description</label>
-                <textarea id="description" name="description" required></textarea>
-              </div>
-              
-              <div class="form-group">
-                <label for="resourceType">Resource Type</label>
-                <select id="resourceType" name="resource_type" onchange="toggleResourceInputs()" required>
-                  <option value="">Select Type</option>
-                  <option value="FILE">File Upload</option>
-                  <option value="LINK">External Link</option>
-                  <option value="TEXT">Plain Text</option>
-                </select>
-              </div>
-              
-              <div id="fileInput" class="form-group" style="display: none;">
-                <label for="file">Upload File</label>
-                <input type="file" id="file" name="file">
-                <small>Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR</small>
-              </div>
-              
-              <div id="linkInput" class="form-group" style="display: none;">
-                <label for="contentUrl">External Link</label>
-                <input type="url" id="contentUrl" name="content_url">
-              </div>
-              
-              <div id="textInput" class="form-group" style="display: none;">
-                <label for="contentText">Content</label>
-                <textarea id="contentText" name="content_text"></textarea>
-              </div>
-              
-              <div class="form-group">
-                <label for="courses">Target Courses</label>
-                <select id="courses" name="courses[]" multiple required>
-                  <!-- Courses will be populated dynamically -->
-                </select>
-                <small>Hold Ctrl/Cmd to select multiple courses</small>
-              </div>
-              
-              <div class="form-actions">
-                <button type="submit" class="submit-btn">
-                  <i class="fas fa-save"></i> Save Resource
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-        </div>
+      
+        
 
         <div id="sitInHistory" class="content-section animate-section" style="display: none">
           <h2><i class="fas fa-history"></i> Sit-in History</h2>
@@ -892,34 +1126,7 @@
         </div>
 
     <!-- Custom Confirmation Dialog -->
-    <div
-      id="confirmDialog"
-      class="confirm-dialog"
-      onclick="if(event.target === this) closeConfirmDialog()"
-    >
-      <div class="confirm-content">
-        <h3>Confirm Logout</h3>
-        <p>Are you sure you want to logout?</p>
-        <div class="confirm-buttons">
-          <button
-            onclick="handleLogout()"
-            class="confirm-btn confirm-yes"
-            style="background: #dd0c0c"
-          >
-            Yes, Logout
-              </button>
-          <button onclick="closeConfirmDialog()" class="confirm-btn confirm-no">
-            Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-      <i class="fas"></i>
-      <span class="toast-message"></span>
-    </div>
+  
 
     <!-- End Session Modal -->
     <div
@@ -983,6 +1190,127 @@
           <button type="submit" class="submit-btn">
             <i class="fas fa-sign-in-alt"></i> Start Session
           </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add Resource Modal -->
+    <div id="addResourceModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeAddResourceModal()">&times;</span>
+        <h2><i class="fas fa-plus"></i> Add New Resource</h2>
+        
+        <form id="addResourceForm" onsubmit="submitResource(event)">
+          <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="resourceType">Resource Type</label>
+            <select id="resourceType" name="resource_type" onchange="toggleResourceInputs()" required>
+              <option value="">Select Type</option>
+              <option value="FILE">File Upload</option>
+              <option value="LINK">External Link</option>
+              <option value="TEXT">Plain Text</option>
+            </select>
+          </div>
+          
+          <div id="fileInput" class="form-group" style="display: none;">
+            <label for="file">Upload File</label>
+            <input type="file" id="file" name="file">
+            <small>Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR</small>
+          </div>
+          
+          <div id="linkInput" class="form-group" style="display: none;">
+            <label for="contentUrl">External Link</label>
+            <input type="url" id="contentUrl" name="content_url">
+          </div>
+          
+          <div id="textInput" class="form-group" style="display: none;">
+            <label for="contentText">Content</label>
+            <textarea id="contentText" name="content_text"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="courses">Target Courses</label>
+            <select id="courses" name="courses[]" multiple required>
+              <!-- Courses will be populated dynamically -->
+            </select>
+            <small>Hold Ctrl/Cmd to select multiple courses</small>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">
+              <i class="fas fa-save"></i> Save Resource
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Edit Resource Modal -->
+    <div id="editResourceModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeEditResourceModal()">&times;</span>
+        <h2><i class="fas fa-edit"></i> Edit Resource</h2>
+        
+        <form id="editResourceForm" onsubmit="updateResource(event)">
+          <input type="hidden" id="editResourceId">
+          <div class="form-group">
+            <label for="editTitle">Title</label>
+            <input type="text" id="editTitle" name="title" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="editDescription">Description</label>
+            <textarea id="editDescription" name="description" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="editResourceType">Resource Type</label>
+            <select id="editResourceType" name="resource_type" onchange="toggleEditResourceInputs()" required>
+              <option value="">Select Type</option>
+              <option value="FILE">File Upload</option>
+              <option value="LINK">External Link</option>
+              <option value="TEXT">Plain Text</option>
+            </select>
+          </div>
+          
+          <div id="editFileInput" class="form-group" style="display: none;">
+            <label for="editFile">Upload File</label>
+            <input type="file" id="editFile" name="file">
+            <small>Allowed formats: PDF, DOC, DOCX, PPT, PPTX, TXT, ZIP, RAR</small>
+          </div>
+          
+          <div id="editLinkInput" class="form-group" style="display: none;">
+            <label for="editContentUrl">External Link</label>
+            <input type="url" id="editContentUrl" name="content_url">
+          </div>
+          
+          <div id="editTextInput" class="form-group" style="display: none;">
+            <label for="editContentText">Content</label>
+            <textarea id="editContentText" name="content_text"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="editCourses">Target Courses</label>
+            <select id="editCourses" name="courses[]" multiple required>
+              <!-- Courses will be populated dynamically -->
+            </select>
+            <small>Hold Ctrl/Cmd to select multiple courses</small>
+          </div>
+          
+          <div class="form-actions">
+            <button type="submit" class="submit-btn">
+              <i class="fas fa-save"></i> Update Resource
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -5030,8 +5358,8 @@
             
             if (resources.length === 0) {
               container.innerHTML = `
-                <div class="no-resources">
-                  <i class="fas fa-info-circle"></i>
+                <div class="no-data">
+                  <i class="fas fa-book"></i>
                   <p>No resources available</p>
                 </div>
               `;
@@ -5042,42 +5370,23 @@
               const card = document.createElement('div');
               card.className = 'resource-card';
               card.innerHTML = `
-                <div class="resource-header">
-                  <h3>${resource.title}</h3>
-                  <div class="resource-status ${resource.is_enabled ? 'enabled' : 'disabled'}">
-                    ${resource.is_enabled ? 'Enabled' : 'Disabled'}
-                  </div>
-                </div>
-                <div class="resource-body">
+                <div class="resource-info">
+                  <h4>${resource.title}</h4>
                   <p>${resource.description}</p>
-                  <div class="resource-meta">
-                    <span><i class="fas fa-layer-group"></i> Type: ${resource.resource_type}</span>
-                    <span><i class="fas fa-graduation-cap"></i> Courses: ${resource.courses || 'All Courses'}</span>
-                  </div>
+                  <p><strong>Type:</strong> ${resource.resource_type}</p>
+                  <p><strong>Courses:</strong> ${resource.courses.join(', ')}</p>
+                  <p><strong>Created by:</strong> ${resource.creator_name || 'Unknown'}</p>
+                  <p><strong>Date:</strong> ${new Date(resource.created_at).toLocaleString()}</p>
                 </div>
                 <div class="resource-actions">
-                  ${resource.resource_type === 'FILE' ? `
-                    <button onclick="downloadResource(${resource.resource_id})" class="action-btn download">
+                  ${resource.resource_type === 'FILE' ? 
+                    `<button onclick="downloadResource(${resource.resource_id})" class="action-button primary">
                       <i class="fas fa-download"></i> Download
-                    </button>
-                  ` : resource.resource_type === 'LINK' ? `
-                    <a href="${resource.content_url}" target="_blank" class="action-btn link">
-                      <i class="fas fa-external-link-alt"></i> Open Link
-                    </a>
-                  ` : `
-                    <button onclick="viewContent(${resource.resource_id})" class="action-btn view">
-                      <i class="fas fa-eye"></i> View Content
-                    </button>
-                  `}
-                  <button onclick="editResource(${resource.resource_id})" class="action-btn edit">
+                    </button>` : ''}
+                  <button onclick="editResource(${resource.resource_id})" class="action-button edit">
                     <i class="fas fa-edit"></i> Edit
                   </button>
-                  <button onclick="toggleResource(${resource.resource_id}, ${!resource.is_enabled})" 
-                          class="action-btn toggle">
-                    <i class="fas ${resource.is_enabled ? 'fa-eye-slash' : 'fa-eye'}"></i>
-                    ${resource.is_enabled ? 'Disable' : 'Enable'}
-                  </button>
-                  <button onclick="deleteResource(${resource.resource_id})" class="action-btn delete">
+                  <button onclick="deleteResource(${resource.resource_id})" class="action-button danger">
                     <i class="fas fa-trash"></i> Delete
                   </button>
                 </div>
@@ -5093,245 +5402,229 @@
 
       function openAddResourceModal() {
         document.getElementById('addResourceModal').style.display = 'block';
-        loadCourses();
+        loadCoursesForSelect();
+        // Reset and hide all resource type inputs
+        document.getElementById('fileInput').style.display = 'none';
+        document.getElementById('linkInput').style.display = 'none';
+        document.getElementById('textInput').style.display = 'none';
       }
 
       function closeAddResourceModal() {
         document.getElementById('addResourceModal').style.display = 'none';
-        document.getElementById('resourceForm').reset();
-        currentResourceId = null;
+        document.getElementById('addResourceForm').reset();
+        // Reset and hide all resource type inputs
+        document.getElementById('fileInput').style.display = 'none';
+        document.getElementById('linkInput').style.display = 'none';
+        document.getElementById('textInput').style.display = 'none';
       }
 
-      function toggleResourceInputs() {
-        const type = document.getElementById('resourceType').value;
-        document.getElementById('fileInput').style.display = type === 'FILE' ? 'block' : 'none';
-        document.getElementById('linkInput').style.display = type === 'LINK' ? 'block' : 'none';
-        document.getElementById('textInput').style.display = type === 'TEXT' ? 'block' : 'none';
-      }
-
-      async function loadCourses() {
-        console.log('Starting to load courses...');
-        try {
-            const response = await fetch('/api/courses');
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
+      function loadCoursesForSelect() {
+        fetch('/api/courses')
+          .then(response => response.json())
+          .then(courses => {
+            const addSelect = document.getElementById('courses');
+            const editSelect = document.getElementById('editCourses');
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const contentType = response.headers.get("content-type");
-            console.log('Content type:', contentType);
-            
-            const courses = await response.json();
-            console.log('Received courses:', courses);
-
-            const courseSelect = document.getElementById('courses');
-            if (!courseSelect) {
-                console.error('Course select element not found! Looking for element with id "courses"');
-                return;
-            }
-
-            // Clear existing options
-            courseSelect.innerHTML = '';
-            
-            if (!Array.isArray(courses)) {
-                console.error('Courses is not an array:', courses);
-                return;
-            }
-
-            // Add course options
-            courses.forEach(course => {
-                console.log('Adding course:', course);
+            if (addSelect) {
+              addSelect.innerHTML = '';
+              courses.forEach(course => {
                 const option = document.createElement('option');
                 option.value = course;
                 option.textContent = course;
-                courseSelect.appendChild(option);
-            });
-            
-            console.log('Finished loading courses');
-        } catch (error) {
-            console.error('Error loading courses:', error);
-            // Display error to user
-            const errorDiv = document.getElementById('error-message') || document.createElement('div');
-            errorDiv.id = 'error-message';
-            errorDiv.style.color = 'red';
-            errorDiv.textContent = 'Failed to load courses. Please try again later.';
-            const courseSelect = document.getElementById('courses');
-            if (courseSelect) {
-                courseSelect.parentNode.insertBefore(errorDiv, courseSelect);
-            }
-        }
-    }
-
-      function submitResource(event) {
-        event.preventDefault();
-        console.log('Starting resource submission...');
-        
-        const form = event.target;
-        const formData = new FormData(form);
-        
-        // Log form data for debugging
-        for (let [key, value] of formData.entries()) {
-            console.log(`Form data - ${key}:`, value);
-        }
-        
-        // Get selected courses
-        const coursesSelect = document.getElementById('courses');
-        const selectedCourses = Array.from(coursesSelect.selectedOptions).map(option => option.value);
-        console.log('Selected courses:', selectedCourses);
-        
-        if (selectedCourses.length === 0) {
-            showToast('Please select at least one course', 'error');
-            return;
-        }
-        
-        // Remove existing courses array and add selected courses
-        formData.delete('courses[]');
-        selectedCourses.forEach(course => {
-            formData.append('courses[]', course);
-        });
-        
-        // Validate required fields
-        const title = formData.get('title');
-        const description = formData.get('description');
-        const resourceType = formData.get('resource_type');
-        
-        if (!title || !description || !resourceType) {
-            showToast('Please fill in all required fields', 'error');
-            return;
-        }
-        
-        // Validate resource type specific fields
-        if (resourceType === 'FILE' && !formData.get('file')) {
-            showToast('Please select a file to upload', 'error');
-            return;
-        } else if (resourceType === 'LINK' && !formData.get('content_url')) {
-            showToast('Please enter a valid URL', 'error');
-            return;
-        } else if (resourceType === 'TEXT' && !formData.get('content_text')) {
-            showToast('Please enter the content text', 'error');
-            return;
-        }
-        
-        const url = currentResourceId ? 
-            `/api/resources/${currentResourceId}` : 
-            '/api/resources';
-        
-        console.log('Submitting to URL:', url);
-        
-        fetch(url, {
-            method: currentResourceId ? 'PUT' : 'POST',
-            body: formData
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Failed to save resource');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success response:', data);
-            showToast('Resource saved successfully', 'success');
-            closeAddResourceModal();
-            loadResources();
-        })
-        .catch(error => {
-            console.error('Error saving resource:', error);
-            showToast(error.message || 'Error saving resource', 'error');
-        });
-    }
-
-      function editResource(resourceId) {
-        currentResourceId = resourceId;
-        fetch(`/api/resources/${resourceId}`)
-          .then(response => response.json())
-          .then(resource => {
-            document.getElementById('title').value = resource.title;
-            document.getElementById('description').value = resource.description;
-            document.getElementById('resourceType').value = resource.resource_type;
-            toggleResourceInputs();
-            
-            if (resource.resource_type === 'LINK') {
-              document.getElementById('contentUrl').value = resource.content_url;
-            } else if (resource.resource_type === 'TEXT') {
-              document.getElementById('contentText').value = resource.content_text;
+                addSelect.appendChild(option);
+              });
             }
             
-            const coursesSelect = document.getElementById('courses');
-            const courses = resource.courses.split(',');
-            Array.from(coursesSelect.options).forEach(option => {
-              option.selected = courses.includes(option.value);
-            });
-            
-            openAddResourceModal();
+            if (editSelect) {
+              editSelect.innerHTML = '';
+              courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                editSelect.appendChild(option);
+              });
+            }
           })
           .catch(error => {
-            console.error('Error loading resource:', error);
-            showToast('Error loading resource', 'error');
+            console.error('Error loading courses:', error);
+            showToast('Error loading courses', 'error');
           });
       }
 
-      function toggleResource(resourceId, enable) {
-        fetch(`/api/resources/${resourceId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ is_enabled: enable })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            throw new Error(data.error);
+      // Handle resource form submission
+      document.getElementById('addResourceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData();
+        formData.append('title', document.getElementById('resourceTitle').value);
+        formData.append('description', document.getElementById('resourceDescription').value);
+        formData.append('resource_type', document.getElementById('resourceType').value);
+        
+        const courses = Array.from(document.getElementById('courseSelect').selectedOptions)
+          .map(option => option.value);
+        courses.forEach(course => formData.append('courses[]', course));
+        
+        const resourceType = document.getElementById('resourceType').value;
+        if (resourceType === 'FILE') {
+          const fileInput = document.getElementById('resourceFile');
+          if (fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
           }
-          showToast(`Resource ${enable ? 'enabled' : 'disabled'} successfully`, 'success');
-          loadResources();
-        })
-        .catch(error => {
-          console.error('Error toggling resource:', error);
-          showToast(error.message || 'Error toggling resource', 'error');
-        });
-      }
-
-      function deleteResource(resourceId) {
-        if (!confirm('Are you sure you want to delete this resource?')) {
-          return;
+        } else if (resourceType === 'LINK') {
+          formData.append('content_url', document.getElementById('resourceUrl').value);
+        } else if (resourceType === 'TEXT') {
+          formData.append('content_text', document.getElementById('resourceText').value);
         }
         
-        fetch(`/api/resources/${resourceId}`, {
-          method: 'DELETE'
+        fetch('/api/resources', {
+          method: 'POST',
+          body: formData
         })
         .then(response => response.json())
-        .then(data => {
-          if (data.error) {
-            throw new Error(data.error);
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Resource added successfully', 'success');
+            closeAddResourceModal();
+            loadResources();
           }
-          showToast('Resource deleted successfully', 'success');
-          loadResources();
         })
         .catch(error => {
-          console.error('Error deleting resource:', error);
-          showToast(error.message || 'Error deleting resource', 'error');
+          console.error('Error adding resource:', error);
+          showToast('Error adding resource', 'error');
         });
-      }
+      });
 
+      // Handle resource type change
+      document.getElementById('resourceType').addEventListener('change', function(e) {
+        const type = e.target.value;
+        document.getElementById('fileInput').style.display = type === 'FILE' ? 'block' : 'none';
+        document.getElementById('urlInput').style.display = type === 'LINK' ? 'block' : 'none';
+        document.getElementById('textInput').style.display = type === 'TEXT' ? 'block' : 'none';
+      });
+
+      // Download resource
       function downloadResource(resourceId) {
         window.location.href = `/api/resources/download/${resourceId}`;
       }
 
-      // Load resources when the section is shown
-      document.addEventListener('DOMContentLoaded', function() {
-        const resourcesButton = document.querySelector('button[onclick="showSection(\'resources\', this)"]');
-        if (resourcesButton) {
-          resourcesButton.addEventListener('click', loadResources);
+      // Edit resource
+      function editResource(resourceId) {
+        // Load courses first
+        loadCoursesForSelect();
+        
+        fetch(`/api/resources/${resourceId}`)
+          .then(response => response.json())
+          .then(resource => {
+            // Set form values
+            document.getElementById('editResourceId').value = resourceId;
+            document.getElementById('editTitle').value = resource.title;
+            document.getElementById('editDescription').value = resource.description;
+            document.getElementById('editResourceType').value = resource.resource_type;
+            
+            // Set content based on resource type
+            if (resource.resource_type === 'LINK') {
+              document.getElementById('editContentUrl').value = resource.content_url;
+            } else if (resource.resource_type === 'TEXT') {
+              document.getElementById('editContentText').value = resource.content_text;
+            }
+            
+            // Show appropriate input fields
+            toggleEditResourceInputs();
+            
+            // Set selected courses after a short delay to ensure courses are loaded
+            setTimeout(() => {
+              const courseSelect = document.getElementById('editCourses');
+              if (courseSelect && resource.courses) {
+                Array.from(courseSelect.options).forEach(option => {
+                  option.selected = resource.courses.includes(option.value);
+                });
+              }
+            }, 500);
+            
+            // Show the modal
+            document.getElementById('editResourceModal').style.display = 'block';
+          })
+          .catch(error => {
+            console.error('Error loading resource:', error);
+            showToast('Error loading resource details', 'error');
+          });
+      }
+
+      // Update resource
+      function updateResource(resourceId) {
+        const formData = new FormData();
+        formData.append('title', document.getElementById('resourceTitle').value);
+        formData.append('description', document.getElementById('resourceDescription').value);
+        formData.append('resource_type', document.getElementById('resourceType').value);
+        
+        const courses = Array.from(document.getElementById('courseSelect').selectedOptions)
+          .map(option => option.value);
+        courses.forEach(course => formData.append('courses[]', course));
+        
+        const resourceType = document.getElementById('resourceType').value;
+        if (resourceType === 'FILE') {
+          const fileInput = document.getElementById('resourceFile');
+          if (fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+          }
+        } else if (resourceType === 'LINK') {
+          formData.append('content_url', document.getElementById('resourceUrl').value);
+        } else if (resourceType === 'TEXT') {
+          formData.append('content_text', document.getElementById('resourceText').value);
         }
-      });
+        
+        fetch(`/api/resources/${resourceId}`, {
+          method: 'PUT',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Resource updated successfully', 'success');
+            closeAddResourceModal();
+            loadResources();
+            // Reset form submission to add
+            document.getElementById('addResourceForm').onsubmit = function(e) {
+              e.preventDefault();
+              addResource();
+            };
+          }
+        })
+        .catch(error => {
+          console.error('Error updating resource:', error);
+          showToast('Error updating resource', 'error');
+        });
+      }
+
+      // Delete resource
+      function deleteResource(resourceId) {
+        if (confirm('Are you sure you want to delete this resource?')) {
+          fetch(`/api/resources/${resourceId}`, {
+            method: 'DELETE'
+          })
+          .then(response => response.json())
+          .then(result => {
+            if (result.error) {
+              showToast(result.error, 'error');
+            } else {
+              showToast('Resource deleted successfully', 'success');
+              loadResources();
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting resource:', error);
+            showToast('Error deleting resource', 'error');
+          });
+        }
+      }
+
+      // Load resources when section is shown
+      document.querySelector('button[onclick="showSection(\'resources\', this)"]')
+        .addEventListener('click', loadResources);
 
       // Add these new functions for purpose management
       function openEditPurposeModal(purposeId, purposeName) {
@@ -5733,6 +6026,979 @@
           console.error('Error:', error);
           showToast('An error occurred while resetting sessions', 'error');
         });
+      }
+
+      // Load lab schedule
+      function loadLabSchedule() {
+        fetch('/api/schedule')
+          .then(response => response.json())
+          .then(schedule => {
+            const container = document.getElementById('scheduleList');
+            container.innerHTML = '';
+            
+            if (schedule.length === 0) {
+              container.innerHTML = `
+                <div class="no-data">
+                  <i class="fas fa-calendar-times"></i>
+                  <p>No schedule available</p>
+                </div>
+              `;
+              return;
+            }
+            
+            schedule.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'schedule-item';
+              card.innerHTML = `
+                <div class="schedule-info">
+                  <h4>${item.lab_name}</h4>
+                  <p><strong>Day:</strong> ${item.day}</p>
+                  <p><strong>Time:</strong> ${item.start_time} - ${item.end_time}</p>
+                  <p><strong>Subject:</strong> ${item.subject}</p>
+                  <p><strong>Instructor:</strong> ${item.instructor}</p>
+                </div>
+                <div class="schedule-actions">
+                  <button onclick="editSchedule(${item.schedule_id})" class="action-button">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button onclick="deleteSchedule(${item.schedule_id})" class="action-button danger">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading schedule:', error);
+            showToast('Error loading schedule', 'error');
+          });
+      }
+
+      // Load top participants
+      function loadTopParticipants() {
+        fetch('/api/rewards/top_participants')
+          .then(response => response.json())
+          .then(participants => {
+            const container = document.getElementById('topParticipantsList');
+            container.innerHTML = '';
+            
+            if (participants.length === 0) {
+              container.innerHTML = `
+                <div class="no-data">
+                  <i class="fas fa-trophy"></i>
+                  <p>No participants yet</p>
+                </div>
+              `;
+              return;
+            }
+            
+            participants.forEach((participant, index) => {
+              const card = document.createElement('div');
+              card.className = 'participant-card';
+              card.innerHTML = `
+                <div class="rank">${index + 1}</div>
+                <div class="participant-info">
+                  <h4>${participant.name}</h4>
+                  <p><strong>Course:</strong> ${participant.course}</p>
+                  <p><strong>Points:</strong> ${participant.total_points}</p>
+                  <p><strong>Rewards:</strong> ${participant.total_rewards}</p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading top participants:', error);
+            showToast('Error loading top participants', 'error');
+          });
+      }
+
+      // Add schedule
+      document.getElementById('addScheduleForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          lab_id: document.getElementById('labSelect').value,
+          day: document.getElementById('daySelect').value,
+          start_time: document.getElementById('startTime').value,
+          end_time: document.getElementById('endTime').value,
+          subject: document.getElementById('subject').value,
+          instructor: document.getElementById('instructor').value
+        };
+        
+        fetch('/api/schedule', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Schedule added successfully', 'success');
+            closeAddScheduleModal();
+            loadLabSchedule();
+          }
+        })
+        .catch(error => {
+          console.error('Error adding schedule:', error);
+          showToast('Error adding schedule', 'error');
+        });
+      });
+
+      // Add reward
+      document.getElementById('addRewardForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const data = {
+          student_id: document.getElementById('studentSelect').value,
+          reward_type: document.getElementById('rewardType').value,
+          points: document.getElementById('points').value,
+          description: document.getElementById('description').value
+        };
+        
+        fetch('/api/rewards/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Reward added successfully', 'success');
+            closeAddRewardModal();
+            loadTopParticipants();
+          }
+        })
+        .catch(error => {
+          console.error('Error adding reward:', error);
+          showToast('Error adding reward', 'error');
+        });
+      });
+
+      // Load data when sections are shown
+      document.querySelector('button[onclick="showSection(\'labSchedule\', this)"]')
+        .addEventListener('click', loadLabSchedule);
+      document.querySelector('button[onclick="showSection(\'rewards\', this)"]')
+        .addEventListener('click', loadTopParticipants);
+
+      // Modal handling functions
+      function showAddScheduleModal() {
+        document.getElementById('addScheduleModal').style.display = 'block';
+        loadLabsForSelect();
+      }
+
+      function closeAddScheduleModal() {
+        document.getElementById('addScheduleModal').style.display = 'none';
+        document.getElementById('addScheduleForm').reset();
+      }
+
+      function showAddRewardModal() {
+        document.getElementById('addRewardModal').style.display = 'block';
+        loadStudentsForSelect();
+      }
+
+      function closeAddRewardModal() {
+        document.getElementById('addRewardModal').style.display = 'none';
+        document.getElementById('addRewardForm').reset();
+      }
+
+      // Load labs for schedule form
+      function loadLabsForSelect() {
+        fetch('/api/laboratories')
+          .then(response => response.json())
+          .then(labs => {
+            const select = document.getElementById('labSelect');
+            select.innerHTML = '';
+            labs.forEach(lab => {
+              const option = document.createElement('option');
+              option.value = lab.LAB_ID;
+              option.textContent = lab.LAB_NAME;
+              select.appendChild(option);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading labs:', error);
+            showToast('Error loading laboratories', 'error');
+          });
+      }
+
+      // Load students for reward form
+      function loadStudentsForSelect() {
+        fetch('/api/all_students')
+          .then(response => response.json())
+          .then(students => {
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = '';
+            students.forEach(student => {
+              const option = document.createElement('option');
+              option.value = student.IDNO;
+              option.textContent = `${student.FIRSTNAME} ${student.LASTNAME} (${student.COURSE})`;
+              select.appendChild(option);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading students:', error);
+            showToast('Error loading students', 'error');
+          });
+      }
+
+      // Edit schedule
+      function editSchedule(scheduleId) {
+        fetch(`/api/schedule/${scheduleId}`)
+          .then(response => response.json())
+          .then(schedule => {
+            document.getElementById('labSelect').value = schedule.lab_id;
+            document.getElementById('daySelect').value = schedule.day;
+            document.getElementById('startTime').value = schedule.start_time;
+            document.getElementById('endTime').value = schedule.end_time;
+            document.getElementById('subject').value = schedule.subject;
+            document.getElementById('instructor').value = schedule.instructor;
+            
+            showAddScheduleModal();
+            // Change form submission to update instead of add
+            document.getElementById('addScheduleForm').onsubmit = function(e) {
+              e.preventDefault();
+              updateSchedule(scheduleId);
+            };
+          })
+          .catch(error => {
+            console.error('Error loading schedule:', error);
+            showToast('Error loading schedule details', 'error');
+          });
+      }
+
+      // Update schedule
+      function updateSchedule(scheduleId) {
+        const data = {
+          lab_id: document.getElementById('labSelect').value,
+          day: document.getElementById('daySelect').value,
+          start_time: document.getElementById('startTime').value,
+          end_time: document.getElementById('endTime').value,
+          subject: document.getElementById('subject').value,
+          instructor: document.getElementById('instructor').value
+        };
+        
+        fetch(`/api/schedule/${scheduleId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Schedule updated successfully', 'success');
+            closeAddScheduleModal();
+            loadLabSchedule();
+            // Reset form submission to add
+            document.getElementById('addScheduleForm').onsubmit = function(e) {
+              e.preventDefault();
+              addSchedule();
+            };
+          }
+        })
+        .catch(error => {
+          console.error('Error updating schedule:', error);
+          showToast('Error updating schedule', 'error');
+        });
+      }
+
+      // Delete schedule
+      function deleteSchedule(scheduleId) {
+        if (confirm('Are you sure you want to delete this schedule?')) {
+          fetch(`/api/schedule/${scheduleId}`, {
+            method: 'DELETE'
+          })
+          .then(response => response.json())
+          .then(result => {
+            if (result.error) {
+              showToast(result.error, 'error');
+            } else {
+              showToast('Schedule deleted successfully', 'success');
+              loadLabSchedule();
+            }
+          })
+          .catch(error => {
+            console.error('Error deleting schedule:', error);
+            showToast('Error deleting schedule', 'error');
+          });
+        }
+      }
+
+      // Add schedule
+      function addSchedule() {
+        const data = {
+          lab_id: document.getElementById('labSelect').value,
+          day: document.getElementById('daySelect').value,
+          start_time: document.getElementById('startTime').value,
+          end_time: document.getElementById('endTime').value,
+          subject: document.getElementById('subject').value,
+          instructor: document.getElementById('instructor').value
+        };
+        
+        fetch('/api/schedule', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Schedule added successfully', 'success');
+            closeAddScheduleModal();
+            loadLabSchedule();
+          }
+        })
+        .catch(error => {
+          console.error('Error adding schedule:', error);
+          showToast('Error adding schedule', 'error');
+        });
+      }
+
+      // Initialize form submissions
+      document.getElementById('addScheduleForm').onsubmit = function(e) {
+        e.preventDefault();
+        addSchedule();
+      };
+
+      // Close modals when clicking outside
+      window.onclick = function(event) {
+        if (event.target.className === 'modal') {
+          event.target.style.display = 'none';
+        }
+      };
+
+      function editResource(resourceId) {
+        fetch(`/api/resources/${resourceId}`)
+          .then(response => response.json())
+          .then(resource => {
+            // Set form values
+            document.getElementById('editResourceId').value = resourceId;
+            document.getElementById('editTitle').value = resource.title;
+            document.getElementById('editDescription').value = resource.description;
+            document.getElementById('editResourceType').value = resource.resource_type;
+            
+            // Set content based on resource type
+            if (resource.resource_type === 'LINK') {
+              document.getElementById('editContentUrl').value = resource.content_url;
+            } else if (resource.resource_type === 'TEXT') {
+              document.getElementById('editContentText').value = resource.content_text;
+            }
+            
+            // Set selected courses
+            const courseSelect = document.getElementById('editCourses');
+            Array.from(courseSelect.options).forEach(option => {
+              option.selected = resource.courses.includes(option.value);
+            });
+            
+            // Show appropriate input fields
+            toggleEditResourceInputs();
+            
+            // Show the modal
+            document.getElementById('editResourceModal').style.display = 'block';
+          })
+          .catch(error => {
+            console.error('Error loading resource:', error);
+            showToast('Error loading resource details', 'error');
+          });
+      }
+
+      function closeEditResourceModal() {
+        document.getElementById('editResourceModal').style.display = 'none';
+        document.getElementById('editResourceForm').reset();
+      }
+
+      function toggleEditResourceInputs() {
+        const type = document.getElementById('editResourceType').value;
+        console.log('Edit resource type changed to:', type); // Debug log
+        
+        // Hide all inputs first
+        document.getElementById('editFileInput').style.display = 'none';
+        document.getElementById('editLinkInput').style.display = 'none';
+        document.getElementById('editTextInput').style.display = 'none';
+        
+        // Show the appropriate input
+        if (type === 'FILE') {
+          document.getElementById('editFileInput').style.display = 'block';
+        } else if (type === 'LINK') {
+          document.getElementById('editLinkInput').style.display = 'block';
+        } else if (type === 'TEXT') {
+          document.getElementById('editTextInput').style.display = 'block';
+        }
+      }
+
+      function updateResource(event) {
+        event.preventDefault();
+        const resourceId = document.getElementById('editResourceId').value;
+        
+        const formData = new FormData();
+        formData.append('title', document.getElementById('editTitle').value);
+        formData.append('description', document.getElementById('editDescription').value);
+        formData.append('resource_type', document.getElementById('editResourceType').value);
+        
+        const courses = Array.from(document.getElementById('editCourses').selectedOptions)
+          .map(option => option.value);
+        courses.forEach(course => formData.append('courses[]', course));
+        
+        const resourceType = document.getElementById('editResourceType').value;
+        if (resourceType === 'FILE') {
+          const fileInput = document.getElementById('editFile');
+          if (fileInput && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+          }
+        } else if (resourceType === 'LINK') {
+          const contentUrl = document.getElementById('editContentUrl');
+          if (contentUrl) {
+            formData.append('content_url', contentUrl.value);
+          }
+        } else if (resourceType === 'TEXT') {
+          const contentText = document.getElementById('editContentText');
+          if (contentText) {
+            formData.append('content_text', contentText.value);
+          }
+        }
+        
+        fetch(`/api/resources/${resourceId}`, {
+          method: 'PUT',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Resource updated successfully', 'success');
+            closeEditResourceModal();
+            loadResources();
+          }
+        })
+        .catch(error => {
+          console.error('Error updating resource:', error);
+          showToast('Error updating resource', 'error');
+        });
+      }
+
+      // Add event listeners for resource type changes
+      document.addEventListener('DOMContentLoaded', function() {
+        const resourceTypeSelect = document.getElementById('resourceType');
+        const editResourceTypeSelect = document.getElementById('editResourceType');
+        
+        if (resourceTypeSelect) {
+          resourceTypeSelect.addEventListener('change', toggleResourceInputs);
+        }
+        
+        if (editResourceTypeSelect) {
+          editResourceTypeSelect.addEventListener('change', toggleEditResourceInputs);
+        }
+      });
+
+      function toggleResourceInputs() {
+        const type = document.getElementById('resourceType').value;
+        console.log('Resource type changed to:', type); // Debug log
+        
+        // Hide all inputs first
+        const fileInput = document.getElementById('fileInput');
+        const linkInput = document.getElementById('linkInput');
+        const textInput = document.getElementById('textInput');
+        
+        if (fileInput) fileInput.style.display = 'none';
+        if (linkInput) linkInput.style.display = 'none';
+        if (textInput) textInput.style.display = 'none';
+        
+        // Show the appropriate input
+        if (type === 'FILE' && fileInput) {
+          fileInput.style.display = 'block';
+        } else if (type === 'LINK' && linkInput) {
+          linkInput.style.display = 'block';
+        } else if (type === 'TEXT' && textInput) {
+          textInput.style.display = 'block';
+        }
+      }
+
+      function toggleEditResourceInputs() {
+        const type = document.getElementById('editResourceType').value;
+        console.log('Edit resource type changed to:', type); // Debug log
+        
+        // Hide all inputs first
+        const fileInput = document.getElementById('editFileInput');
+        const linkInput = document.getElementById('editLinkInput');
+        const textInput = document.getElementById('editTextInput');
+        
+        if (fileInput) fileInput.style.display = 'none';
+        if (linkInput) linkInput.style.display = 'none';
+        if (textInput) textInput.style.display = 'none';
+        
+        // Show the appropriate input
+        if (type === 'FILE' && fileInput) {
+          fileInput.style.display = 'block';
+        } else if (type === 'LINK' && linkInput) {
+          linkInput.style.display = 'block';
+        } else if (type === 'TEXT' && textInput) {
+          textInput.style.display = 'block';
+        }
+      }
+
+      function loadCoursesForSelect() {
+        fetch('/api/courses')
+          .then(response => response.json())
+          .then(courses => {
+            const addSelect = document.getElementById('courses');
+            const editSelect = document.getElementById('editCourses');
+            
+            if (addSelect) {
+              addSelect.innerHTML = '';
+              courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                addSelect.appendChild(option);
+              });
+            }
+            
+            if (editSelect) {
+              editSelect.innerHTML = '';
+              courses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course;
+                option.textContent = course;
+                editSelect.appendChild(option);
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error loading courses:', error);
+            showToast('Error loading courses', 'error');
+          });
+      }
+
+      function openAddResourceModal() {
+        document.getElementById('addResourceModal').style.display = 'block';
+        loadCoursesForSelect();
+        // Reset and hide all resource type inputs
+        document.getElementById('fileInput').style.display = 'none';
+        document.getElementById('linkInput').style.display = 'none';
+        document.getElementById('textInput').style.display = 'none';
+      }
+
+      function closeAddResourceModal() {
+        document.getElementById('addResourceModal').style.display = 'none';
+        document.getElementById('addResourceForm').reset();
+        // Reset and hide all resource type inputs
+        document.getElementById('fileInput').style.display = 'none';
+        document.getElementById('linkInput').style.display = 'none';
+        document.getElementById('textInput').style.display = 'none';
+      }
+
+      function editResource(resourceId) {
+        // Load courses first
+        loadCoursesForSelect();
+        
+        fetch(`/api/resources/${resourceId}`)
+          .then(response => response.json())
+          .then(resource => {
+            // Set form values
+            document.getElementById('editResourceId').value = resourceId;
+            document.getElementById('editTitle').value = resource.title;
+            document.getElementById('editDescription').value = resource.description;
+            document.getElementById('editResourceType').value = resource.resource_type;
+            
+            // Set content based on resource type
+            if (resource.resource_type === 'LINK') {
+              document.getElementById('editContentUrl').value = resource.content_url;
+            } else if (resource.resource_type === 'TEXT') {
+              document.getElementById('editContentText').value = resource.content_text;
+            }
+            
+            // Show appropriate input fields
+            toggleEditResourceInputs();
+            
+            // Set selected courses after a short delay to ensure courses are loaded
+            setTimeout(() => {
+              const courseSelect = document.getElementById('editCourses');
+              if (courseSelect && resource.courses) {
+                Array.from(courseSelect.options).forEach(option => {
+                  option.selected = resource.courses.includes(option.value);
+                });
+              }
+            }, 500);
+            
+            // Show the modal
+            document.getElementById('editResourceModal').style.display = 'block';
+          })
+          .catch(error => {
+            console.error('Error loading resource:', error);
+            showToast('Error loading resource details', 'error');
+          });
+      }
+
+      // Add event listeners for resource type changes
+      document.addEventListener('DOMContentLoaded', function() {
+        const resourceTypeSelect = document.getElementById('resourceType');
+        const editResourceTypeSelect = document.getElementById('editResourceType');
+        
+        if (resourceTypeSelect) {
+          resourceTypeSelect.addEventListener('change', toggleResourceInputs);
+        }
+        
+        if (editResourceTypeSelect) {
+          editResourceTypeSelect.addEventListener('change', toggleEditResourceInputs);
+        }
+      });
+
+      // Add this function to handle resource submission
+      function submitResource(event) {
+        event.preventDefault();
+        
+        // Get all form values
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const resourceType = document.getElementById('resourceType').value;
+        const courses = Array.from(document.getElementById('courses').selectedOptions)
+          .map(option => option.value);
+        
+        // Validate required fields
+        if (!title || !description || !resourceType || courses.length === 0) {
+          showToast('Please fill in all required fields', 'error');
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('description', description);
+        formData.append('resource_type', resourceType);
+        
+        // Add courses
+        courses.forEach(course => formData.append('courses[]', course));
+        
+        // Add content based on resource type
+        if (resourceType === 'FILE') {
+          const fileInput = document.getElementById('file');
+          if (fileInput && fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+          } else {
+            showToast('Please select a file', 'error');
+            return;
+          }
+        } else if (resourceType === 'LINK') {
+          const contentUrl = document.getElementById('contentUrl');
+          if (contentUrl && contentUrl.value) {
+            formData.append('content_url', contentUrl.value);
+          } else {
+            showToast('Please enter a URL', 'error');
+            return;
+          }
+        } else if (resourceType === 'TEXT') {
+          const contentText = document.getElementById('contentText');
+          if (contentText && contentText.value) {
+            formData.append('content_text', contentText.value);
+          } else {
+            showToast('Please enter content', 'error');
+            return;
+          }
+        }
+        
+        // Send the request
+        fetch('/api/resources', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.error) {
+            showToast(result.error, 'error');
+          } else {
+            showToast('Resource added successfully', 'success');
+            closeAddResourceModal();
+            loadResources();
+          }
+        })
+        .catch(error => {
+          console.error('Error adding resource:', error);
+          showToast('Error adding resource', 'error');
+        });
+      }
+
+      // Update the form submission handler
+      document.addEventListener('DOMContentLoaded', function() {
+        const addResourceForm = document.getElementById('addResourceForm');
+        const editResourceForm = document.getElementById('editResourceForm');
+        const resourceTypeSelect = document.getElementById('resourceType');
+        const editResourceTypeSelect = document.getElementById('editResourceType');
+        
+        if (addResourceForm) {
+          addResourceForm.onsubmit = submitResource;
+        }
+        
+        if (editResourceForm) {
+          editResourceForm.onsubmit = submitEditResource;
+        }
+        
+        if (resourceTypeSelect) {
+          resourceTypeSelect.addEventListener('change', toggleResourceInputs);
+        }
+        
+        if (editResourceTypeSelect) {
+          editResourceTypeSelect.addEventListener('change', toggleEditResourceInputs);
+        }
+      }); // Close the DOMContentLoaded event listener
+
+      // Handle resource type change
+      document.addEventListener('DOMContentLoaded', function() {
+        const resourceTypeSelect = document.getElementById('resourceType');
+        if (resourceTypeSelect) {
+          resourceTypeSelect.addEventListener('change', function(e) {
+            const type = e.target.value;
+            const fileInput = document.getElementById('fileInput');
+            const urlInput = document.getElementById('urlInput');
+            const textInput = document.getElementById('textInput');
+            
+            if (fileInput) fileInput.style.display = type === 'FILE' ? 'block' : 'none';
+            if (urlInput) urlInput.style.display = type === 'LINK' ? 'block' : 'none';
+            if (textInput) textInput.style.display = type === 'TEXT' ? 'block' : 'none';
+          });
+        }
+
+        // Handle resource form submission
+        const addResourceForm = document.getElementById('addResourceForm');
+        if (addResourceForm) {
+          addResourceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const resourceTypeInput = document.getElementById('resourceType');
+            const coursesSelect = document.getElementById('courses');
+            
+            if (!titleInput || !descriptionInput || !resourceTypeInput || !coursesSelect) {
+              showToast('Required form elements are missing', 'error');
+              return;
+            }
+            
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value);
+            formData.append('resource_type', resourceTypeInput.value);
+            
+            const courses = Array.from(coursesSelect.selectedOptions)
+              .map(option => option.value);
+            if (courses.length === 0) {
+              showToast('Please select at least one course', 'error');
+              return;
+            }
+            courses.forEach(course => formData.append('courses[]', course));
+            
+            const resourceType = resourceTypeInput.value;
+            if (resourceType === 'FILE') {
+              const fileInput = document.getElementById('file');
+              if (fileInput && fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+              } else {
+                showToast('Please select a file', 'error');
+                return;
+              }
+            } else if (resourceType === 'LINK') {
+              const urlInput = document.getElementById('contentUrl');
+              if (urlInput && urlInput.value) {
+                formData.append('content_url', urlInput.value);
+              } else {
+                showToast('Please enter a URL', 'error');
+                return;
+              }
+            } else if (resourceType === 'TEXT') {
+              const textInput = document.getElementById('contentText');
+              if (textInput && textInput.value) {
+                formData.append('content_text', textInput.value);
+              } else {
+                showToast('Please enter content', 'error');
+                return;
+              }
+            }
+            
+            fetch('/api/resources', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.error) {
+                showToast(result.error, 'error');
+              } else {
+                showToast('Resource added successfully', 'success');
+                closeAddResourceModal();
+                loadResources();
+              }
+            })
+            .catch(error => {
+              console.error('Error adding resource:', error);
+              showToast('Error adding resource', 'error');
+            });
+          });
+        }
+      });
+
+      // Handle resource type change and form submission
+      document.addEventListener('DOMContentLoaded', function() {
+        // Handle resource type change
+        const resourceTypeSelect = document.getElementById('resourceType');
+        if (resourceTypeSelect) {
+          resourceTypeSelect.addEventListener('change', function(e) {
+            const type = e.target.value;
+            const fileInput = document.getElementById('fileInput');
+            const linkInput = document.getElementById('linkInput');
+            const textInput = document.getElementById('textInput');
+            
+            if (fileInput) fileInput.style.display = type === 'FILE' ? 'block' : 'none';
+            if (linkInput) linkInput.style.display = type === 'LINK' ? 'block' : 'none';
+            if (textInput) textInput.style.display = type === 'TEXT' ? 'block' : 'none';
+          });
+        }
+
+        // Handle resource form submission
+        const addResourceForm = document.getElementById('addResourceForm');
+        if (addResourceForm) {
+          addResourceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const resourceTypeInput = document.getElementById('resourceType');
+            const coursesSelect = document.getElementById('courses');
+            
+            if (!titleInput || !descriptionInput || !resourceTypeInput || !coursesSelect) {
+              showToast('Required form elements are missing', 'error');
+              return;
+            }
+            
+            formData.append('title', titleInput.value);
+            formData.append('description', descriptionInput.value);
+            formData.append('resource_type', resourceTypeInput.value);
+            
+            const courses = Array.from(coursesSelect.selectedOptions)
+              .map(option => option.value);
+            if (courses.length === 0) {
+              showToast('Please select at least one course', 'error');
+              return;
+            }
+            courses.forEach(course => formData.append('courses[]', course));
+            
+            const resourceType = resourceTypeInput.value;
+            if (resourceType === 'FILE') {
+              const fileInput = document.getElementById('file');
+              if (fileInput && fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+              } else {
+                showToast('Please select a file', 'error');
+                return;
+              }
+            } else if (resourceType === 'LINK') {
+              const urlInput = document.getElementById('contentUrl');
+              if (urlInput && urlInput.value) {
+                formData.append('content_url', urlInput.value);
+              } else {
+                showToast('Please enter a URL', 'error');
+                return;
+              }
+            } else if (resourceType === 'TEXT') {
+              const textInput = document.getElementById('contentText');
+              if (textInput && textInput.value) {
+                formData.append('content_text', textInput.value);
+              } else {
+                showToast('Please enter content', 'error');
+                return;
+              }
+            }
+            
+            fetch('/api/resources', {
+              method: 'POST',
+              body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+              if (result.error) {
+                showToast(result.error, 'error');
+              } else {
+                showToast('Resource added successfully', 'success');
+                closeAddResourceModal();
+                loadResources();
+              }
+            })
+            .catch(error => {
+              console.error('Error adding resource:', error);
+              showToast('Error adding resource', 'error');
+            });
+          });
+        }
+
+        // Load resources when section is shown
+        const resourcesButton = document.querySelector('button[onclick="showSection(\'resources\', this)"]');
+        if (resourcesButton) {
+          resourcesButton.addEventListener('click', loadResources);
+        }
+      });
+
+      // Function to toggle resource inputs
+      function toggleResourceInputs() {
+        const resourceType = document.getElementById('resourceType')?.value;
+        const fileInput = document.getElementById('fileInput');
+        const linkInput = document.getElementById('linkInput');
+        const textInput = document.getElementById('textInput');
+        
+        if (fileInput) fileInput.style.display = resourceType === 'FILE' ? 'block' : 'none';
+        if (linkInput) linkInput.style.display = resourceType === 'LINK' ? 'block' : 'none';
+        if (textInput) textInput.style.display = resourceType === 'TEXT' ? 'block' : 'none';
+      }
+
+      // Add this function to load top students
+      function loadTopStudents() {
+        fetch('/staff/top_students')
+          .then(response => response.json())
+          .then(students => {
+            const topStudentsList = document.getElementById('topStudentsList');
+            topStudentsList.innerHTML = '';
+            
+            students.forEach((student, index) => {
+              const studentElement = document.createElement('div');
+              studentElement.className = 'top-student-item';
+              studentElement.innerHTML = `
+                <div class="top-student-rank">#${index + 1}</div>
+                <div class="top-student-info">
+                  <div class="top-student-name">${student.student_name}</div>
+                  <div class="top-student-course">${student.course}</div>
+                </div>
+                <div class="top-student-sitins">
+                  ${student.total_sitins} sit-ins
+                </div>
+              `;
+              topStudentsList.appendChild(studentElement);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading top students:', error);
+            showToast('Error loading top students', 'error');
+          });
+      }
+
+      // Add this to your existing loadStatistics function
+      function loadStatistics() {
+        // ... existing statistics loading code ...
+        
+        // Load top students
+        loadTopStudents();
       }
     </script>
   </body>

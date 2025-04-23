@@ -882,6 +882,12 @@
           <button class="button ripple" onclick="showSection('resources', this)">
             <i class="fas fa-book"></i> Lab Resources
           </button>
+          <button class="button ripple" onclick="showSection('labSchedule', this)">
+            <i class="fas fa-clock"></i> Lab Schedule
+          </button>
+          <button class="button ripple" onclick="showSection('rewards', this)">
+            <i class="fas fa-trophy"></i> My Rewards
+          </button>
         </div>
       </div>
       
@@ -1107,6 +1113,39 @@
           <div class="resources-container">
             <div class="resources-grid" id="resourcesList">
               <!-- Resources will be populated here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Lab Schedule Section -->
+        <div id="labSchedule" class="content-section">
+          <h2><i class="fas fa-clock"></i> Lab Schedule</h2>
+          <div class="schedule-container">
+            <div class="schedule-grid" id="scheduleList">
+              <!-- Schedule items will be populated here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Rewards Section -->
+        <div id="rewards" class="content-section">
+          <h2><i class="fas fa-trophy"></i> My Rewards</h2>
+          <div class="rewards-container">
+            <div class="rewards-summary">
+              <div class="summary-card">
+                <h3>Total Points</h3>
+                <p id="totalPoints">0</p>
+              </div>
+              <div class="summary-card">
+                <h3>Total Rewards</h3>
+                <p id="totalRewards">0</p>
+              </div>
+            </div>
+            <div class="rewards-history">
+              <h3>Reward History</h3>
+              <div class="rewards-list" id="rewardsList">
+                <!-- Rewards will be populated here -->
+              </div>
             </div>
           </div>
         </div>
@@ -1907,6 +1946,94 @@
           resourcesButton.addEventListener('click', loadResources);
         }
       });
+
+      // Load lab schedule
+      function loadLabSchedule() {
+        fetch('/api/schedule')
+          .then(response => response.json())
+          .then(schedule => {
+            const container = document.getElementById('scheduleList');
+            container.innerHTML = '';
+            
+            if (schedule.length === 0) {
+              container.innerHTML = `
+                <div class="no-data">
+                  <i class="fas fa-calendar-times"></i>
+                  <p>No schedule available</p>
+                </div>
+              `;
+              return;
+            }
+            
+            schedule.forEach(item => {
+              const card = document.createElement('div');
+              card.className = 'schedule-item';
+              card.innerHTML = `
+                <div class="schedule-info">
+                  <h4>${item.lab_name}</h4>
+                  <p><strong>Day:</strong> ${item.day}</p>
+                  <p><strong>Time:</strong> ${item.start_time} - ${item.end_time}</p>
+                  <p><strong>Subject:</strong> ${item.subject}</p>
+                  <p><strong>Instructor:</strong> ${item.instructor}</p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading schedule:', error);
+            showToast('Error loading schedule', 'error');
+          });
+      }
+
+      // Load student rewards
+      function loadStudentRewards() {
+        fetch(`/api/rewards/student/${session['IDNO']}`)
+          .then(response => response.json())
+          .then(data => {
+            // Update summary
+            document.getElementById('totalPoints').textContent = data.total_points;
+            document.getElementById('totalRewards').textContent = data.total_rewards;
+            
+            // Update rewards history
+            const container = document.getElementById('rewardsList');
+            container.innerHTML = '';
+            
+            if (data.rewards_history.length === 0) {
+              container.innerHTML = `
+                <div class="no-data">
+                  <i class="fas fa-trophy"></i>
+                  <p>No rewards yet</p>
+                </div>
+              `;
+              return;
+            }
+            
+            data.rewards_history.forEach(reward => {
+              const card = document.createElement('div');
+              card.className = 'reward-card';
+              card.innerHTML = `
+                <div class="reward-info">
+                  <h4>${reward.reward_type}</h4>
+                  <p><strong>Points:</strong> ${reward.points_earned}</p>
+                  <p><strong>Date:</strong> ${reward.date_earned}</p>
+                  <p><strong>Description:</strong> ${reward.description}</p>
+                </div>
+              `;
+              container.appendChild(card);
+            });
+          })
+          .catch(error => {
+            console.error('Error loading rewards:', error);
+            showToast('Error loading rewards', 'error');
+          });
+      }
+
+      // Load data when sections are shown
+      document.querySelector('button[onclick="showSection(\'labSchedule\', this)"]')
+        .addEventListener('click', loadLabSchedule);
+      document.querySelector('button[onclick="showSection(\'rewards\', this)"]')
+        .addEventListener('click', loadStudentRewards);
 
     </script>
   </body>

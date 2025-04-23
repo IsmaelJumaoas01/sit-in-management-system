@@ -22,6 +22,7 @@ from routes.admin_routes import admin_bp
 from routes.staff_routes import staff_bp
 from routes.announcement_routes import announcement_bp
 from routes.lab_resources import lab_resources
+from routes.rewards_routes import rewards_bp
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -31,6 +32,7 @@ app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(staff_bp, url_prefix='/staff')
 app.register_blueprint(announcement_bp)
 app.register_blueprint(lab_resources)
+app.register_blueprint(rewards_bp)
 
 if __name__ == '__main__':
     # For development only - in production, use proper HTTPS

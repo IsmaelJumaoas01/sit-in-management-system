@@ -210,4 +210,144 @@ def manage_announcement(announcement_id):
             finally:
                 cursor.close()
                 conn.close()
-    return jsonify({'error': 'Access denied'}), 403        
+    return jsonify({'error': 'Access denied'}), 403
+
+@lab_bp.route('/api/schedule', methods=['GET'])
+def get_lab_schedule():
+    if 'IDNO' not in session:
+        return jsonify({'error': 'Not logged in'}), 401
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            SELECT 
+                s.SCHEDULE_ID,
+                s.LAB_ID,
+                l.LAB_NAME,
+                s.DAY_OF_WEEK,
+                s.START_TIME,
+                s.END_TIME,
+                s.SUBJECT,
+                s.INSTRUCTOR
+            FROM LAB_SCHEDULE s
+            JOIN LABORATORIES l ON s.LAB_ID = l.LAB_ID
+            ORDER BY s.DAY_OF_WEEK, s.START_TIME
+        """)
+        
+        schedule = []
+        for row in cursor.fetchall():
+            schedule.append({
+                'schedule_id': row[0],
+                'lab_id': row[1],
+                'lab_name': row[2],
+                'day': row[3],
+                'start_time': row[4].strftime('%H:%M'),
+                'end_time': row[5].strftime('%H:%M'),
+                'subject': row[6],
+                'instructor': row[7]
+            })
+            
+        return jsonify(schedule)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@lab_bp.route('/api/schedule', methods=['POST'])
+def add_lab_schedule():
+    if 'IDNO' not in session or session['USER_TYPE'] not in ['STAFF', 'ADMIN']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    lab_id = data.get('lab_id')
+    day = data.get('day')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+    subject = data.get('subject')
+    instructor = data.get('instructor')
+    
+    if not all([lab_id, day, start_time, end_time, subject, instructor]):
+        return jsonify({'error': 'Missing required fields'}), 400
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            INSERT INTO LAB_SCHEDULE 
+            (LAB_ID, DAY_OF_WEEK, START_TIME, END_TIME, SUBJECT, INSTRUCTOR)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (lab_id, day, start_time, end_time, subject, instructor))
+        
+        conn.commit()
+        return jsonify({'message': 'Schedule added successfully'}), 201
+        
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@lab_bp.route('/api/schedule/<int:schedule_id>', methods=['PUT'])
+def update_lab_schedule(schedule_id):
+    if 'IDNO' not in session or session['USER_TYPE'] not in ['STAFF', 'ADMIN']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    data = request.get_json()
+    day = data.get('day')
+    start_time = data.get('start_time')
+    end_time = data.get('end_time')
+    subject = data.get('subject')
+    instructor = data.get('instructor')
+    
+    if not all([day, start_time, end_time, subject, instructor]):
+        return jsonify({'error': 'Missing required fields'}), 400
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("""
+            UPDATE LAB_SCHEDULE 
+            SET DAY_OF_WEEK = %s,
+                START_TIME = %s,
+                END_TIME = %s,
+                SUBJECT = %s,
+                INSTRUCTOR = %s
+            WHERE SCHEDULE_ID = %s
+        """, (day, start_time, end_time, subject, instructor, schedule_id))
+        
+        conn.commit()
+        return jsonify({'message': 'Schedule updated successfully'})
+        
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+@lab_bp.route('/api/schedule/<int:schedule_id>', methods=['DELETE'])
+def delete_lab_schedule(schedule_id):
+    if 'IDNO' not in session or session['USER_TYPE'] not in ['STAFF', 'ADMIN']:
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("DELETE FROM LAB_SCHEDULE WHERE SCHEDULE_ID = %s", (schedule_id,))
+        conn.commit()
+        return jsonify({'message': 'Schedule deleted successfully'})
+        
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()        
